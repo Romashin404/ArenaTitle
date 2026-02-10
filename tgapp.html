@@ -58,8 +58,8 @@
             box-shadow: 0 4px 12px rgba(5, 202, 255, 0.4);
         }
         
-        .btn-stop { grid-column: span 2; background: #ff9f43; color: white; }
-        .btn-stop.closed { background: #ee5253; }
+        .btn-stop { grid-column: span 2; background: #ff4040; color: white; }
+        .btn-stop.closed { background: #3eff55; }
         .btn-win { background: #10ac84; color: white; grid-column: span 2; }
         .btn-apply { background: var(--sibir-blue); color: white; width: 100%; margin-top: 8px; }
 
@@ -145,8 +145,8 @@
 
     <h2>Режим отображения</h2>
     <div class="btn-grid">
-        <button id="mode-voting" class="btn" onclick="setActiveMode('voting')">🏒 КОНКУРС</button>
-        <button id="mode-slideshow" class="btn" onclick="setActiveMode('slideshow')">📸 СЛАЙДЫ</button>
+        <button id="mode-voting" class="btn" onclick="setActiveMode('voting')">🏒 ПЕРВАЯ ШАЙБА</button>
+        <button id="mode-slideshow" class="btn" onclick="setActiveMode('slideshow')">📸 СЛАЙД-ШОУ</button>
     </div>
 
     <div id="controls-voting">
@@ -155,7 +155,7 @@
             <button class="btn" onclick="setScene('announcement')">Анонс</button>
             <button class="btn" onclick="setScene('qr')">QR-код</button>
             <button class="btn" onclick="setScene('roulette')">Рулетка</button>
-            <button class="btn btn-win" onclick="setScene('winner')">🏆 ПОБЕДИТЕЛЬ</button>
+            <button class="btn" onclick="setScene('winner')">🏆 ПОБЕДИТЕЛЬ</button>
         </div>
         
         <h2>Результат гола</h2>
@@ -273,7 +273,7 @@
         document.getElementById('controls-slideshow').style.display = mode === 'slideshow' ? 'block' : 'none';
 
         const sBtn = document.getElementById('stopBtn');
-        sBtn.textContent = currentData.acceptingVotes ? "🛑 СТОП ПРИЕМ ГЛОСОВ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
+        sBtn.textContent = currentData.acceptingVotes ? "🛑 СТОП ПРИЕМ ГОЛОСОВ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
         sBtn.className = currentData.acceptingVotes ? "btn btn-stop" : "btn btn-stop closed";
 
         document.getElementById('current-info').innerHTML = `ЭФИР: <span style="color:var(--sibir-blue)">${mode.toUpperCase()}</span> | СЦЕНА: <span style="color:var(--sibir-blue)">${(currentData.state || 'ОЖИДАНИЕ').toUpperCase()}</span>`;
