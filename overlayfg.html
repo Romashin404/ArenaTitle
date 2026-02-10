@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        #bg-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: -1; 
+            transition: opacity 1s ease-in-out;
+            background-color: transparent;
+        }
+        @font-face {
+            font-family: 'MyCustomFont';
+            src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
+        }
+        
+        @keyframes scrollTape {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); } 
+        }
+
+        /* Анимация для слова УГАДАЙ */
+        @keyframes fadeInOutCustom {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        /* Анимация пульсации финального текста */
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
+            50% { transform: scale(1.03); text-shadow: 0 0 50px rgba(0, 242, 255, 0.9); }
+        }
+
+        #tape.rolling {
+            display: flex;
+            position: absolute;
+            left: 0;
+            animation: scrollTape 20s linear infinite; 
+        }
+
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; font-family: 'MyCustomFont', sans-serif; color: white; }
+        
+        .scene {
+            position: absolute; 
+            width: 100%; 
+            height: 100%;
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+        }
+
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 5;
+        }
+
+        #bg-video, #bg-layer {
+            transition: opacity 1.5s ease-in-out;
+        }
+        h1 { font-size: 80px; text-transform: uppercase; text-shadow: 4px 4px 15px rgba(0,0,0,0.8); margin: 20px; }
+        h2 { font-size: 80px; text-shadow: 4px 4px 15px rgba(0,0,0,0.8); }
+
+        .roulette-wrapper {
+            position: relative; width: 1920px; height: 400px;
+            display: flex; align-items: center;
+        }
+        #tape { display: flex; position: absolute; left: 0; }
+        .user-card { min-width: 300px; display: flex; flex-direction: column; align-items: center; }
+        .user-card img { width: 270px; height: 270px; border-radius: 50%; border: 5px solid white; }
+        .user-card span { margin-top: 15px; font-size: 24px; font-weight: bold; }
+
+        /* --- СЦЕНА ПОБЕДИТЕЛЯ --- */
+        #winner {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .winner-title {
+            font-size: 140px;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+            margin: 0 0 40px 0;
+        }
+
+        .winner-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .winner-avatar {
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
+            border: 10px solid rgb(42, 138, 255);
+            box-shadow: 0 0 60px rgb(42, 138, 255);
+            object-fit: cover;
+            margin-bottom: 30px;
+        }
+
+        /* --- ЛОГИКА АНОНСА (ПЕРЕЗАПУСК ПРИ .active) --- */
+        .fade-out-text { 
+            font-size: 250px; 
+            font-weight: bold; 
+            color: white; 
+            text-shadow: 0 0 30px rgba(0, 242, 255, 0.9); 
+            position: absolute; 
+            width: 100%; left: 50%; top: 50%; 
+            transform: translate(-50%, -50%); 
+            opacity: 0;
+        }
+
+        .scene.active .fade-out-text {
+            animation: fadeInOutCustom 3s forwards;
+        }
+
+        .final-pulse-container { opacity: 0; }
+        
+        .scene.active .final-pulse-container { 
+            animation: fadeInMain 0.5s forwards 3.1s, pulse-glow 3s ease-in-out infinite 5.0s; 
+        }
+
+        .line1, .line2, .line3 { 
+            opacity: 0; 
+            text-transform: uppercase; 
+            transform: translateY(100px); 
+        }
+
+        .scene.active .line1 { font-size: 220px; font-weight: bold; animation: slideUpFade 0.8s forwards 3.3s; text-shadow: 0 0 30px rgba(0, 242, 255, 0.9);}
+        .scene.active .line2 { font-size: 220px; font-weight: bold; margin-top: -30px; animation: slideUpFade 0.8s forwards 3.8s; text-shadow: 0 0 30px rgba(0, 242, 255, 0.9);}
+        .scene.active .line3 { font-size: 100px; margin-top: 30px; animation: slideUpFade 0.8s forwards 4.3s; }
+
+        .announcement-content { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 200px; text-shadow: 0 0 30px rgba(0, 242, 255, 0.9);}
+        
+        @keyframes fadeInMain { to { opacity: 1; } }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+
+        /* --- ПРОЧЕЕ --- */
+        .qr-row { display: flex; gap: 100px; justify-content: center; align-items: flex-start; }
+        .qr-item { display: flex; flex-direction: column; align-items: center; }
+        .qr-item img { width: 700px; border: 10px solid white; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .top-logo { position: absolute; top: 0px; left: 50%; transform: translateX(-50%); width: 350px; z-index: 10; outline: none; }
+        
+        #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: opacity 1s ease-in-out; }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: transparent; }
+    </style>
+</head>
+<body>
+    <div id="bg-layer"></div>
+
+    <div id="announcement" class="scene">
+        <video muted playsinline id="logo-video" class="top-logo">
+            <source src="media/logoVideo.webm" type="video/webm">
+        </video>
+        <div class="announcement-content">
+            <h1 class="fade-out-text">УГАДАЙ!</h1>
+            <div class="staggered-text final-pulse-container">
+                <div class="line1">КТО ЗАБРОСИТ</div>
+                <div class="line2">ПЕРВУЮ ШАЙБУ?</div>
+                <div class="line3">В СОСТАВЕ ХК «СИБИРЬ»</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="qr" class="scene">
+        <div class="qr-row">
+            <div class="qr-item"><img src="media/telegramqr.png"></div>
+            <div class="qr-item"><img src="media/max.jpg"></div>
+        </div>
+        <h1 style="text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); font-size: 160px; animation: pulse-glow 2s ease-in-out infinite;">Переходи и голосуй!</h1>
+    </div>
+
+    <div id="roulette" class="scene">
+        <h1 style="text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); font-size: 150px">Выбираем победителя...</h1>
+        <div class="roulette-wrapper">
+            <div id="tape"></div>
+        </div>
+    </div>
+
+    <div id="winner" class="scene">
+        <h1 class="winner-title">ПОБЕДИТЕЛЬ:</h1>
+        <div id="winner-display" class="winner-content"></div>
+    </div>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="media/backgroundvideo.webm" type="video/webm">
+    </video>
+    <div class="video-overlay"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        let selectedWinner = null;
+        let winnerImagePreloaded = false;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+            authDomain: "arenawork-94e68.firebaseapp.com",
+            databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+            projectId: "arenawork-94e68",
+            storageBucket: "arenawork-94e68.firebasestorage.app",
+            messagingSenderId: "504372844993",
+            appId: "1:504372844993:web:1783bb75879ee074953740"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const tape = document.getElementById('tape');
+        const bgLayer = document.getElementById('bg-layer');
+        const bgVideo = document.getElementById('bg-video');
+
+        let allWinners = [];
+        let lastScene = "";
+        let rouletteHandled = false;
+        const preloadedImages = new Map(); // Здесь будем хранить уже загруженные картинки
+        const defaultPhoto = 'media/tg_logo.png';
+
+        onValue(ref(db, 'competition'), (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            if (data.votes) {
+                Object.values(data.votes).forEach(vote => {
+                    if (vote.photo) smartPreload(vote.photo);
+                });
+            }
+
+            if (data.winner && data.winner.photo) {
+                smartPreload(data.winner.photo);
+            }
+
+            const currentScene = data.state || 'announcement';
+
+            // 1. Управление фоном
+            if (data.background && data.background.trim() !== "") {
+                bgLayer.style.backgroundImage = `url('${data.background}')`;
+                bgLayer.style.opacity = "1";
+                bgVideo.style.opacity = "0";
+            } else {
+                bgLayer.style.opacity = "0";
+                bgVideo.style.opacity = "1";
+            }
+
+            // 2. Переключение сцен
+            if (currentScene !== lastScene) {
+                document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+                const target = document.getElementById(currentScene);
+                if (target) target.classList.add('active');
+
+                // Если зашли в рулетку — запускаем ленту (данные уже должны быть в data.winner)
+                if (currentScene === 'roulette') {
+                    const scorer = data.scorer;
+                    const votes = data.votes || {};
+                    // Формируем список участников для анимации ленты
+                    allWinners = Object.values(votes).filter(v => v.votedFor === scorer);
+                    startRoulette();
+                }
+            }
+
+            // 3. Обновление данных победителя (когда админка его записала)
+            if (data.winner) {
+                displayWinner(data.winner);
+            }
+
+            // Очистка при уходе со сцен
+            if (currentScene !== 'roulette' && currentScene !== 'winner') {
+                stopRoulette();
+            }
+
+            lastScene = currentScene;
+
+            const logoVid = document.getElementById('logo-video');
+            if (currentScene === 'announcement') logoVid.play().catch(()=>{});
+            else logoVid.pause();
+        });
+
+        function startRoulette() {
+            tape.innerHTML = '';
+            tape.classList.add('rolling');
+            if (allWinners.length === 0) return;
+            const minCards = 40; 
+            const repeatCount = Math.ceil(minCards / (allWinners.length || 1));
+            let displayList = [...allWinners].sort(() => Math.random() - 0.5);
+            let fullSet = [];
+            for (let i = 0; i < repeatCount; i++) fullSet = fullSet.concat(displayList);
+            const finalDisplayList = [...fullSet, ...fullSet];
+
+            finalDisplayList.forEach(user => {
+                    // Если фотки нет в базе — ставим заглушку
+                    const userPhoto = (user.photo && user.photo.trim() !== "") ? user.photo : defaultPhoto;
+                    
+                    tape.innerHTML += `
+                        <div class="user-card">
+                            <img src="${userPhoto}" onerror="this.src='${defaultPhoto}'">
+                            <span>@${user.handle || user.name || 'Anonymous'}</span>
+                        </div>`;
+                });
+                
+            const scrollSpeed = Math.max(10, allWinners.length * 0.8);
+            tape.style.animationDuration = `${scrollSpeed}s`;
+        }
+
+        function stopRoulette() {
+            tape.classList.remove('rolling');
+            tape.innerHTML = '';
+        }
+
+        function displayWinner(winner) {
+            const container = document.getElementById('winner-display');
+            if (!winner || !container) return;
+            const winnerPhoto = (winner.photo && winner.photo !== "") ? winner.photo : defaultPhoto;
+            container.innerHTML = `
+                <img src="${winnerPhoto}" class="winner-avatar" onerror="this.src='${defaultPhoto}'">
+                <h1 style="font-size: 150px; margin: 10px 0;">${winner.name || "Без имени"}</h1>
+                <h2 style="font-size: 70px; margin: 0;">@${winner.handle || 'no_nickname'}</h2>
+            `;
+        }
+        function preloadImage(src, callback) {
+            const img = new Image();
+            img.onload = callback;
+            img.onerror = callback;
+            img.src = src;
+        }
+        function smartPreload(url) {
+            if (!url || url === "" || url === defaultPhoto) return;
+            if (preloadedImages.has(url)) return; // Уже загружено
+
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                preloadedImages.set(url, true);
+                console.log("Предзагружено фото:", url);
+            };
+        }
+    </script>
+</body>
+</html>
