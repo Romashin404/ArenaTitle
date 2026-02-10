@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sibir Mobile Admin</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --sibir-blue: #0055a4;
+            --sibir-light: #00f2ff;
+            --dark-bg: #121212;
+            --card-bg: #1e1e1e;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--dark-bg); 
+            color: white; 
+            margin: 0; padding: 10px;
+            padding-bottom: 80px; /* место под статус-бар */
+        }
+
+        h2 { color: var(--sibir-light); font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin: 15px 0 10px 0; text-transform: uppercase; }
+
+        /* Сетка кнопок */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        
+        .btn { 
+            padding: 12px 5px; border: none; border-radius: 8px; 
+            font-weight: bold; font-size: 0.8rem; cursor: pointer; 
+            transition: 0.2s; color: white; background: #333;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+        }
+
+        .btn-active { background: var(--sibir-blue) !important; box-shadow: 0 0 10px var(--sibir-blue); }
+        .btn-stop { grid-column: span 2; background: #f39c12; }
+        .btn-stop.closed { background: #dc3545; }
+        .btn-win { background: #28a745; grid-column: span 2; }
+        .btn-apply { background: var(--sibir-blue); width: 100%; margin-top: 5px; }
+
+        /* Вкладки */
+        .tabs { display: flex; sticky: top; background: var(--dark-bg); z-index: 10; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #333; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #777; padding: 10px; font-weight: bold; font-size: 0.9rem; }
+        .tab-btn.active { color: var(--sibir-light); border-bottom: 3px solid var(--sibir-light); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Сообщения чата */
+        .message-item {
+            background: var(--card-bg); border-radius: 12px; padding: 12px;
+            margin-bottom: 10px; border-left: 4px solid #555;
+        }
+        .msg-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .msg-header img { width: 30px; height: 30px; border-radius: 50%; }
+        .msg-body img { width: 100%; border-radius: 8px; margin: 8px 0; }
+        
+        .msg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .btn-mini { padding: 8px; font-size: 0.7rem; }
+
+        /* Список голосов */
+        .votes-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .vote-card { background: var(--card-bg); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #333; position: relative; }
+        .vote-card.correct { border-color: #28a745; }
+        .vote-card img { width: 45px; height: 45px; border-radius: 50%; }
+
+        input, select { 
+            width: 100%; padding: 12px; background: #252525; border: 1px solid #444; 
+            color: white; border-radius: 8px; margin-bottom: 8px; font-size: 14px;
+        }
+
+        .player-tag { background: #333; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; margin: 2px; display: inline-block; }
+
+        /* Плашка режима снизу */
+        .mode-indicator {
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--sibir-blue);
+            padding: 10px; text-align: center; font-size: 0.8rem; font-weight: bold; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('main')">🕹 ПУЛЬТ</button>
+    <button class="tab-btn" onclick="switchTab('chat')">💬 ЧАТ/ФОТО</button>
+    <button class="tab-btn" onclick="switchTab('votes')">🏒 ГОЛОСА</button>
+</div>
+
+<div id="tab-main" class="tab-content active">
+    <button id="stopBtn" class="btn btn-stop" onclick="toggleVoting()">🛑 СТОП ПРИЕМ ГОЛОСОВ</button>
+
+    <h2>Активный Режим</h2>
+    <div class="btn-grid">
+        <button id="mode-voting" class="btn" onclick="setActiveMode('voting')">🏒 КОНКУРС</button>
+        <button id="mode-slideshow" class="btn" onclick="setActiveMode('slideshow')">📸 СЛАЙД-ШОУ</button>
+    </div>
+
+    <div id="controls-voting">
+        <h2>Сцены Конкурса</h2>
+        <div class="btn-grid">
+            <button class="btn" onclick="setScene('announcement')">Анонс</button>
+            <button class="btn" onclick="setScene('qr')">QR-код</button>
+            <button class="btn" onclick="setScene('roulette')">Рулетка</button>
+            <button class="btn btn-win" onclick="setScene('winner')">🏆 ПОБЕДИТЕЛЬ</button>
+        </div>
+        
+        <h2>Кто забил?</h2>
+        <select id="goalScorer" onchange="setScorer(this.value)"></select>
+    </div>
+
+    <div id="controls-slideshow" style="display:none">
+        <h2>Слайд-шоу</h2>
+        <button class="btn" style="width:100%; background:#6f42c1; margin-bottom:10px;" onclick="setScene('qr')">📲 Показать QR</button>
+        <button class="btn" style="width:100%; background:var(--sibir-blue);" onclick="setScene('photo_feed')">🎬 ЗАПУСК СЛАЙДОВ</button>
+    </div>
+
+    <h2>Фон (URL)</h2>
+    <input type="text" id="bgUrl" placeholder="Ссылка .webm или .jpg">
+    <div class="btn-grid">
+        <button class="btn btn-apply" onclick="updateBg()">ПРИМЕНИТЬ</button>
+        <button class="btn" style="background:#dc3545; margin-top:5px;" onclick="removeBackground()">🗑 УДАЛИТЬ</button>
+    </div>
+</div>
+
+<div id="tab-chat" class="tab-content">
+    <div class="btn-grid">
+        <button class="btn btn-mini" style="background:#f39c12" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
+        <button class="btn btn-mini" style="background:#dc3545" onclick="clearChat()">🗑 Удалить всё</button>
+    </div>
+    <div id="messagesList"></div>
+</div>
+
+<div id="tab-votes" class="tab-content">
+    <select id="filterMode" onchange="renderVotes()">
+        <option value="all">Все (0)</option>
+        <option value="correct">Угадали</option>
+    </select>
+    <div id="votesList" class="votes-list"></div>
+    
+    <h2>Игроки</h2>
+    <input type="text" id="pName" placeholder="Имя">
+    <input type="text" id="pKeys" placeholder="Ключи">
+    <button class="btn btn-apply" onclick="addPlayer()">Добавить игрока</button>
+    <div id="playersList" style="margin-top:10px"></div>
+</div>
+
+<div class="mode-indicator" id="current-info">Система загружается...</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+        authDomain: "arenawork-94e68.firebaseapp.com",
+        databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+        projectId: "arenawork-94e68",
+        storageBucket: "arenawork-94e68.firebasestorage.app",   
+        messagingSenderId: "504372844993",
+        appId: "1:504372844993:web:1783bb75879ee074953740"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let currentData = {};
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // --- Функции управления ---
+    window.switchTab = (tab) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+    };
+
+    window.toggleVoting = () => set(ref(db, 'competition/acceptingVotes'), !currentData.acceptingVotes);
+    window.setActiveMode = (mode) => set(ref(db, 'competition/activeMode'), mode);
+    window.setScene = (scene) => {
+        if (scene === 'roulette') {
+            const votes = currentData.votes || {};
+            const luckyOnes = Object.values(votes).filter(v => v.votedFor === currentData.scorer);
+            if (luckyOnes.length === 0) { alert("Никто не угадал!"); return; }
+        }
+        set(ref(db, 'competition/state'), scene);
+        tg.HapticFeedback.impactOccurred('medium');
+    };
+
+    window.updateBg = () => {
+        const url = document.getElementById('bgUrl').value;
+        if(url) set(ref(db, 'competition/background'), url);
+    };
+
+    window.removeBackground = () => set(ref(db, 'competition/background'), null);
+
+    window.togglePhotoSelection = (id, status) => set(ref(db, `competition/allMessages/${id}/approved`), !status);
+    
+    window.removeMessage = (id) => confirm("Удалить?") && remove(ref(db, `competition/allMessages/${id}`));
+
+    window.clearChat = () => confirm("Удалить всё?") && remove(ref(db, 'competition/allMessages'));
+
+    window.sendReply = (chatId, name) => {
+        const msg = prompt(`Ответ для ${name}:`);
+        if (msg) push(ref(db, 'competition/replies'), { chatId, text: msg });
+    };
+
+    window.addPlayer = () => {
+        const name = document.getElementById('pName').value;
+        const keywords = document.getElementById('pKeys').value;
+        if(name && keywords) push(ref(db, 'competition/players'), { name, keywords });
+    };
+
+    window.removePlayer = (id) => remove(ref(db, `competition/players/${id}`));
+    window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
+    window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
+
+    // --- Рендеринг ---
+    onValue(ref(db, 'competition'), (snapshot) => {
+        currentData = snapshot.val() || {};
+        const mode = currentData.activeMode || 'voting';
+        
+        // Обновление UI кнопок режимов
+        document.getElementById('mode-voting').className = mode === 'voting' ? 'btn btn-active' : 'btn';
+        document.getElementById('mode-slideshow').className = mode === 'slideshow' ? 'btn btn-active' : 'btn';
+        document.getElementById('controls-voting').style.display = mode === 'voting' ? 'block' : 'none';
+        document.getElementById('controls-slideshow').style.display = mode === 'slideshow' ? 'block' : 'none';
+
+        const sBtn = document.getElementById('stopBtn');
+        sBtn.textContent = currentData.acceptingVotes ? "🛑 СТОП ПРИЕМ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
+        sBtn.className = currentData.acceptingVotes ? "btn btn-stop" : "btn btn-stop closed";
+
+        document.getElementById('current-info').innerText = `РЕЖИМ: ${mode.toUpperCase()} | СЦЕНА: ${currentData.state || '---'}`;
+
+        renderMessages();
+        renderVotes();
+        renderPlayers();
+    });
+
+    function renderMessages() {
+        const container = document.getElementById('messagesList');
+        const msgs = currentData.allMessages || {};
+        container.innerHTML = '';
+        Object.keys(msgs).reverse().forEach(id => {
+            const m = msgs[id];
+            container.innerHTML += `
+                <div class="message-item" style="border-left-color: ${m.approved ? '#28a745' : '#555'}">
+                    <div class="msg-header">
+                        <img src="${m.userPhoto || 'https://ui-avatars.com/api/?name='+m.name}">
+                        <b>${m.name}</b>
+                    </div>
+                    <div class="msg-body">
+                        ${m.text ? `<div>${m.text}</div>` : ''}
+                        ${m.isImage ? `<img src="${m.photo}">` : ''}
+                    </div>
+                    <div class="msg-actions">
+                        <button class="btn btn-mini" style="background:${m.approved ? '#28a745' : '#444'}" onclick="togglePhotoSelection('${id}', ${m.approved})">
+                            ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
+                        </button>
+                        <button class="btn btn-mini" onclick="sendReply('${m.chatId}', '${m.name}')">↩️ ОТВЕТ</button>
+                        <button class="btn btn-mini" style="background:#dc3545" onclick="removeMessage('${id}')">🗑 УДАЛИТЬ</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function renderVotes() {
+        const container = document.getElementById('votesList');
+        const filter = document.getElementById('filterMode').value;
+        const votes = currentData.votes || {};
+        container.innerHTML = '';
+        let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
+        if(filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
+        
+        list.reverse().forEach(v => {
+            const isCorrect = v.votedFor === currentData.scorer;
+            container.innerHTML += `
+                <div class="vote-card ${isCorrect ? 'correct' : ''}">
+                    <img src="${v.photo}">
+                    <div style="font-size:10px; font-weight:bold;">${v.name}</div>
+                    <div style="font-size:9px; color:var(--sibir-light);">${v.votedFor}</div>
+                    <button class="btn btn-mini" style="width:100%; margin-top:5px; background:#444" onclick="sendReply('${v.chatId}', '${v.name}')">💬</button>
+                </div>`;
+        });
+    }
+
+    function renderPlayers() {
+        const pList = document.getElementById('playersList');
+        const pSelect = document.getElementById('goalScorer');
+        const players = currentData.players || {};
+        pList.innerHTML = '';
+        pSelect.innerHTML = '<option value="">-- КТО ЗАБИЛ? --</option>';
+        for(let id in players) {
+            pList.innerHTML += `<div class="player-tag">${players[id].name} <span onclick="removePlayer('${id}')" style="color:red">×</span></div>`;
+            pSelect.innerHTML += `<option value="${players[id].name}" ${currentData.scorer === players[id].name ? 'selected' : ''}>${players[id].name}</option>`;
+        }
+    }
+</script>
+</body>
+</html>
