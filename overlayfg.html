@@ -245,7 +245,7 @@
                 smartPreload(data.winner.photo);
             }
 
-            const currentScene = data.state || 'announcement';
+            const currentScene = data.votingState || 'announcement';
 
             // 1. Управление фоном
             if (data.background && data.background.trim() !== "") {
