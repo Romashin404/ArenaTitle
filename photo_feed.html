@@ -179,7 +179,7 @@
             approvedPhotos.forEach(p => preloadImage(p.photo));
 
             // ПЛАВНОЕ ПЕРЕКЛЮЧЕНИЕ ЧЕРЕЗ КЛАССЫ
-            if (data.state === 'qr') {
+            if (data.slideshowState === 'qr') {
                 qrScreen.classList.add('active');
                 mainUI.classList.add('hidden');
                 currentState = 'qr';
@@ -228,4 +228,5 @@
         showNextPhoto();
     </script>
 </body>
+
 </html>
