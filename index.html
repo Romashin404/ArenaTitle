@@ -2,110 +2,135 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Панель управления Сибирь</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sibir Control Panel — Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; display: grid; grid-template-columns: 350px 1fr; gap: 20px; padding: 20px; }
-        .sidebar { background: #1e1e1e; padding: 20px; border-radius: 12px; height: 95vh; overflow-y: auto; position: sticky; top: 20px; }
-        .main { background: #1e1e1e; padding: 20px; border-radius: 12px; }
-        h2 { color: #007bff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px; }
-        
-        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 2px; }
-        .btn-scene { background: #444; color: white; width: 45%; }
-        .btn-scene.active { background: #007bff; }
-        .btn-win { background: #28a745; color: white; width: 93%; font-size: 16px; margin-top: 10px; }
-        .btn-stop { background: #f39c12; color: white; width: 93%; margin-bottom: 15px; }
-        .btn-stop.closed { background: #dc3545; }
+        :root {
+            --sibir-blue: #05caff;
+            --sibir-dark: #253566;
+            --bg-body: #d8d8d8;
+            --white: #ffffff;
+            --gray: rgb(223, 223, 223);
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color:#05caff;
+        }
 
-        /* Стили для вкладок */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .tab-btn { background: transparent; border: none; color: #777; font-size: 18px; cursor: pointer; padding: 5px 15px; font-weight: bold; }
-        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: grid; 
+            grid-template-columns: 350px 1fr; 
+            gap: 20px; 
+            padding: 20px; 
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .sidebar { 
+            background: var(--white); 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            overflow-y: auto; 
+            position: sticky; 
+            top: 20px; 
+            height: calc(100vh - 40px);
+        }
+
+        .main { 
+            background: var(--white); 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 { 
+            color: var(--sibir-dark); 
+            font-size: 0.85rem; 
+            font-weight: 800;
+            margin: 25px 0 15px 0; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+        }
+        h2::before {
+            content: ""; display: inline-block; width: 4px; height: 16px; 
+            background: var(--sibir-blue); margin-right: 8px; border-radius: 2px;
+        }
+
+        .btn { 
+            padding: 12px 15px; border: none; border-radius: 12px; 
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; 
+            transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+            gap: 8px; font-family: inherit;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-scene { background: #f8f9fa; color: var(--text-main); border: 1px solid var(--border-color); width: 48%; }
+        .btn-scene.active { background: var(--sibir-blue) !important; color: white !important; border-color: var(--sibir-blue) !important; box-shadow: 0 4px 12px rgba(5, 202, 255, 0.3); }
+        
+        .btn-stop { width: 100%; background: #ff9f43; color: white; margin-bottom: 20px; font-size: 1rem; }
+        .btn-stop.closed { background: #ee5253; }
+        
+        .btn-primary { background: var(--sibir-blue); color: white; width: 100%; }
+
+        .tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; font-weight: 700; padding: 5px 10px; transition: 0.3s; }
+        .tab-btn.active { color: var(--sibir-blue); border-bottom: 3px solid var(--sibir-blue); }
+        
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
-       /* Контейнер сообщения */
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
         .message-item {
-            display: flex; 
-            background: #222;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #333;
-            gap: 20px;
-            align-items: flex-start;
+            display: flex; background: var(--gray); border-radius: 16px; margin-bottom: 15px; padding: 20px;
+            border: 1px solid var(--white); gap: 20px; align-items: flex-start; transition: 0.3s;
         }
 
-        /* Левая колонка: кнопка Эфира */
-        .message-left {
-            min-width: 130px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .message-left { min-width: 140px; display: flex; flex-direction: column; gap: 10px; }
+        .message-content { flex-grow: 1; }
+
+        .photo-container { 
+            margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid var(--white); 
+            max-width: 400px;
+        }
+        .photo-container img { width: 100%; display: block; }
+
+        input, select { 
+            width: 100%; height: 45px; padding: 0 15px; background: #fff; 
+            border: 1.5px solid var(--sibir-blue); color: var(--text-main); 
+            border-radius: 12px; margin-bottom: 15px; font-family: inherit;
+            font-size: 0.9rem; box-sizing: border-box; display: block; outline: none;
         }
 
-        /* Правая колонка: контент */
-        .message-content {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-grow: 1;
+        select {
+            cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2305caff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 15px center; background-size: 15px;
         }
-
-        /* Текст пользователя (сверху) */
-        .user-info {
-            font-size: 14px;
-            color: #bbb;
-        }
-        .user-info b { color: #fff; font-size: 16px; margin-right: 8px; }
-
-        /* Фото (подстраивается под размер) */
-        .photo-container {
-            width: fit-content;
-            max-width: 100%;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #111;
-            border: 1px solid #444;
-        }
-        .photo-container img {
-            display: block;
-            max-width: 450px; /* Ограничиваем только макс. ширину в админке */
-            height: auto;
-            object-fit: contain;
-        }
-
-        /* Нижний ряд кнопок */
-        .actions-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        /* Кнопки */
-        .btn-approve { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-action { padding: 6px 15px; border-radius: 4px; border: none; cursor: pointer; font-size: 13px; color: white; }
-        .btn-reply { background: #444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        /* Стили для списка сообщений чата */
-        .chat-list { display: flex; flex-direction: column; gap: 10px; }
-        .chat-item { background: #2d2d2d; padding: 10px; border-radius: 8px; display: flex; align-items: flex-start; gap: 10px; border-left: 4px solid #555; }
-        .chat-item img { width: 40px; height: 40px; border-radius: 50%; }
-        .chat-content { width: 100%; }
-        .chat-header { display: flex; justify-content: space-between; font-size: 12px; color: #aaa; margin-bottom: 4px; }
-        .chat-text { font-size: 14px; color: white; margin-bottom: 8px; }
-        
-        /* Кнопка удаления фона */
-        .btn-delete-bg { background: #dc3545; color: white; width: 93%; margin-top: 5px; font-size: 12px; opacity: 0.8; }
-        .btn-delete-bg:hover { opacity: 1; }
-
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; background: #333; border: 1px solid #444; color: white; margin-bottom: 10px; border-radius: 6px; }
 
         .votes-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .vote-card { background: #2d2d2d; padding: 12px; border-radius: 8px; text-align: center; position: relative; border: 2px solid transparent; }
-        .vote-card.correct { border-color: #28a745; background: #1b3d24; }
-        .vote-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
-        .time { font-size: 10px; color: #777; margin-top: 5px; }
-        .del-vote { position: absolute; top: 5px; right: 5px; cursor: pointer; color: #555; }
-        .player-tag { background: #333; padding: 5px; margin: 2px; display: inline-block; border-radius: 4px; font-size: 12px; border: 1px solid #444; }
+        .vote-card { 
+            background: var(--gray); padding: 15px; border-radius: 16px; text-align: center; 
+            border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;
+        }
+        .vote-card.correct {background: #b8ffbe; border-color: #10ac84;}
+        .vote-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-body); background: #fff; }
+        
+        .player-tag { 
+            background: #edf2f7; padding: 5px 12px; margin: 3px; display: inline-block; 
+            border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        
     </style>
 </head>
 <body>
@@ -113,83 +138,86 @@
 <div class="sidebar">
     <button id="stopBtn" class="btn btn-stop" onclick="toggleVoting()">🛑 СТОП ПРИЕМ ГОЛОСОВ</button>
 
-    <h2>Текущий Интерактив</h2>
-    <div class="scene-btns" style="margin-bottom: 20px;">
-        <button id="mode-voting" class="btn btn-scene active" onclick="setActiveMode('voting')">🏒 Кто забьет</button>
+    <h2>Активный режим</h2>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Первая шайба</button>
         <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд-шоу</button>
     </div>
 
-    <div id="controls-voting" class="mode-controls">
-        <h2>Сцены: Кто забьет</h2>
-        <div class="scene-btns">
-            <button class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
-            <button class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
-            <button class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
-            <button class="btn btn-win" onclick="setScene('winner')">🏆 ПОБЕДИТЕЛЬ!</button>
+    <div id="controls-voting">
+        <h2>Сцены конкурса</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button id="scene-announcement" class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+            <button id="scene-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
+            <button id="scene-roulette" class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
+            <button id="scene-winner" class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:10px; background:#e0e0e0" onclick="pickWinnerManual()">🎲 Перевыбрать победителя</button>
+    </div>
+
+    <div id="controls-slideshow" style="display: none;">
+        <h2>Сцены слайд-шоу</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button id="scene-slideshow_qr" class="btn btn-scene"
+                    onclick="setScene('slideshow_qr')">QR-коды</button>
+
+            <button id="scene-slideshow_photo" class="btn btn-scene"
+                    onclick="setScene('slideshow_photo')">Слайд-шоу</button>
         </div>
     </div>
 
-    <div id="controls-slideshow" class="mode-controls" style="display: none;">
-        <h2>Сцены: Слайд-шоу</h2>
-        <div class="scene-btns">
-            <button class="btn btn-scene" style="width: 93%; margin-bottom: 10px; background: #6f42c1;" onclick="setScene('qr')">📲 Показать QR-код</button>
-            <button class="btn btn-scene" style="width: 93%; background: #007bff;" onclick="setScene('photo_feed')">🎬 ЗАПУСТИТЬ СЛАЙДЫ</button>
-        </div>
-    </div>
-
-    <h2>Фон (Видео или Фото)</h2>
-    <input type="text" id="bgUrl" placeholder="Вставьте ссылку на .webm или .jpg">
-    <button class="btn btn-scene" style="width:93%; background: #007bff;" onclick="updateBg()">Применить фон</button>
-    <button class="btn btn-delete-bg" onclick="removeBackground()">🗑️ УДАЛИТЬ ФОН</button>
-    <button class="btn btn-scene" style="background: #6f42c1;" onclick="setScene('photo_feed')">📸 Показ фото</button>
-
+    <h2>Фон оверлея</h2>
+    <input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn btn-scene" style="width: 48%" onclick="updateBg()">Применить</button>
+        <button class="btn btn-scene" style="width: 48%" onclick="removeBackground()">Удалить</button>
+    </div>   
+    
     <div id="players-controls">
-        <h2>Кто забил?</h2>
+        <h2>Автор гола</h2>
         <select id="goalScorer" onchange="setScorer(this.value)"></select>
 
-        <h2>База Игроков</h2>
+        <h2>База игроков</h2>
         <input type="text" id="pName" placeholder="Имя игрока">
-        <input type="text" id="pKeys" placeholder="Ключи (номер, фамилия)">
-        <button class="btn btn-scene" style="width:93%" onclick="addPlayer()">Добавить в базу</button>
+        <input type="text" id="pKeys" placeholder="Номер, фамилия (через запятую)">
+        <button class="btn btn-primary" style="background: var(--sibir-dark);" onclick="addPlayer()">Добавить игрока</button>
         <div id="playersList" style="margin-top:15px;"></div>
         
-        <hr style="margin-top:30px; opacity:0.1">
-        <button class="btn" style="background:#444; color:#aaa; width:93%" onclick="resetVotes()">Очистить голоса</button>
+        <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+        <button class="btn" style="width: 100%; background: #f8f9fa; color: #ee5253; border: 1px solid #eee;" onclick="resetVotes()">🧹 Очистить голоса</button>
     </div>
 </div>
 
 <div class="main">
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('votes')">Голоса (Конкурс)</button>
-        <button class="tab-btn" onclick="switchTab('chat')">Все сообщения</button>
+        <button class="tab-btn active" onclick="switchTab('votes')">Голоса болельщиков</button>
+        <button class="tab-btn" onclick="switchTab('chat')">Эфир (Чат и Фото)</button>
     </div>
 
     <div id="tab-votes" class="tab-content active">
-        <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-            <select id="filterMode" onchange="renderVotes()" style="width:200px; margin:0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <select id="filterMode" onchange="renderVotes()" style="width: 250px; margin: 0;">
                 <option value="all">Все голоса</option>
-                <option value="correct">Только угадавшие</option>
+                <option value="correct">Только правильные</option>
             </select>
-            <span id="vCount" style="color:#007bff; font-weight:bold;"></span>
+            <b id="vCount" style="color: var(--sibir-blue);"></b>
         </div>
         <div id="votesList" class="votes-list"></div>
     </div>
 
     <div id="tab-chat" class="tab-content">
-        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-            <span style="color: #aaa;">Сообщения и фото:</span>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" style="width: auto; background: #f39c12; font-size: 12px; padding: 5px 15px;" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
-                <button class="btn" style="width: auto; background: #dc3545; font-size: 12px; padding: 5px 15px;" onclick="clearChat()">🗑️ Удалить всё</button>
-            </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+            <button class="btn" style="background: #ff9f43; color: white;" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
+            <button class="btn" style="background: #ee5253; color: white;" onclick="clearChat()">🗑️ Удалить всё</button>
         </div>
-        <div id="messagesList" class="chat-list"></div>
+        <div id="messagesList"></div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
         authDomain: "arenawork-94e68.firebaseapp.com",
@@ -203,171 +231,109 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     let currentData = {};
+    const tgLogo = "media/tg_logo.png";
 
-    // --- ФУНКЦИИ ОКНА (доступны из HTML) ---
+    // --- ЛОГИКА ОКНА ---
 
-    window.toggleVoting = () => {
-        const newState = !currentData.acceptingVotes;
-        set(ref(db, 'competition/acceptingVotes'), newState);
-    };
-
-    window.switchTab = (tabName) => {
-        // Убираем активный класс у всех кнопок и контента
+    window.toggleVoting = () => set(ref(db, 'competition/acceptingVotes'), !currentData.acceptingVotes);
+    
+    window.switchTab = (tab) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        // Включаем нужные
-        if (tabName === 'votes') {
-            document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-            document.getElementById('tab-votes').classList.add('active');
-        } else {
-            document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-            document.getElementById('tab-chat').classList.add('active');
-        }
+        event.currentTarget.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
     };
 
-    window.clearChat = () => {
-        if(confirm("Удалить всю историю переписки?")) {
-            remove(ref(db, 'competition/allMessages'));
-        }
-    };
-
-    window.setActiveMode = (mode) => {
-        set(ref(db, 'competition/activeMode'), mode);
-    };
-
-    window.clearApprovedPhotos = () => {
-        if (confirm("Убрать все одобренные фото из эфира? (Сами сообщения останутся в списке)")) {
-            const msgs = currentData.allMessages || {};
-            const updates = {};
-
-            // Проходим по всем сообщениям и ищем те, что в эфире
-            for (let id in msgs) {
-                if (msgs[id].approved) {
-                    updates[`competition/allMessages/${id}/approved`] = false;
-                }
-            }
-
-            // Выполняем массовое обновление одним махом
-            if (Object.keys(updates).length > 0) {
-                update(ref(db), updates)
-                    .then(() => alert("Эфир очищен!"))
-                    .catch(err => console.error("Ошибка при очистке:", err));
-            } else {
-                alert("В эфире сейчас и так пусто.");
-            }
-        }
-    };
-
-    window.renderMessages = () => {
-        const mList = document.getElementById('messagesList');
-        const msgs = currentData.allMessages || {};
-        mList.innerHTML = '';
-        
-        let list = Object.keys(msgs).map(id => ({id, ...msgs[id]}));
-        list.sort((a, b) => b.timestamp - a.timestamp);
-
-        list.forEach(m => {
-            const date = new Date(m.timestamp);
-            const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
-
-            mList.innerHTML += `
-                <div class="message-item" style="border-left: 4px solid ${m.approved ? '#28a745' : '#555'}">
-                    
-                    <div class="message-left">
-                        <button class="btn-approve" 
-                                style="background: ${m.approved ? '#28a745' : '#444'}; color: white;"
-                                onclick="togglePhotoSelection('${m.id}', ${m.approved || false})">
-                            ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
-                        </button>
-                        <span style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;">${timeStr}</span>
-                    </div>
-
-                    <div class="message-content">
-                        
-                        <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
-                            <img src="${m.userPhoto || 'https://ui-avatars.com/api/?name=' + m.name}" 
-                                style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #444;">
-                            <div>
-                                <b>${m.name}</b> <span style="color: #666;">@${m.handle || 'anon'}</span>
-                            </div>
-                        </div>
-
-                        <div style="color: white; font-size: 15px; margin-top: 2px;">
-                            ${m.text && m.text.trim() !== "" ? m.text : ""}
-                        </div>
-
-                        ${m.isImage ? `
-                            <div class="photo-container">
-                                <img src="${m.photo}" onclick="window.open('${m.photo}')" style="cursor: pointer;">
-                            </div>
-                        ` : ''}
-
-                        <div class="actions-row">
-                            <button class="btn-action" style="background: #333;" onclick="sendReply('${m.chatId}', '${m.name}')">↩ Ответить</button>
-                            <button class="btn-action" style="background: #dc3545; opacity: 0.8;" onclick="removeMessage('${m.id}')">🗑️ Удалить</button>
-                        </div>
-
-                    </div>
-                </div>`;
-        });
-    };
-
-    // Добавь функцию удаления отдельного сообщения
-    window.removeMessage = (id) => {
-        if(confirm("Удалить это сообщение?")) {
-            remove(ref(db, `competition/allMessages/${id}`));
-        }
-    };
-
+    window.setActiveMode = (mode) => set(ref(db, 'competition/activeMode'), mode);
+    
+    // --- ВОТ СЮДА ВСТАВЛЕНА ЛОГИКА РУЛЕТКИ И ВЫБОРА ПОБЕДИТЕЛЯ ---
     window.setScene = (scene) => {
-        // Если переходим в рулетку, выбираем победителя заранее
-        if (scene === 'roulette') {
-            const votes = currentData.votes || {};
-            const scorer = currentData.scorer;
-            
-            if (!scorer) {
-                alert("Сначала выбери автора гола!");
-                return;
-            }
+        const mode = currentData.activeMode || 'voting';
 
-            const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
-            
-            if (luckyOnes.length > 0) {
-                set(ref(db, 'competition/state'), scene);
-                setTimeout(() => {
-                    const randomIndex = Math.floor(Math.random() * luckyOnes.length);
-                    const winner = luckyOnes[randomIndex];
-                    winner.selectionId = Date.now(); 
-                    set(ref(db, 'competition/winner'), winner);
-                }, 600);
+        if (mode === 'voting') {
 
+            if (scene === 'roulette') {
+                const votes = currentData.votes || {};
+                const scorer = currentData.scorer;
+
+                if (!scorer) {
+                    alert("Сначала выбери автора гола!");
+                    return;
+                }
+
+                const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
+
+                set(ref(db, 'competition/votingState'), scene);
+
+                if (luckyOnes.length > 0) {
+                    setTimeout(() => {
+                        const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
+                        winner.selectionId = Date.now();
+                        set(ref(db, 'competition/winner'), winner);
+                    }, 600);
+                }
             } else {
-                alert("Никто не угадал автора гола. Рулетка будет пустой!");
-                set(ref(db, 'competition/state'), scene);
+                set(ref(db, 'competition/votingState'), scene);
             }
-        } else {
-            // Для остальных сцен просто переключаем
-            set(ref(db, 'competition/state'), scene);
+
+        } else if (mode === 'slideshow') {
+            set(ref(db, 'competition/slideshowState'), scene);
         }
     };
 
-    window.togglePhotoSelection = (id, status) => {
-        // Ставим или снимаем метку "approved" для фото
-        set(ref(db, `competition/allMessages/${id}/approved`), !status);
-    };
 
-    window.updateBg = () => {
-        const url = document.getElementById('bgUrl').value;
-        if(url) set(ref(db, 'competition/background'), url);
-    };
+    // Функция для ручного перевыбора без смены сцены
+    window.pickWinnerManual = () => {
+        const votes = currentData.votes || {};
+        const scorer = currentData.scorer;
+        if (!scorer) { 
+            alert("Сначала выбери автора гола!"); 
+            return; 
+        }
 
-    // НОВАЯ ФУНКЦИЯ: Удаление фона
+        const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
+        if (luckyOnes.length > 0) {
+            const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
+            winner.selectionId = Date.now(); 
+            set(ref(db, 'competition/winner'), winner);
+            alert("Новый победитель: " + winner.name);
+        } else {
+            alert("Никто не угадал этого игрока!");
+        }
+    };
+    // -----------------------------------------------------------
+
+    window.updateBg = () => { const url = document.getElementById('bgUrl').value; if(url) set(ref(db, 'competition/background'), url); };
     window.removeBackground = () => {
         if(confirm("Очистить фон на оверлее?")) {
             set(ref(db, 'competition/background'), null);
             document.getElementById('bgUrl').value = '';
         }
+    };
+
+    window.togglePhotoSelection = (id, status) => set(ref(db, `competition/allMessages/${id}/approved`), !status);
+    window.removeMessage = (id) => confirm("Удалить сообщение?") && remove(ref(db, `competition/allMessages/${id}`));
+    window.clearChat = () => confirm("Полная очистка сообщений?") && remove(ref(db, 'competition/allMessages'));
+    window.resetVotes = () => confirm("Полная очистка базы голосов?") && remove(ref(db, 'competition/votes'));
+    
+    window.clearApprovedPhotos = () => {
+        if (confirm("Убрать все фото из эфира?")) {
+            const msgs = currentData.allMessages || {};
+            const updates = {};
+            for(let id in msgs) {
+                if(msgs[id].approved) updates[`competition/allMessages/${id}/approved`] = false;
+            }
+            if(Object.keys(updates).length) update(ref(db), updates);
+        }
+    };
+
+    window.sendReply = (chatId, name) => {
+        if (!chatId) {
+            alert("Нет Chat ID. Не могу ответить.");
+            return;
+        }
+        const msg = prompt(`Ответ для ${name}:`);
+        if (msg) push(ref(db, 'competition/replies'), { chatId, text: msg });
     };
 
     window.addPlayer = () => {
@@ -383,116 +349,168 @@
     window.removePlayer = (id) => remove(ref(db, `competition/players/${id}`));
     window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
     window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
-    window.resetVotes = () => confirm("Удалить все сообщения?") && remove(ref(db, 'competition/votes'));
 
-    window.sendReply = (chatId, name) => {
-        if (!chatId) {
-            alert("У этого пользователя нет Chat ID (старая запись). Не могу ответить.");
-            return;
-        }
-        const message = prompt(`Напиши сообщение для ${name}:`);
-        if (message && message.trim() !== "") {
-            push(ref(db, 'competition/replies'), {
-                chatId: chatId,
-                text: message
-            });
-            alert("Сообщение отправлено!");
-        }
-    };
+    // --- СЛУШАТЕЛЬ ДАННЫХ ---
+    function updateActiveSceneButtons() {
+        const mode = currentData.activeMode || 'voting';
 
-    window.pickWinner = () => {
-        const votes = currentData.votes || {};
-        const scorer = currentData.scorer;
-        if (!scorer) { 
-            alert("Сначала выбери автора гола!"); 
-            return; 
-        }
+        // Снимаем активность со всех сцен
+        document
+            .querySelectorAll('.btn-scene[id^="scene-"]')
+            .forEach(btn => btn.classList.remove('active'));
 
-        const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
-        if (luckyOnes.length > 0) {
-            // Выбираем нового счастливчика
-            const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
-            winner.selectionId = Date.now(); 
-            
-            // Сразу пишем в базу. Оверлей увидит обновление и подставит его в конец рулетки/сцену победы
-            set(ref(db, 'competition/winner'), winner);
-        } else {
-            alert("Никто не угадал этого игрока!");
-        }
-    };
+        if (mode === 'voting') {
+            const votingState = currentData.votingState || 'announcement';
+            const activeBtn = document.getElementById(`scene-${votingState}`);
+            if (activeBtn) activeBtn.classList.add('active');
 
-    // --- ПОДПИСКА НА ДАННЫЕ ---
+        } else if (mode === 'slideshow') {
+            const slideshowState = currentData.slideshowState || 'slideshow_photo';
+
+            // 🔑 ключевая строка
+            const activeBtn = document.getElementById(`scene-${slideshowState}`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+    }
+
 
     onValue(ref(db, 'competition'), (snapshot) => {
         currentData = snapshot.val() || {};
-        renderPlayers();
-        renderVotes();
-        renderMessages();
+        
+        // Обновляем активную кнопку сцены
+        updateActiveSceneButtons();
 
-        const activeMode = currentData.activeMode || 'voting';
-
-        document.querySelectorAll('[id^="mode-"]').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById(`mode-${activeMode}`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-       if (activeMode === 'slideshow') {
-            document.getElementById('controls-slideshow').style.display = 'block';
+        // Управление видимостью панелей
+        const mode = currentData.activeMode || 'voting';
+        document.getElementById('mode-voting').classList.toggle('active', mode === 'voting');
+        document.getElementById('mode-slideshow').classList.toggle('active', mode === 'slideshow');
+        
+        if (mode === 'slideshow') {
             document.getElementById('controls-voting').style.display = 'none';
-            
-            // СКРЫВАЕМ БАЗУ ИГРОКОВ
-            document.getElementById('players-controls').style.display = 'none'; 
+            document.getElementById('controls-slideshow').style.display = 'block';
+            document.getElementById('players-controls').style.display = 'none';
         } else {
-            document.getElementById('controls-slideshow').style.display = 'none';
             document.getElementById('controls-voting').style.display = 'block';
-            
-            // ПОКАЗЫВАЕМ БАЗУ ИГРОКОВ
+            document.getElementById('controls-slideshow').style.display = 'none';
             document.getElementById('players-controls').style.display = 'block';
         }
 
         const sBtn = document.getElementById('stopBtn');
-        if(currentData.acceptingVotes === false) {
-            sBtn.textContent = "▶️ ЗАПУСТИТЬ ПРИЕМ";
-            sBtn.classList.add('closed');
-        } else {
-            sBtn.textContent = "🛑 СТОП ПРИЕМ ГОЛОСОВ";
-            sBtn.classList.remove('closed');
-        }
+        sBtn.textContent = currentData.acceptingVotes ? "🛑 СТОП ПРИЕМ ГОЛОСОВ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
+        sBtn.classList.toggle('closed', !currentData.acceptingVotes);
+
+        renderPlayers(); 
+        renderVotes(); 
+        renderMessages();
     });
+
+
+    // Переменные для кеширования DOM
+    let lastMsgsHtml = "";
+    let lastVotesHtml = "";
+
+    function renderMessages() {
+        const container = document.getElementById('messagesList');
+        const msgs = currentData.allMessages || {};
+        
+        let list = Object.keys(msgs).map(id => ({id, ...msgs[id]}));
+        list.sort((a, b) => b.timestamp - a.timestamp); // Сортировка: новые сверху
+
+        let newHtml = '';
+        list.forEach(m => {
+            const userAvatar = (m.userPhoto && m.userPhoto.length > 10) ? m.userPhoto : tgLogo;
+            const date = m.timestamp ? new Date(m.timestamp) : new Date();
+            const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
+            
+            newHtml += `    
+                <div class="message-item" style="border-left: 5px solid ${m.approved ? '#10ac84' : '#d1d8e0'}">
+                    <div class="message-left">
+                        <button class="btn" style="width:100%; background:${m.approved ? '#10ac84' : '#f1f2f6'}; color:${m.approved ? 'white' : 'black'}" 
+                                onclick="togglePhotoSelection('${m.id}', ${m.approved})">
+                            ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
+                        </button>
+                        <span style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;">${timeStr}</span>
+                    </div>
+                    <div class="message-content">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                            <div style="width:40px; height:40px; flex-shrink:0;">
+                                <img src="${userAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:40px; height:40px; border-radius:50%; object-fit: cover; background: #eee;">
+                            </div>
+                            <div>
+                                <b>${m.name}</b> <span style="color:#7f8c8d; font-size:0.9em">@${m.handle || ''}</span>
+                            </div>
+                        </div>
+                        <div>${m.text || ''}</div>
+                        ${m.isImage ? `<div class="photo-container"><img src="${m.photo}" onclick="window.open('${m.photo}')" style="cursor:pointer"></div>` : ''}
+                        <div style="margin-top:15px; display:flex; gap:10px;">
+                            <button class="btn" style="font-size:11px; padding:5px 10px;" onclick="sendReply('${m.chatId}', '${m.name}')">↩ Ответить</button>
+                            <button class="btn" style="font-size:11px; padding:5px 10px; color:#ee5253" onclick="removeMessage('${m.id}')">🗑 Удалить</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        if (lastMsgsHtml !== newHtml) {
+            container.innerHTML = newHtml;
+            lastMsgsHtml = newHtml;
+        }
+    }
+
+    window.renderVotes = () => {
+        const container = document.getElementById('votesList');
+        const filter = document.getElementById('filterMode').value;
+        const votes = currentData.votes || {};
+        
+        let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
+        if(filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
+        document.getElementById('vCount').textContent = `Всего: ${list.length}`;
+
+        let newHtml = '';
+        list.reverse().forEach(v => {
+            const isCorrect = v.votedFor === currentData.scorer;
+            const voteAvatar = (v.photo && v.photo.length > 10) ? v.photo : tgLogo;
+
+            newHtml += `
+                <div class="vote-card ${isCorrect ? 'correct' : ''}">
+                    <span style="position:absolute; top:5px; right:10px; cursor:pointer; color:#ccc" onclick="removeVote('${v.id}')">×</span>
+                    <div style="width:60px; height:60px; margin: 0 auto; background: #eee; border-radius: 50%; overflow: hidden;">
+                        <img src="${voteAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:60px; height:60px; object-fit: cover;">
+                    </div>
+                    <div style="font-weight:700; font-size:0.9rem; margin-top:8px;">${v.name}</div>
+                    <div style="color:var(--sibir-blue); font-size:0.8rem; font-weight:600;">${v.votedFor}</div>
+                    <button class="btn" style="width:100%; margin-top:10px; font-size:10px; padding:5px;" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
+                </div>`;
+        });
+
+        if (lastVotesHtml !== newHtml) {
+            container.innerHTML = newHtml;
+            lastVotesHtml = newHtml;
+        }
+    }
 
     function renderPlayers() {
         const pList = document.getElementById('playersList');
         const pSelect = document.getElementById('goalScorer');
         const players = currentData.players || {};
-        pList.innerHTML = '';
-        pSelect.innerHTML = '<option value="">-- Выберите автора гола --</option>';
-        for(let id in players) {
-            pList.innerHTML += `<div class="player-tag">${players[id].name} <span onclick="removePlayer('${id}')" style="cursor:pointer; color:red;">×</span></div>`;
-            pSelect.innerHTML += `<option value="${players[id].name}" ${currentData.scorer === players[id].name ? 'selected' : ''}>${players[id].name}</option>`;
-        }
-    }
-    
-
-    window.renderVotes = () => {
-        const vList = document.getElementById('votesList');
-        const mode = document.getElementById('filterMode').value;
-        const votes = currentData.votes || {};
-        vList.innerHTML = '';
-        let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
-        list.sort((a, b) => b.timestamp - a.timestamp);
-        if(mode === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
-        document.getElementById('vCount').textContent = `(Всего: ${list.length})`;
         
-        list.forEach(v => {
-            const isCorrect = v.votedFor === currentData.scorer;
-            // !!! НОВОЕ: Добавлена кнопка "Ответить" !!!
-            vList.innerHTML += `<div class="vote-card ${isCorrect ? 'correct' : ''}">
-                <span class="del-vote" onclick="removeVote('${v.id}')">×</span>
-                <img src="${v.photo}">
-                <div style="font-weight:bold; margin-top:5px;">${v.name}</div>
-                <div style="font-size:12px; color:#007bff;">${v.votedFor}</div>
-                <button class="btn" style="width:100%; font-size:11px; margin-top:5px; background:#555;" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
-            </div>`;
-        });
+        // Сохраняем текущее положение скролла
+        const scrollPos = pList.scrollTop;
+        
+        pList.innerHTML = '';
+        // Генерируем опции для селекта, сохраняя текущий выбор
+        let optionsHtml = '<option value="">-- КТО ЗАБИЛ? --</option>';
+        for(let id in players) {
+            pList.innerHTML += `<div class="player-tag">${players[id].name} <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; margin-left:5px">×</span></div>`;
+            optionsHtml += `<option value="${players[id].name}" ${currentData.scorer === players[id].name ? 'selected' : ''}>${players[id].name}</option>`;
+        }
+        
+        // Обновляем select только если количество детей изменилось (чтобы не сбрасывать фокус/выбор при каждом тике базы)
+        if (pSelect.innerHTML !== optionsHtml) {
+             pSelect.innerHTML = optionsHtml;
+        }
+        
+        // Возвращаем скролл
+        pList.scrollTop = scrollPos;
     }
 </script>
 </body>
