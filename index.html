@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sibir Control Panel — Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <style>
         :root {
             --sibir-blue: #05caff;
@@ -48,6 +49,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         h2 { 
@@ -128,9 +130,39 @@
             border-radius: 20px; font-size: 0.75rem; font-weight: 600;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+        /* --- STYLES FOR CROPPER AND LOOKS LIKE --- */
+        .crop-container {
+            max-width: 100%;
+            height: 400px;
+            background: #333;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none; /* Скрыт пока не выбрано фото */
+        }
+        .crop-container img {
+            max-width: 100%;
+        }
         
+        .char-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
+        }
+        .char-card {
+            background: var(--gray); border-radius: 12px; overflow: hidden;
+            border: 3px solid transparent; transition: 0.2s;
+        }
+        .char-card.active-char {
+            border-color: #9ef01a; /* Оранжевая обводка активного */
+            background: #fff;
+            box-shadow: 0 0 15px rgba(24, 164, 14, 0.4);
+        }
+        .char-img {
+            width: 100%; aspect-ratio: 8/9; object-fit: cover; display: block; background: #000;
+        }
+        .char-info { padding: 10px; }
+        .char-name { font-weight: 700; font-size: 1rem; margin-bottom: 10px; text-align: center; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -139,13 +171,16 @@
     <button id="stopBtn" class="btn btn-stop" onclick="toggleVoting()">🛑 СТОП ПРИЕМ ГОЛОСОВ</button>
 
     <h2>Активный режим</h2>
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Первая шайба</button>
-        <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд-шоу</button>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px;">
+            <button id="mode-voting" class="btn btn-scene" style="width: 50%;" onclick="setActiveMode('voting')">🏒 Шайба</button>
+            <button id="mode-slideshow" class="btn btn-scene" style="width: 50%;" onclick="setActiveMode('slideshow')">📸 Слайд</button>
+        </div>
+        <button id="mode-lookslike" class="btn btn-scene" style="width: 100%;" onclick="setActiveMode('lookslike')">👯 Looks Like Cam</button>
     </div>
 
     <div id="controls-voting">
-        <h2>Сцены конкурса</h2>
+        <h2>Сцены: Первая шайба</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             <button id="scene-announcement" class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
             <button id="scene-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
@@ -156,14 +191,23 @@
     </div>
 
     <div id="controls-slideshow" style="display: none;">
-        <h2>Сцены слайд-шоу</h2>
+        <h2>Сцены: Слайд-шоу</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button id="scene-slideshow_qr" class="btn btn-scene"
-                    onclick="setScene('slideshow_qr')">QR-коды</button>
-
-            <button id="scene-slideshow_photo" class="btn btn-scene"
-                    onclick="setScene('slideshow_photo')">Слайд-шоу</button>
+            <button id="scene-slideshow-qr" class="btn btn-scene" onclick="setScene('slideshow_qr')">QR-коды</button>
+            <button id="scene-slideshow-photo_feed" class="btn btn-scene" onclick="setScene('slideshow_photo')">Слайд-шоу</button>
         </div>
+    </div>
+
+    <div id="controls-lookslike" style="display: none;">
+        <h2>Сцены: Looks Like</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button id="scene-ll-announcement" class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+            <button id="scene-ll-character" class="btn btn-scene" onclick="setScene('character')">Персонаж</button>
+            <button id="scene-ll-fan" class="btn btn-scene" onclick="setScene('fan')">Болельщик</button>
+        </div>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px; line-height: 1.3;">
+            💡 Выбери персонажа кнопкой "В ЭФИР" в меню справа, затем нажми сцену "Персонаж".
+        </p>
     </div>
 
     <h2>Фон оверлея</h2>
@@ -190,8 +234,9 @@
 
 <div class="main">
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('votes')">Голоса болельщиков</button>
-        <button class="tab-btn" onclick="switchTab('chat')">Эфир (Чат и Фото)</button>
+        <button class="tab-btn active" onclick="switchTab('votes')">Голоса</button>
+        <button class="tab-btn" onclick="switchTab('chat')">Эфир (Чат)</button>
+        <button class="tab-btn" onclick="switchTab('lookslike')">Персонажи (Looks Like)</button>
     </div>
 
     <div id="tab-votes" class="tab-content active">
@@ -212,12 +257,31 @@
         </div>
         <div id="messagesList"></div>
     </div>
+
+    <div id="tab-lookslike" class="tab-content">
+        <div style="background: #f1f2f6; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <h3 style="margin-top:0">Добавить персонажа</h3>
+            <input type="text" id="charName" placeholder="Имя персонажа">
+            <input type="file" id="charFile" accept="image/*" style="padding-top: 10px;">
+            
+            <div id="cropWrapper" class="crop-container">
+                <img id="imageToCrop" src="">
+            </div>
+            
+            <button id="btnSaveChar" class="btn btn-primary" onclick="saveCharacter()" style="display: none;">💾 Сохранить персонажа</button>
+        </div>
+
+        <h3>Список персонажей</h3>
+        <div id="charactersList" class="char-grid"></div>
+    </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+    
     const firebaseConfig = {
         apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
         authDomain: "arenawork-94e68.firebaseapp.com",
@@ -232,6 +296,8 @@
     const db = getDatabase(app);
     let currentData = {};
     const tgLogo = "media/tg_logo.png";
+    let cropper; // Глобальная переменная для кроппера
+    let editingCharId = null;
 
     // --- ЛОГИКА ОКНА ---
 
@@ -244,27 +310,23 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     };
 
-    window.setActiveMode = (mode) => set(ref(db, 'competition/activeMode'), mode);
+    window.setActiveMode = (mode) => {
+        set(ref(db, 'competition/activeMode'), mode);
+        // При смене режима автоматически открываем нужную вкладку для удобства
+        if(mode === 'lookslike') window.switchTab('lookslike');
+    };
     
-    // --- ВОТ СЮДА ВСТАВЛЕНА ЛОГИКА РУЛЕТКИ И ВЫБОРА ПОБЕДИТЕЛЯ ---
+    // --- ЛОГИКА СЦЕН ---
     window.setScene = (scene) => {
         const mode = currentData.activeMode || 'voting';
 
         if (mode === 'voting') {
-
             if (scene === 'roulette') {
                 const votes = currentData.votes || {};
                 const scorer = currentData.scorer;
-
-                if (!scorer) {
-                    alert("Сначала выбери автора гола!");
-                    return;
-                }
-
+                if (!scorer) { alert("Сначала выбери автора гола!"); return; }
                 const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
-
                 set(ref(db, 'competition/votingState'), scene);
-
                 if (luckyOnes.length > 0) {
                     setTimeout(() => {
                         const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
@@ -275,22 +337,26 @@
             } else {
                 set(ref(db, 'competition/votingState'), scene);
             }
-
-        } else if (mode === 'slideshow') {
+        } 
+        else if (mode === 'slideshow') {
             set(ref(db, 'competition/slideshowState'), scene);
+        }
+        else if (mode === 'lookslike') {
+            if (scene === 'character') {
+                const pending = currentData.lookslike?.pendingCharacter;
+                if (pending) {
+                    set(ref(db, 'competition/lookslike/activeCharacter'), pending);
+                }
+            }
+            set(ref(db, 'competition/lookslikeState'), scene);
         }
     };
 
 
-    // Функция для ручного перевыбора без смены сцены
     window.pickWinnerManual = () => {
         const votes = currentData.votes || {};
         const scorer = currentData.scorer;
-        if (!scorer) { 
-            alert("Сначала выбери автора гола!"); 
-            return; 
-        }
-
+        if (!scorer) { alert("Сначала выбери автора гола!"); return; }
         const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
         if (luckyOnes.length > 0) {
             const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
@@ -328,10 +394,7 @@
     };
 
     window.sendReply = (chatId, name) => {
-        if (!chatId) {
-            alert("Нет Chat ID. Не могу ответить.");
-            return;
-        }
+        if (!chatId) { alert("Нет Chat ID. Не могу ответить."); return; }
         const msg = prompt(`Ответ для ${name}:`);
         if (msg) push(ref(db, 'competition/replies'), { chatId, text: msg });
     };
@@ -350,49 +413,120 @@
     window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
     window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
 
+    // --- ЛОГИКА LOOKS LIKE CAM (CROPPER & MANAGEMENT) ---
+    
+    // 1. Инициализация кроппера при выборе файла
+    document.getElementById('charFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const image = document.getElementById('imageToCrop');
+                image.src = event.target.result;
+                
+                document.getElementById('cropWrapper').style.display = 'block';
+                document.getElementById('btnSaveChar').style.display = 'block';
+
+                if (cropper) { cropper.destroy(); }
+                
+                cropper = new Cropper(image, {
+                    aspectRatio: 8 / 9, // Фиксированное соотношение для половины экрана (960x1080)
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 2. Сохранение персонажа
+    window.saveCharacter = () => {
+        const name = document.getElementById('charName').value;
+        if (!name) { alert("Введите имя персонажа!"); return; }
+        if (!cropper) { alert("Выберите фото!"); return; }
+
+        // Получаем обрезанное изображение в формате base64
+        // Уменьшаем размер до разумного предела (высота 800px) для оптимизации базы
+        const canvas = cropper.getCroppedCanvas({ height: 800 }); 
+        const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+
+        push(ref(db, 'competition/lookslike/characters'), {
+            name: name,
+            image: base64Image
+        }).then(() => {
+            // Сброс формы
+            cropper.destroy();
+            cropper = null;
+            document.getElementById('charName').value = '';
+            document.getElementById('charFile').value = '';
+            document.getElementById('imageToCrop').src = '';
+            document.getElementById('cropWrapper').style.display = 'none';
+            document.getElementById('btnSaveChar').style.display = 'none';
+        });
+    };
+
+    // 3. Управление персонажами
+    window.setActiveCharacter = (id) => set(ref(db, 'competition/lookslike/pendingCharacter'), id);
+    window.deleteCharacter = (id) => {
+        if(confirm("Удалить персонажа?")) remove(ref(db, `competition/lookslike/characters/${id}`));
+    };
+
+
     // --- СЛУШАТЕЛЬ ДАННЫХ ---
+
     function updateActiveSceneButtons() {
         const mode = currentData.activeMode || 'voting';
 
-        // Снимаем активность со всех сцен
-        document
-            .querySelectorAll('.btn-scene[id^="scene-"]')
-            .forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('[id^="scene-"]').forEach(btn => btn.classList.remove('active'));
 
         if (mode === 'voting') {
             const votingState = currentData.votingState || 'announcement';
             const activeBtn = document.getElementById(`scene-${votingState}`);
             if (activeBtn) activeBtn.classList.add('active');
-
-        } else if (mode === 'slideshow') {
-            const slideshowState = currentData.slideshowState || 'slideshow_photo';
-
-            // 🔑 ключевая строка
-            const activeBtn = document.getElementById(`scene-${slideshowState}`);
+        } 
+        else if (mode === 'slideshow') {
+            const slideshowState = currentData.slideshowState || 'photo_feed';
+            let targetId = '';
+            if (slideshowState === 'slideshow_qr') targetId = 'scene-slideshow-qr';
+            if (slideshowState === 'slideshow_photo') targetId = 'scene-slideshow-photo_feed';
+            const activeBtn = document.getElementById(targetId);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+        else if (mode === 'lookslike') {
+            const llState = currentData.lookslikeState || 'announcement';
+            // Маппинг для лукс лайка
+            let targetId = '';
+            if (llState === 'announcement') targetId = 'scene-ll-announcement';
+            if (llState === 'character') targetId = 'scene-ll-character';
+            if (llState === 'fan') targetId = 'scene-ll-fan';
+            
+            const activeBtn = document.getElementById(targetId);
             if (activeBtn) activeBtn.classList.add('active');
         }
     }
 
-
     onValue(ref(db, 'competition'), (snapshot) => {
         currentData = snapshot.val() || {};
         
-        // Обновляем активную кнопку сцены
         updateActiveSceneButtons();
 
         // Управление видимостью панелей
         const mode = currentData.activeMode || 'voting';
         document.getElementById('mode-voting').classList.toggle('active', mode === 'voting');
         document.getElementById('mode-slideshow').classList.toggle('active', mode === 'slideshow');
+        document.getElementById('mode-lookslike').classList.toggle('active', mode === 'lookslike');
         
-        if (mode === 'slideshow') {
-            document.getElementById('controls-voting').style.display = 'none';
-            document.getElementById('controls-slideshow').style.display = 'block';
-            document.getElementById('players-controls').style.display = 'none';
-        } else {
+        document.getElementById('controls-voting').style.display = 'none';
+        document.getElementById('controls-slideshow').style.display = 'none';
+        document.getElementById('controls-lookslike').style.display = 'none';
+        document.getElementById('players-controls').style.display = 'none';
+
+        if (mode === 'voting') {
             document.getElementById('controls-voting').style.display = 'block';
-            document.getElementById('controls-slideshow').style.display = 'none';
             document.getElementById('players-controls').style.display = 'block';
+        } else if (mode === 'slideshow') {
+            document.getElementById('controls-slideshow').style.display = 'block';
+        } else if (mode === 'lookslike') {
+            document.getElementById('controls-lookslike').style.display = 'block';
         }
 
         const sBtn = document.getElementById('stopBtn');
@@ -402,6 +536,7 @@
         renderPlayers(); 
         renderVotes(); 
         renderMessages();
+        renderCharacters(); // Рендер списка персонажей
     });
 
 
@@ -409,12 +544,57 @@
     let lastMsgsHtml = "";
     let lastVotesHtml = "";
 
+    function renderCharacters() {
+        const container = document.getElementById('charactersList');
+        const chars = (currentData.lookslike && currentData.lookslike.characters) ? currentData.lookslike.characters : {};
+        const pendingId = currentData.lookslike?.pendingCharacter;
+        const activeId = currentData.lookslike?.activeCharacter;
+
+        let html = '';
+        for (let id in chars) {
+            const char = chars[id];
+            const isPending = (id === pendingId);
+            const isActiveInAir = (id === activeId);
+            const isEditing = (id === editingCharId);
+            
+            html += `
+            <div class="char-card ${isActiveInAir ? 'active-char' : ''}">
+                <img src="${char.image}" class="char-img">
+                <div class="char-info">
+                    ${isEditing ? 
+                        `<input type="text" id="edit-name-${id}" value="${char.name}" style="margin-bottom: 5px; height: 35px;">
+                        <div style="display:flex; gap:5px; margin-bottom:10px;">
+                            <button class="btn btn-primary" style="flex:1; padding:5px; background:#10ac84" onclick="saveEditName('${id}')">💾</button>
+                            <button class="btn" style="flex:1; padding:5px; background:#ee5253; color:white" onclick="cancelEditName()">✖</button>
+                        </div>` 
+                        : 
+                        `<div class="char-name" style="display:flex; justify-content:center; align-items:center; gap:10px;">
+                            <span>${char.name}</span>
+                            <span style="cursor:pointer; font-size:12px; opacity:0.5" onclick="startEditName('${id}')">✏️</span>
+                        </div>`
+                    }
+                    
+                    <button class="btn" style="width:100%; margin-bottom:5px; 
+                            background: ${isPending ? '#9ef01a' : '#ecf0f1'}; 
+                            color: ${isPending ? 'white' : 'black'}" 
+                            onclick="setActiveCharacter('${id}')">
+                        ${isPending ? '📺 В ЭФИРЕ' : '📺 В ЭФИР'}
+                    </button>
+                    ${isActiveInAir ? '<div style="font-size:10px; color:green; text-align:center">● СЕЙЧАС В OBS</div>' : ''}
+                    <button class="btn" style="width:100%; background:#fab1a0; color:#c0392b; font-size: 0.8rem; margin-top:5px" 
+                            onclick="deleteCharacter('${id}')">Удалить</button>
+                </div>
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
     function renderMessages() {
         const container = document.getElementById('messagesList');
         const msgs = currentData.allMessages || {};
         
         let list = Object.keys(msgs).map(id => ({id, ...msgs[id]}));
-        list.sort((a, b) => b.timestamp - a.timestamp); // Сортировка: новые сверху
+        list.sort((a, b) => b.timestamp - a.timestamp);
 
         let newHtml = '';
         list.forEach(m => {
@@ -456,6 +636,37 @@
         }
     }
 
+    // Начать редактирование (запоминаем ID и перерисовываем)
+    window.startEditName = (id) => {
+        editingCharId = id;
+        renderCharacters();
+    };
+
+    // Отмена
+    window.cancelEditName = () => {
+        editingCharId = null;
+        renderCharacters();
+    };
+
+    // Сохранение в Firebase
+    window.saveEditName = (id) => {
+        const newName = document.getElementById(`edit-name-${id}`).value;
+        if (!newName) {
+            alert("Имя не может быть пустым");
+            return;
+        }
+
+        // Обновляем только поле name по конкретному пути в базе
+        update(ref(db, `competition/lookslike/characters/${id}`), {
+            name: newName
+        }).then(() => {
+            editingCharId = null; // Выходим из режима редактирования
+            // Рендер вызовется автоматически, так как сработает слушатель onValue
+        }).catch((error) => {
+            console.error("Ошибка при обновлении имени:", error);
+        });
+    };
+
     window.renderVotes = () => {
         const container = document.getElementById('votesList');
         const filter = document.getElementById('filterMode').value;
@@ -493,23 +704,19 @@
         const pSelect = document.getElementById('goalScorer');
         const players = currentData.players || {};
         
-        // Сохраняем текущее положение скролла
         const scrollPos = pList.scrollTop;
         
         pList.innerHTML = '';
-        // Генерируем опции для селекта, сохраняя текущий выбор
         let optionsHtml = '<option value="">-- КТО ЗАБИЛ? --</option>';
         for(let id in players) {
             pList.innerHTML += `<div class="player-tag">${players[id].name} <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; margin-left:5px">×</span></div>`;
             optionsHtml += `<option value="${players[id].name}" ${currentData.scorer === players[id].name ? 'selected' : ''}>${players[id].name}</option>`;
         }
         
-        // Обновляем select только если количество детей изменилось (чтобы не сбрасывать фокус/выбор при каждом тике базы)
         if (pSelect.innerHTML !== optionsHtml) {
              pSelect.innerHTML = optionsHtml;
         }
         
-        // Возвращаем скролл
         pList.scrollTop = scrollPos;
     }
 </script>
