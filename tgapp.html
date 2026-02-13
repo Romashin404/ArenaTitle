@@ -160,6 +160,13 @@ h2::before, h3::before {
   border: 1px solid #edf2f7;
 }
 
+.votes-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;          /* ← было 10px, стало 16px — больше воздуха */
+  margin-top: 10px;
+}
+
 .vote-card {
   background: var(--white);
   padding: 12px;
@@ -167,10 +174,44 @@ h2::before, h3::before {
   text-align: center;
   box-shadow: 0 4px 10px rgba(0,0,0,0.03);
   border: 2px solid transparent;
+  position: relative;   /* ← нужно для позиционирования крестика */
 }
 
-.vote-card.correct { border-color: #10ac84; background: #f0fff4; }
-.vote-card img { width: 55px; height: 55px; border-radius: 50%; margin-bottom: 8px; }
+.vote-card.correct {
+  border-color: #10ac84;
+  background: #f0fff4;
+}
+
+.vote-card img {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+/* Крестик удаления */
+.vote-card .remove-vote {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 1.2rem;
+  color: #ee5253;
+  cursor: pointer;
+  background: rgba(255,255,255,0.9);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: all 0.15s;
+}
+
+.vote-card .remove-vote:hover {
+  background: #ee5253;
+  color: white;
+}
 
 .player-tag {
   background: #edf2f7;
@@ -556,7 +597,7 @@ function renderMessages() {
       </div>`;
   });
 }
-
+  
 function renderVotes() {
   const container = document.getElementById('votesList');
   const filter = document.getElementById('filterMode').value;
@@ -565,14 +606,16 @@ function renderVotes() {
   let list = Object.values(votes).map((v, i) => ({...v, id: Object.keys(votes)[i]}));
   if (filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
   list.sort((a,b) => b.timestamp - a.timestamp);
+
   list.forEach(v => {
     const avatar = v.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(v.name)}&background=05caff&color=fff`;
     container.innerHTML += `
       <div class="vote-card ${v.votedFor === currentData.scorer ? 'correct' : ''}">
+        <span class="remove-vote" onclick="removeVote('${v.id}')">×</span>
         <img src="${avatar}">
         <div>${v.name}</div>
         <div style="color:var(--sibir-blue); font-size:0.8rem;">${v.votedFor}</div>
-        <button class="btn btn-mini" onclick="sendReply('${v.chatId}', '${v.name}')">💬</button>
+        <button class="btn btn-mini" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
       </div>`;
   });
 }
