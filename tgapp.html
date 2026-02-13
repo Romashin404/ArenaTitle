@@ -1,367 +1,381 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Sibir Control Panel</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-<style>
-:root {
-  --sibir-blue: #05caff;
-  --sibir-dark: #253566;
-  --bg-body: #f4f7f9;
-  --white: #ffffff;
-  --gray: rgb(223, 223, 223);
-  --text-main: #2c3e50;
-  --text-muted: #7f8c8d;
-  --border-color: #05caff;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sibir Control Panel</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --sibir-blue: #05caff;
+      --sibir-dark: #253566;
+      --bg-body: #f4f7f9;
+      --white: #ffffff;
+      --gray: rgb(223, 223, 223);
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+      --border-color: #05caff;
+    }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-body);
-  color: var(--text-main);
-  margin: 0;
-  padding: 15px;
-  padding-bottom: 100px;
-}
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+    }
 
-h2, h3 {
-  color: var(--sibir-dark);
-  font-size: 0.9rem;
-  font-weight: 800;
-  margin: 20px 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-}
+    .tabs {
+      display: flex;
+      position: sticky;
+      top: 0;
+      background: var(--bg-body);
+      z-index: 100;
+      padding: 10px;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-h2::before, h3::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 16px;
-  background: var(--sibir-blue);
-  margin-right: 8px;
-  border-radius: 2px;
-}
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 12px 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      border-bottom: 3px solid transparent;
+      text-align: center;
+    }
 
-/* Кнопки — точная копия десктопных */
-.btn {
-  padding: 12px 15px;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: inherit;
-}
+    .tab-btn.active {
+      color: var(--sibir-blue);
+      border-bottom: 3px solid var(--sibir-blue);
+    }
 
-.btn:active { transform: scale(0.98); }
+    .tab-content {
+      display: none;
+      padding: 15px;
+    }
 
-.btn-scene {
-  background: #f8f9fa;
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-}
+    .tab-content.active {
+      display: block;
+    }
 
-.btn-scene.active {
-  background: var(--sibir-blue) !important;
-  color: white !important;
-  border-color: var(--sibir-blue) !important;
-  box-shadow: 0 4px 12px rgba(5, 202, 255, 0.3);
-}
+    h2, h3 {
+      color: var(--sibir-dark);
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin: 20px 0 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+    }
 
-.btn-primary {
-  background: var(--sibir-blue);
-  color: white;
-  border: none;
-  width: 100%;
-}
+    h2::before, h3::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--sibir-blue);
+      margin-right: 8px;
+      border-radius: 2px;
+    }
 
-.btn-stop {
-  width: 100%;
-  background: #ff9f43;
-  color: white;
-  margin-bottom: 15px;
-  font-size: 1rem;
-}
+    .btn {
+      padding: 12px 15px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+    }
 
-.btn-stop.closed {
-  background: #ee5253;
-}
+    .btn:active {
+      transform: scale(0.98);
+    }
 
-.btn-danger {
-  background: #ee5253;
-  color: white;
-}
+    .btn-scene {
+      background: #f8f9fa;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
 
-/* Табы — как в десктопе, но адаптивно */
-.tabs {
-  display: flex;
-  position: sticky;
-  top: 0;
-  background: var(--bg-body);
-  z-index: 100;
-  padding: 10px 0;
-  gap: 8px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-}
+    .btn-scene.active {
+      background: var(--sibir-blue) !important;
+      color: white !important;
+      border-color: var(--sibir-blue) !important;
+      box-shadow: 0 4px 12px rgba(5, 202, 255, 0.3);
+    }
 
-.tab-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 10px;
-  cursor: pointer;
-  transition: 0.3s;
-  border-bottom: 3px solid transparent;
-}
+    .btn-primary {
+      background: var(--sibir-blue);
+      color: white;
+      width: 100%;
+      border: none;
+    }
 
-.tab-btn.active {
-  color: var(--sibir-blue);
-  border-bottom: 3px solid var(--sibir-blue);
-}
-  
-/* Остальные стили (сообщения, голоса, персонажи и т.д.) */
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+    .btn-stop {
+      width: 100%;
+      background: #ff9f43;
+      color: white;
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+    }
 
-.message-item {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 15px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-  border-left: 5px solid #d1d8e0;
-}
+    .btn-stop.closed {
+      background: #ee5253;
+    }
 
-.msg-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.msg-header img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #eee; }
-.msg-body img { width: 100%; border-radius: 12px; margin-top: 8px; }
-.msg-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 15px 0;
+    }
 
-.btn-mini {
-  padding: 10px;
-  font-size: 0.8rem;
-  background: #f8f9fa;
-  border: 1px solid #edf2f7;
-}
+    .btn-grid-full {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
 
-.votes-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;          /* ← было 10px, стало 16px — больше воздуха */
-  margin-top: 10px;
-}
+    input, select {
+      width: 100%;
+      height: 48px;
+      padding: 0 15px;
+      background: #fff;
+      border: 1.5px solid var(--sibir-blue);
+      color: var(--text-main);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
 
-.vote-card {
-  background: var(--white);
-  padding: 12px;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-  border: 2px solid transparent;
-  position: relative;   /* ← нужно для позиционирования крестика */
-}
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2305caff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      background-size: 15px;
+    }
 
-.vote-card.correct {
-  border-color: #10ac84;
-  background: #f0fff4;
-}
+    .votes-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
 
-.vote-card img {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  margin-bottom: 8px;
-}
+    .vote-card {
+      background: var(--gray);
+      padding: 12px;
+      border-radius: 16px;
+      text-align: center;
+      border: 2px solid transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      position: relative;
+    }
 
-/* Крестик удаления */
-.vote-card .remove-vote {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 1.2rem;
-  color: #ee5253;
-  cursor: pointer;
-  background: rgba(255,255,255,0.9);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  transition: all 0.15s;
-}
+    .vote-card.correct {
+      background: #b8ffbe;
+      border-color: #10ac84;
+    }
 
-.vote-card .remove-vote:hover {
-  background: #ee5253;
-  color: white;
-}
+    .vote-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+      background: #fff;
+    }
 
-.player-tag {
-  background: #edf2f7;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  margin: 4px 4px 4px 0;
-  display: inline-block;
-}
+    .remove-vote {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 1.3rem;
+      color: #ee5253;
+      cursor: pointer;
+      background: rgba(255,255,255,0.9);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
 
-.char-card {
-  background: var(--gray);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  border: 3px solid transparent;
-}
+    .remove-vote:hover {
+      background: #ee5253;
+      color: white;
+    }
 
-.char-card.active { border-color: #9ef01a; box-shadow: 0 0 12px rgba(158,240,26,0.4); }
-.char-img { width: 100%; aspect-ratio: 8/9; object-fit: cover; background: #000; }
-.char-info { padding: 10px; text-align: center; }
+    .player-tag {
+      background: #edf2f7;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin: 4px 4px 4px 0;
+      display: inline-block;
+    }
 
-.crop-container {
-  width: 100%;
-  height: 280px;
-  background: #333;
-  margin: 12px 0;
-  border-radius: 12px;
-  overflow: hidden;
-  display: none;
-}
+    .char-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  margin: 6px 0;
-  background: white;
-  border: 1.5px solid var(--sibir-blue);
-  border-radius: 12px;
-  font-size: 0.9rem;
-  box-sizing: border-box;
-}
+    .char-card {
+      background: var(--gray);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 3px solid transparent;
+      transition: 0.2s;
+    }
 
-.mode-indicator {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  padding: 12px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.85rem;
-  border-top: 3px solid var(--sibir-blue);
-  box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
-  z-index: 999;
-}
+    .char-card.active-char {
+      border-color: #9ef01a;
+      background: #fff;
+      box-shadow: 0 0 15px rgba(24, 164, 14, 0.4);
+    }
 
-.btn-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 12px 0;
-}
-</style>
+    .char-img {
+      width: 100%;
+      aspect-ratio: 8/9;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .char-info {
+      padding: 12px;
+      text-align: center;
+    }
+
+    .crop-container {
+      width: 100%;
+      height: 300px;
+      background: #333;
+      margin: 12px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .mode-indicator {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 12px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-top: 3px solid var(--sibir-blue);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      z-index: 999;
+    }
+  </style>
 </head>
 <body>
 
 <div class="tabs">
-<button class="tab-btn active" onclick="switchTab('main')">🕹 ПУЛЬТ</button>
-<button class="tab-btn" onclick="switchTab('chat')">💬 ЭФИР</button>
-<button class="tab-btn" onclick="switchTab('votes')">🏒 ГОЛОСА</button>
-<button class="tab-btn" onclick="switchTab('lookslike')">👯 LOOKS LIKE</button>
+  <button class="tab-btn active" onclick="switchTab('main')">🕹 ПУЛЬТ</button>
+  <button class="tab-btn" onclick="switchTab('chat')">💬 ЭФИР</button>
+  <button class="tab-btn" onclick="switchTab('votes')">🏒 ГОЛОСА</button>
+  <button class="tab-btn" onclick="switchTab('lookslike')">👯 LOOKS LIKE</button>
 </div>
 
 <!-- MAIN -->
 <div id="tab-main" class="tab-content active">
-<button id="stopBtn" class="btn btn-stop" onclick="toggleVoting()">🛑 СТОП ПРИЕМ ГОЛОСОВ</button>
+  <button id="stopBtn" class="btn btn-stop" onclick="toggleVoting()">🛑 СТОП ПРИЕМ ГОЛОСОВ</button>
 
-<h2>Активный режим</h2>
-<div class="btn-grid">
-  <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Шайба</button>
-  <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд</button>
-  <button id="mode-lookslike" class="btn btn-scene" onclick="setActiveMode('lookslike')">👯 Looks Like</button>
+  <h2>Активный режим</h2>
+  <div class="btn-grid">
+    <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Шайба</button>
+    <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд</button>
+    <button id="mode-lookslike" class="btn btn-scene" onclick="setActiveMode('lookslike')">👯 Looks Like</button>
+  </div>
+
+  <div id="controls-voting" style="display:none">
+    <h2>Сцены</h2>
+    <div class="btn-grid">
+      <button class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+      <button class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
+      <button class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
+      <button class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
+    </div>
+    <h2>Автор гола</h2>
+    <select id="goalScorer" onchange="setScorer(this.value)"></select>
+  </div>
+
+  <div id="controls-slideshow" style="display:none">
+    <h2>Слайд-шоу</h2>
+    <div class="btn-grid">
+      <button class="btn btn-scene" onclick="setScene('slideshow_qr')">QR-коды</button>
+      <button class="btn btn-scene" onclick="setScene('slideshow_photo')">Слайды</button>
+    </div>
+  </div>
+
+  <h2>Фон оверлея</h2>
+  <input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
+  <div class="btn-grid">
+    <button class="btn btn-scene" onclick="updateBg()">Применить</button>
+    <button class="btn btn-scene" onclick="removeBackground()">Удалить</button>
+  </div>
 </div>
 
-<div id="controls-voting" style="display:none">
-<h2>Сцены</h2>
-<div class="btn-grid">
-  <button class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
-  <button class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
-  <button class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
-  <button class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
-</div>
-<h2>Автор гола</h2>
-<select id="goalScorer" onchange="setScorer(this.value)"></select>
-</div>
-
-<div id="controls-slideshow" style="display:none">
-<h2>Слайд-шоу</h2>
-<div class="btn-grid">
-  <button class="btn btn-scene" onclick="setScene('slideshow_qr')">QR-коды</button>
-  <button class="btn btn-scene" onclick="setScene('slideshow_photo')">Слайды</button>
-</div>
-</div>
-
-<h2>Фон оверлея</h2>
-<input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
-<div class="btn-grid">
-  <button class="btn btn-scene" onclick="updateBg()">Применить</button>
-  <button class="btn btn-scene" onclick="removeBackground()">Удалить</button>
-</div>
-</div>
-
-<!-- ЧАТ / ЭФИР -->
+<!-- ЭФИР / ЧАТ -->
 <div id="tab-chat" class="tab-content">
-<div class="btn-grid">
-  <button class="btn btn-scene btn-danger" onclick="clearChat()">🗑 Удалить всё</button>
-  <button class="btn btn-scene" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
-</div>
-<div id="messagesList"></div>
+  <div class="btn-grid">
+    <button class="btn btn-scene" style="background:#ff9f43; color:white;" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
+    <button class="btn btn-scene" style="background:#ee5253; color:white;" onclick="clearChat()">🗑 Удалить всё</button>
+  </div>
+  <div id="messagesList"></div>
 </div>
 
 <!-- ГОЛОСА -->
 <div id="tab-votes" class="tab-content">
-<select id="filterMode" onchange="renderVotes()">
-<option value="all">Все голоса</option>
-<option value="correct">Только угадавшие</option>
-</select>
-<div id="votesList" class="votes-list"></div>
+  <select id="filterMode" onchange="renderVotes()">
+    <option value="all">Все голоса</option>
+    <option value="correct">Только правильные</option>
+  </select>
+  <div id="votesList" class="votes-list"></div>
 
-<h2>База игроков</h2>
-<input type="text" id="pName" placeholder="Имя игрока">
-<input type="text" id="pKeys" placeholder="Номер, фамилия (через запятую)">
-<button class="btn btn-primary" onclick="addPlayer()">Добавить</button>
-<div id="playersList"></div>
+  <h2>База игроков</h2>
+  <input type="text" id="pName" placeholder="Имя игрока">
+  <input type="text" id="pKeys" placeholder="Номер, фамилия (через запятую)">
+  <button class="btn btn-primary" onclick="addPlayer()">Добавить игрока</button>
+  <div id="playersList" style="margin-top:12px;"></div>
 </div>
 
 <!-- LOOKS LIKE -->
 <div id="tab-lookslike" class="tab-content">
-<h3>Добавить персонажа</h3>
-<input type="text" id="charName" placeholder="Имя персонажа">
-<input type="file" id="charFile" accept="image/*">
-<div id="cropWrapper" class="crop-container">
-<img id="imageToCrop" src="">
-</div>
-<button id="btnSaveChar" class="btn btn-primary" style="display:none;" onclick="saveCharacter()">Сохранить</button>
+  <h3>Добавить персонажа</h3>
+  <input type="text" id="charName" placeholder="Имя персонажа">
+  <input type="file" id="charFile" accept="image/*">
+  <div id="cropWrapper" class="crop-container">
+    <img id="imageToCrop" src="">
+  </div>
+  <button id="btnSaveChar" class="btn btn-primary" style="display:none;" onclick="saveCharacter()">Сохранить</button>
 
-<h3>Персонажи</h3>
-<div id="charactersList"></div>
+  <h3>Список персонажей</h3>
+  <div id="charactersList" class="char-grid"></div>
 </div>
 
 <div class="mode-indicator" id="current-info">Загрузка...</div>
@@ -410,14 +424,12 @@ window.setScene = (scene) => {
   let path = 'competition/votingState';
   if (mode === 'slideshow') path = 'competition/slideshowState';
   if (mode === 'lookslike') path = 'competition/lookslikeState';
-
   set(ref(db, path), scene);
 
   if (mode === 'lookslike' && scene === 'character') {
     const pending = currentData.lookslike?.pendingCharacter;
     if (pending) set(ref(db, 'competition/lookslike/activeCharacter'), pending);
   }
-
   tg.HapticFeedback.impactOccurred('medium');
 };
 
@@ -434,7 +446,7 @@ window.removeBackground = () => {
 window.togglePhotoSelection = (id, status) => set(ref(db, `competition/allMessages/${id}/approved`), !status);
 
 window.removeMessage = (id) => {
-  if (confirm("Удалить?")) remove(ref(db, `competition/allMessages/${id}`));
+  if (confirm("Удалить сообщение?")) remove(ref(db, `competition/allMessages/${id}`));
 };
 
 window.clearChat = () => {
@@ -442,10 +454,10 @@ window.clearChat = () => {
 };
 
 window.clearApprovedPhotos = () => {
-  if (confirm("Снять все фото с эфира?")) {
+  if (confirm("Убрать все фото из эфира?")) {
     const updates = {};
     Object.keys(currentData.allMessages || {}).forEach(id => {
-      if (currentData.allMessages[id].approved) {
+      if (currentData.allMessages[id]?.approved) {
         updates[`competition/allMessages/${id}/approved`] = false;
       }
     });
@@ -474,7 +486,7 @@ window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
 
 window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
 
-// Looks Like
+// Looks Like logic (cropper, save, edit, delete) — та же, что была
 document.getElementById('charFile').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -502,7 +514,7 @@ window.saveCharacter = () => {
     return;
   }
   const canvas = cropper.getCroppedCanvas({ height: 800 });
-  const base64 = canvas.toDataURL('image/jpeg', 0.82);
+  const base64 = canvas.toDataURL('image/jpeg', 0.85);
   push(ref(db, 'competition/lookslike/characters'), { name, image: base64 })
     .then(() => {
       document.getElementById('charName').value = '';
@@ -521,13 +533,18 @@ window.deleteCharacter = (id) => {
   if (confirm("Удалить персонажа?")) remove(ref(db, `competition/lookslike/characters/${id}`));
 };
 
-window.startEditCharName = (id, currentName) => {
+window.startEditName = (id) => {
   editingCharId = id;
-  renderCharacters(); // перерисует с инпутом
+  renderCharacters();
 };
 
-window.saveEditCharName = (id) => {
-  const newName = document.getElementById(`edit-char-name-${id}`).value.trim();
+window.cancelEditName = () => {
+  editingCharId = null;
+  renderCharacters();
+};
+
+window.saveEditName = (id) => {
+  const newName = document.getElementById(`edit-name-${id}`).value.trim();
   if (newName) {
     update(ref(db, `competition/lookslike/characters/${id}`), { name: newName });
   }
@@ -535,16 +552,12 @@ window.saveEditCharName = (id) => {
   renderCharacters();
 };
 
-window.cancelEditCharName = () => {
-  editingCharId = null;
-  renderCharacters();
-};
-
 onValue(ref(db, 'competition'), snapshot => {
   currentData = snapshot.val() || {};
 
-  // Режимы и кнопки
   const mode = currentData.activeMode || 'voting';
+
+  // Активные режимы
   document.getElementById('mode-voting').className = `btn btn-scene ${mode === 'voting' ? 'active' : ''}`;
   document.getElementById('mode-slideshow').className = `btn btn-scene ${mode === 'slideshow' ? 'active' : ''}`;
   document.getElementById('mode-lookslike').className = `btn btn-scene ${mode === 'lookslike' ? 'active' : ''}`;
@@ -552,13 +565,11 @@ onValue(ref(db, 'competition'), snapshot => {
   document.getElementById('controls-voting').style.display = mode === 'voting' ? 'block' : 'none';
   document.getElementById('controls-slideshow').style.display = mode === 'slideshow' ? 'block' : 'none';
 
-  // Стоп/старт голосования
   const accepting = currentData.acceptingVotes !== false;
   const stopBtn = document.getElementById('stopBtn');
   stopBtn.textContent = accepting ? "🛑 СТОП ПРИЕМ ГОЛОСОВ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
   stopBtn.className = accepting ? "btn btn-stop" : "btn btn-stop closed";
 
-  // Индикатор
   document.getElementById('current-info').innerHTML = `
     РЕЖИМ: <span style="color:var(--sibir-blue)">${mode.toUpperCase()}</span> | 
     СЦЕНА: <span style="color:var(--sibir-blue)">${(currentData.votingState || currentData.slideshowState || currentData.lookslikeState || '---').toUpperCase()}</span>
@@ -574,13 +585,13 @@ function renderMessages() {
   const container = document.getElementById('messagesList');
   const msgs = currentData.allMessages || {};
   container.innerHTML = '';
-  Object.keys(msgs).sort((a,b) => msgs[b].timestamp - msgs[a].timestamp).forEach(id => {
+  Object.keys(msgs).sort((a,b) => (msgs[b].timestamp || 0) - (msgs[a].timestamp || 0)).forEach(id => {
     const m = msgs[id];
     const avatar = m.userPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=05caff&color=fff`;
     container.innerHTML += `
       <div class="message-item" style="border-left-color: ${m.approved ? '#10ac84' : '#d1d8e0'}">
         <div class="msg-header">
-          <img src="${avatar}" onerror="this.src='https://via.placeholder.com/36'">
+          <img src="${avatar}" onerror="this.src='https://via.placeholder.com/40'">
           <b>${m.name} ${m.handle ? '@'+m.handle : ''}</b>
         </div>
         <div class="msg-body">
@@ -588,24 +599,24 @@ function renderMessages() {
           ${m.isImage ? `<img src="${m.photo}" alt="фото">` : ''}
         </div>
         <div class="msg-actions">
-          <button class="btn btn-mini ${m.approved ? 'btn-active' : ''}" onclick="togglePhotoSelection('${id}', ${m.approved})">
+          <button class="btn btn-scene ${m.approved ? 'active' : ''}" onclick="togglePhotoSelection('${id}', ${m.approved})">
             ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
           </button>
-          <button class="btn btn-mini" onclick="sendReply('${m.chatId}', '${m.name}')">↩ Ответ</button>
-          <button class="btn btn-mini btn-danger" onclick="removeMessage('${id}')">🗑</button>
+          <button class="btn btn-scene" onclick="sendReply('${m.chatId}', '${m.name}')">↩ Ответ</button>
+          <button class="btn btn-scene btn-danger" onclick="removeMessage('${id}')">🗑</button>
         </div>
       </div>`;
   });
 }
-  
+
 function renderVotes() {
   const container = document.getElementById('votesList');
   const filter = document.getElementById('filterMode').value;
   const votes = currentData.votes || {};
   container.innerHTML = '';
-  let list = Object.values(votes).map((v, i) => ({...v, id: Object.keys(votes)[i]}));
+  let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
   if (filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
-  list.sort((a,b) => b.timestamp - a.timestamp);
+  list.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   list.forEach(v => {
     const avatar = v.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(v.name)}&background=05caff&color=fff`;
@@ -613,9 +624,9 @@ function renderVotes() {
       <div class="vote-card ${v.votedFor === currentData.scorer ? 'correct' : ''}">
         <span class="remove-vote" onclick="removeVote('${v.id}')">×</span>
         <img src="${avatar}">
-        <div>${v.name}</div>
-        <div style="color:var(--sibir-blue); font-size:0.8rem;">${v.votedFor}</div>
-        <button class="btn btn-mini" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
+        <div style="font-weight:700; margin:6px 0;">${v.name}</div>
+        <div style="color:var(--sibir-blue); font-size:0.85rem;">${v.votedFor}</div>
+        <button class="btn btn-scene" style="margin-top:8px; width:100%; font-size:0.85rem;" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
       </div>`;
   });
 }
@@ -649,24 +660,24 @@ function renderCharacters() {
     const isActive = id === active;
     const isEditing = id === editingCharId;
     container.innerHTML += `
-      <div class="char-card ${isActive ? 'active' : ''}">
+      <div class="char-card ${isActive ? 'active-char' : ''}">
         <img class="char-img" src="${c.image}">
         <div class="char-info">
           ${isEditing ? `
-            <input id="edit-char-name-${id}" value="${c.name}" style="margin-bottom:8px;">
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-primary btn-mini" onclick="saveEditCharName('${id}')">Сохранить</button>
-              <button class="btn btn-danger btn-mini" onclick="cancelEditCharName()">Отмена</button>
+            <input id="edit-name-${id}" value="${c.name}" style="margin-bottom:8px; width:100%;">
+            <div class="btn-grid">
+              <button class="btn btn-primary btn-scene" onclick="saveEditName('${id}')">Сохранить</button>
+              <button class="btn btn-scene btn-danger" onclick="cancelEditName()">Отмена</button>
             </div>
           ` : `
-            <div style="font-weight:600; margin-bottom:8px;">${c.name}</div>
-            <button class="btn btn-mini" onclick="startEditCharName('${id}')">✏️ Редактировать</button>
+            <div style="font-weight:700; margin-bottom:8px;">${c.name}</div>
+            <button class="btn btn-scene" onclick="startEditName('${id}')">✏️ Редактировать имя</button>
           `}
-          <button class="btn ${isPending ? 'btn-active' : ''}" style="width:100%; margin:6px 0;" onclick="setActiveCharacter('${id}')">
+          <button class="btn btn-scene ${isPending ? 'active' : ''}" style="width:100%; margin:10px 0;" onclick="setActiveCharacter('${id}')">
             ${isPending ? '📺 В ЭФИРЕ' : 'В ЭФИР'}
           </button>
-          ${isActive ? '<div style="color:#10ac84; font-size:0.8rem;">● Сейчас в эфире</div>' : ''}
-          <button class="btn btn-danger btn-mini" onclick="deleteCharacter('${id}')">Удалить</button>
+          ${isActive ? '<div style="color:#10ac84; font-size:0.85rem; margin:6px 0;">● Сейчас в эфире</div>' : ''}
+          <button class="btn btn-scene btn-danger" onclick="deleteCharacter('${id}')">Удалить</button>
         </div>
       </div>`;
   });
