@@ -9,105 +9,231 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <style>
 :root {
---sibir-blue: #05caff;
---sibir-dark: #004d7a;
---bg-body: #f4f7f9;
---white: #ffffff;
---text-main: #2c3e50;
---text-muted: #7f8c8d;
---gray: #e9ecef;
+  --sibir-blue: #05caff;
+  --sibir-dark: #253566;
+  --bg-body: #f4f7f9;
+  --white: #ffffff;
+  --gray: rgb(223, 223, 223);
+  --text-main: #2c3e50;
+  --text-muted: #7f8c8d;
+  --border-color: #05caff;
 }
+
 body {
-font-family: 'Inter', sans-serif;
-background: var(--bg-body);
-color: var(--text-main);
-margin: 0; padding: 15px;
-padding-bottom: 100px;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-body);
+  color: var(--text-main);
+  margin: 0;
+  padding: 15px;
+  padding-bottom: 100px;
 }
+
 h2, h3 {
-color: var(--sibir-dark);
-font-size: 0.9rem;
-font-weight: 700;
-margin: 20px 0 10px;
-text-transform: uppercase;
-letter-spacing: 0.5px;
+  color: var(--sibir-dark);
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin: 20px 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
 }
-.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+
+h2::before, h3::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: var(--sibir-blue);
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+/* Кнопки — точная копия десктопных */
 .btn {
-padding: 14px 10px; border: none; border-radius: 12px;
-font-weight: 600; font-size: 0.85rem; cursor: pointer;
-background: var(--white); color: var(--text-main);
-box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-transition: all 0.18s;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
 }
-.btn:active { transform: scale(0.97); }
-.btn-active {
-background: var(--sibir-blue) !important;
-color: white !important;
-box-shadow: 0 4px 12px rgba(5,202,255,0.35);
+
+.btn:active { transform: scale(0.98); }
+
+.btn-scene {
+  background: #f8f9fa;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
 }
-.btn-stop { grid-column: span 2; background: #ff4040; color: white; font-size: 1rem; }
-.btn-stop.closed { background: #3eff55; }
-.btn-primary { background: var(--sibir-blue); color: white; width: 100%; }
-.btn-danger { background: #ee5253; color: white; }
+
+.btn-scene.active {
+  background: var(--sibir-blue) !important;
+  color: white !important;
+  border-color: var(--sibir-blue) !important;
+  box-shadow: 0 4px 12px rgba(5, 202, 255, 0.3);
+}
+
+.btn-primary {
+  background: var(--sibir-blue);
+  color: white;
+  border: none;
+  width: 100%;
+}
+
+.btn-stop {
+  width: 100%;
+  background: #ff9f43;
+  color: white;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.btn-stop.closed {
+  background: #ee5253;
+}
+
+.btn-danger {
+  background: #ee5253;
+  color: white;
+}
+
+/* Табы — как в десктопе, но адаптивно */
 .tabs {
-display: flex; position: sticky; top: 0; left: 0; right: 0;
-background: var(--bg-body); z-index: 100;
-padding: 10px 0; gap: 8px; margin-bottom: 10px;
+  display: flex;
+  position: sticky;
+  top: 0;
+  background: var(--bg-body);
+  z-index: 100;
+  padding: 10px 0;
+  gap: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
 }
+
 .tab-btn {
-flex: 1; background: var(--white); border: none;
-color: var(--text-muted); padding: 12px; border-radius: 10px;
-font-weight: 700; font-size: 0.82rem; box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  border-bottom: 3px solid transparent;
 }
-.tab-btn.active { color: var(--sibir-blue); border: 2px solid var(--sibir-blue); background: white; }
+
+.tab-btn.active {
+  color: var(--sibir-blue);
+  border-bottom: 3px solid var(--sibir-blue);
+}
+  
+/* Остальные стили (сообщения, голоса, персонажи и т.д.) */
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
 .message-item {
-background: var(--white); border-radius: 14px; padding: 14px;
-margin-bottom: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-border-left: 5px solid #d1d8e0;
+  background: var(--white);
+  border-radius: 16px;
+  padding: 15px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  border-left: 5px solid #d1d8e0;
 }
-.msg-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.msg-header img { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #eee; }
-.msg-body img { width: 100%; border-radius: 10px; margin-top: 8px; }
-.msg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.btn-mini { padding: 9px; font-size: 0.78rem; background: #f8f9fa; border: 1px solid #e9ecef; }
+
+.msg-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.msg-header img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #eee; }
+.msg-body img { width: 100%; border-radius: 12px; margin-top: 8px; }
+.msg-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+
+.btn-mini {
+  padding: 10px;
+  font-size: 0.8rem;
+  background: #f8f9fa;
+  border: 1px solid #edf2f7;
+}
+
 .vote-card {
-background: var(--white); padding: 12px; border-radius: 14px;
-text-align: center; box-shadow: 0 3px 8px rgba(0,0,0,0.04);
-border: 2px solid transparent;
+  background: var(--white);
+  padding: 12px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  border: 2px solid transparent;
 }
+
 .vote-card.correct { border-color: #10ac84; background: #f0fff4; }
-.vote-card img { width: 55px; height: 55px; border-radius: 50%; margin-bottom: 6px; }
+.vote-card img { width: 55px; height: 55px; border-radius: 50%; margin-bottom: 8px; }
+
 .player-tag {
-background: var(--white); padding: 6px 12px; border-radius: 20px;
-font-size: 0.78rem; margin: 4px 4px 4px 0; display: inline-block;
-box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  background: #edf2f7;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  margin: 4px 4px 4px 0;
+  display: inline-block;
 }
+
 .char-card {
-background: var(--white); border-radius: 12px; overflow: hidden;
-margin-bottom: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-border: 2px solid transparent;
+  background: var(--gray);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 3px solid transparent;
 }
+
 .char-card.active { border-color: #9ef01a; box-shadow: 0 0 12px rgba(158,240,26,0.4); }
 .char-img { width: 100%; aspect-ratio: 8/9; object-fit: cover; background: #000; }
 .char-info { padding: 10px; text-align: center; }
+
 .crop-container {
-width: 100%; height: 280px; background: #222;
-margin: 12px 0; border-radius: 10px; overflow: hidden;
-display: none;
+  width: 100%;
+  height: 280px;
+  background: #333;
+  margin: 12px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: none;
 }
-input, select, textarea {
-width: 100%; padding: 12px; margin: 6px 0;
-background: white; border: 1px solid #ced4da;
-border-radius: 10px; font-size: 0.9rem; box-sizing: border-box;
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  background: white;
+  border: 1.5px solid var(--sibir-blue);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
 }
+
 .mode-indicator {
-position: fixed; bottom: 0; left: 0; right: 0;
-background: white; padding: 12px; text-align: center;
-font-weight: 700; font-size: 0.85rem; border-top: 3px solid var(--sibir-blue);
-box-shadow: 0 -3px 10px rgba(0,0,0,0.1); z-index: 999;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-top: 3px solid var(--sibir-blue);
+  box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
 }
 </style>
 </head>
@@ -126,18 +252,18 @@ box-shadow: 0 -3px 10px rgba(0,0,0,0.1); z-index: 999;
 
 <h2>Активный режим</h2>
 <div class="btn-grid">
-<button id="mode-voting" class="btn" onclick="setActiveMode('voting')">🏒 Шайба</button>
-<button id="mode-slideshow" class="btn" onclick="setActiveMode('slideshow')">📸 Слайд</button>
-<button id="mode-lookslike" class="btn" onclick="setActiveMode('lookslike')">👯 Looks Like</button>
+  <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Шайба</button>
+  <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд</button>
+  <button id="mode-lookslike" class="btn btn-scene" onclick="setActiveMode('lookslike')">👯 Looks Like</button>
 </div>
 
 <div id="controls-voting" style="display:none">
 <h2>Сцены</h2>
 <div class="btn-grid">
-<button class="btn" onclick="setScene('announcement')">Анонс</button>
-<button class="btn" onclick="setScene('qr')">QR-код</button>
-<button class="btn" onclick="setScene('roulette')">Рулетка</button>
-<button class="btn" onclick="setScene('winner')">Победитель</button>
+  <button class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+  <button class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
+  <button class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
+  <button class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
 </div>
 <h2>Автор гола</h2>
 <select id="goalScorer" onchange="setScorer(this.value)"></select>
@@ -146,24 +272,24 @@ box-shadow: 0 -3px 10px rgba(0,0,0,0.1); z-index: 999;
 <div id="controls-slideshow" style="display:none">
 <h2>Слайд-шоу</h2>
 <div class="btn-grid">
-<button class="btn" onclick="setScene('slideshow_qr')">QR-коды</button>
-<button class="btn btn-active" onclick="setScene('slideshow_photo')">Слайды</button>
+  <button class="btn btn-scene" onclick="setScene('slideshow_qr')">QR-коды</button>
+  <button class="btn btn-scene" onclick="setScene('slideshow_photo')">Слайды</button>
 </div>
 </div>
 
 <h2>Фон оверлея</h2>
 <input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
 <div class="btn-grid">
-<button class="btn btn-primary" onclick="updateBg()">Применить</button>
-<button class="btn" onclick="removeBackground()">Удалить</button>
+  <button class="btn btn-scene" onclick="updateBg()">Применить</button>
+  <button class="btn btn-scene" onclick="removeBackground()">Удалить</button>
 </div>
 </div>
 
 <!-- ЧАТ / ЭФИР -->
 <div id="tab-chat" class="tab-content">
 <div class="btn-grid">
-<button class="btn btn-mini btn-danger" onclick="clearChat()">🗑 Удалить всё</button>
-<button class="btn btn-mini" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
+  <button class="btn btn-scene btn-danger" onclick="clearChat()">🗑 Удалить всё</button>
+  <button class="btn btn-scene" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
 </div>
 <div id="messagesList"></div>
 </div>
@@ -378,9 +504,9 @@ onValue(ref(db, 'competition'), snapshot => {
 
   // Режимы и кнопки
   const mode = currentData.activeMode || 'voting';
-  document.getElementById('mode-voting').className = mode === 'voting' ? 'btn btn-active' : 'btn';
-  document.getElementById('mode-slideshow').className = mode === 'slideshow' ? 'btn btn-active' : 'btn';
-  document.getElementById('mode-lookslike').className = mode === 'lookslike' ? 'btn btn-active' : 'btn';
+  document.getElementById('mode-voting').className = `btn btn-scene ${mode === 'voting' ? 'active' : ''}`;
+  document.getElementById('mode-slideshow').className = `btn btn-scene ${mode === 'slideshow' ? 'active' : ''}`;
+  document.getElementById('mode-lookslike').className = `btn btn-scene ${mode === 'lookslike' ? 'active' : ''}`;
 
   document.getElementById('controls-voting').style.display = mode === 'voting' ? 'block' : 'none';
   document.getElementById('controls-slideshow').style.display = mode === 'slideshow' ? 'block' : 'none';
