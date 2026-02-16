@@ -2,14 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Photo Feed - HC Sibir</title>
+    <title>Photo Feed - HC Sibir (Optimized)</title>
     <style>
         @font-face {
             font-family: 'MyCustomFont';
             src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
         }
 
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; font-family: 'MyCustomFont', sans-serif; color: white; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: transparent; 
+            font-family: 'MyCustomFont', sans-serif; color: white; 
+        }
 
         #bg-video {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -20,11 +24,11 @@
             z-index: -1; 
         }
 
-        /* --- ЭКРАН QR С ПЛАВНЫМ ПЕРЕХОДОМ --- */
+        /* --- QR SCREEN --- */
         .qr-scene {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; /* Скрыто по умолчанию */
+            display: flex;
             flex-direction: column;
             align-items: center;
             margin-top: 60px;
@@ -32,22 +36,25 @@
             backdrop-filter: blur(10px);
             z-index: 100;
             
-            /* Свойства для анимации */
             opacity: 0;
             visibility: hidden;
-            transform: scale(1.1); /* Легкий наплыв при появлении */
-            transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1), visibility 1s;
+            transform: scale(1.1) translateZ(0); /* GPU acceleration */
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+            will-change: opacity, transform;
         }
 
         .qr-scene.active {
             opacity: 1;
             visibility: visible;
-            transform: scale(1);
+            transform: scale(1) translateZ(0);
         }
 
         .qr-row { display: flex; gap: 100px; justify-content: center; align-items: flex-start; }
         .qr-item { display: flex; flex-direction: column; align-items: center; }
-        .qr-item img { width: 700px; border: 10px solid white; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .qr-item img { 
+            width: 700px; border: 10px solid white; border-radius: 20px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+        }
         
         .qr-title { 
             text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); 
@@ -58,57 +65,135 @@
         }
 
         @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
-            50% { transform: scale(1.03); text-shadow: 0 0 50px rgba(0, 242, 255, 0.9); }
+            0%, 100% { transform: scale(1) translateZ(0); text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
+            50% { transform: scale(1.03) translateZ(0); text-shadow: 0 0 50px rgba(0, 242, 255, 0.9); }
         }
 
-        /* --- ЛЕНТА ФОТО С ПЛАВНЫМ ПЕРЕХОДОМ --- */
+        /* --- PHOTO FEED --- */
         .container { 
             display: flex; 
             width: 100%; 
             height: 100%; 
             opacity: 1;
             visibility: visible;
-            transform: scale(1);
-            transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1), visibility 1s;
+            transform: scale(1) translateZ(0);
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+            will-change: opacity, transform;
         }
 
         .container.hidden {
             opacity: 0;
             visibility: hidden;
-            transform: scale(0.95); /* Легкое отдаление при исчезновении */
+            transform: scale(0.95) translateZ(0);
         }
 
-        .feed-area { width: 80%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .sidebar { width: 20%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px; box-sizing: border-box; z-index: 10; }
+        .feed-area { 
+            width: 80%; height: 100%; position: relative; 
+            display: flex; justify-content: center; align-items: center; 
+            overflow: hidden; 
+        }
+        
+        .sidebar { 
+            width: 20%; height: 100%; display: flex; 
+            flex-direction: column; align-items: center; 
+            justify-content: space-around; padding: 20px; 
+            box-sizing: border-box; z-index: 10; 
+        }
+        
         .logo-img { width: 85%; filter: drop-shadow(0 0 15px rgba(0,242,255,0.6)); }
         
         .qr-sidebar-block { text-align: center; }
-        .qr-sidebar-block p { font-size: 42px; margin: 0 0 15px 0; text-transform: uppercase; text-shadow: 0 0 15px rgba(0, 242, 255, 0.8); line-height: 1; }
-        .qr-sidebar-block img { width: 85%; border: 5px solid white; border-radius: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .qr-sidebar-block p { 
+            font-size: 42px; margin: 0 0 15px 0; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 15px rgba(0, 242, 255, 0.8); 
+            line-height: 1; 
+        }
+        .qr-sidebar-block img { 
+            width: 85%; border: 5px solid white; 
+            border-radius: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.5); 
+        }
 
-        /* --- КАРТОЧКА ФОТО --- */
+        /* --- PHOTO CARD (GPU-OPTIMIZED) --- */
         .photo-card {
-            position: absolute; background: #1a1a1a; padding: 15px; border: 4px solid #00f2ff; border-radius: 12px;
+            position: absolute; 
+            background: #1a1a1a; 
+            padding: 15px; 
+            border: 4px solid #00f2ff; 
+            border-radius: 12px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 40px rgba(0, 242, 255, 0.3);
-            max-width: 85vw; max-height: 80vh; display: flex; flex-direction: column; opacity: 0; will-change: transform, opacity;
+            max-width: 85vw; 
+            max-height: 80vh; 
+            display: flex; 
+            flex-direction: column; 
+            opacity: 0; 
+            will-change: transform, opacity;
+            transform: translateZ(0); /* Force GPU layer */
+            backface-visibility: hidden; /* Prevent flickering */
         }
 
         .user-badge {
-            position: absolute; top: -30px; left: -30px; background: #00f2ff; color: #000;
-            padding: 10px 25px 10px 10px; border-radius: 60px; display: flex; align-items: center; gap: 15px;
-            box-shadow: 10px 10px 25px rgba(0,0,0,0.4); z-index: 5;
+            position: absolute; top: -30px; left: -30px; 
+            background: #00f2ff; color: #000;
+            padding: 10px 25px 10px 10px; 
+            border-radius: 60px; 
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 10px 10px 25px rgba(0,0,0,0.4); 
+            z-index: 5;
+            will-change: transform;
+            transform: translateZ(0);
         }
-        .user-badge img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid white; object-fit: cover; background: white; }
+        
+        .user-badge img { 
+            width: 70px; height: 70px; 
+            border-radius: 50%; border: 3px solid white; 
+            object-fit: cover; background: white; 
+        }
+        
         .user-badge span { font-size: 32px; font-weight: bold; }
-        .photo-image { max-width: 100%; max-height: 75vh; display: block; border-radius: 6px; object-fit: contain; }
+        
+        .photo-image { 
+            max-width: 100%; max-height: 75vh; 
+            display: block; border-radius: 6px; 
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast; /* Better performance */
+        }
 
         @keyframes flowAnimation {
-            0% { transform: translateY(-130%) rotate(-8deg) scale(0.9); opacity: 0; }
-            50% { transform: translateY(0) rotate(var(--rot)) scale(1); opacity: 1; }
-            100% { transform: translateY(130%) rotate(8deg) scale(1.05); opacity: 0; }
+            0% { 
+                transform: translateY(-130%) rotate(-8deg) scale(0.9) translateZ(0); 
+                opacity: 0; 
+            }
+            50% { 
+                transform: translateY(0) rotate(var(--rot)) scale(1) translateZ(0); 
+                opacity: 1; 
+            }
+            100% { 
+                transform: translateY(130%) rotate(8deg) scale(1.05) translateZ(0); 
+                opacity: 0; 
+            }
         }
-        .animate-card { animation: flowAnimation 5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        
+        .animate-card { 
+            animation: flowAnimation 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; 
+        }
+
+        /* Preload indicator (optional) */
+        .loading-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 242, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .loading-indicator.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -139,6 +224,8 @@
         </div>
     </div>
 
+    <div class="loading-indicator" id="loader">Загрузка фото...</div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -156,60 +243,239 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // ========== PERFORMANCE OPTIMIZATIONS ==========
+        
         let approvedPhotos = [];
         let currentIndex = 0;
-        let currentState = '';
+        let currentState = 'photo_feed';
         const imageCache = new Map();
+        const loadingQueue = new Set();
+        
         const feedContainer = document.getElementById('feed');
         const qrScreen = document.getElementById('qr-screen');
         const mainUI = document.getElementById('main-ui');
+        const loader = document.getElementById('loader');
 
-        function preloadImage(url) {
-            if (!url || imageCache.has(url)) return;
-            const img = new Image();
-            img.src = url;
-            img.onload = () => imageCache.set(url, true);
+        // DOM element pool for reuse (prevent GC)
+        let cardPool = [];
+        const MAX_POOL_SIZE = 3;
+
+        // Батчинг для фоновой предзагрузки
+        const PRELOAD_AHEAD = 10; // Сколько фото грузить наперед
+        const ANIMATION_DURATION = 4500; // ms
+        const TRANSITION_BUFFER = -1000; // ms
+
+        // ========== PERSISTENT CACHE ==========
+        
+        const CACHE_KEY = 'hc_sibir_image_cache';
+        const CACHE_TIMESTAMP_KEY = 'hc_sibir_cache_timestamp';
+        const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 часа
+
+        // Загружаем кеш из localStorage
+        function loadCacheFromStorage() {
+            try {
+                const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+                const now = Date.now();
+                
+                // Проверяем, не устарел ли кеш
+                if (timestamp && (now - parseInt(timestamp)) < CACHE_EXPIRY) {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const urls = JSON.parse(cached);
+                        console.log(`Loaded ${urls.length} cached images from localStorage`);
+                        urls.forEach(url => imageCache.set(url, true));
+                        return urls.length;
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load cache:', e);
+            }
+            return 0;
         }
+
+        // Сохраняем кеш в localStorage (с дебаунсом)
+        let saveTimeout = null;
+        function saveCacheToStorage() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                try {
+                    const urls = Array.from(imageCache.keys());
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(urls));
+                    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+                } catch (e) {
+                    console.warn('Failed to save cache:', e);
+                    // Если localStorage переполнен, очищаем старые данные
+                    if (e.name === 'QuotaExceededError') {
+                        localStorage.removeItem(CACHE_KEY);
+                        localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                    }
+                }
+            }, 1000); // Сохраняем раз в секунду
+        }
+
+        // Загружаем кеш при старте
+        const cachedCount = loadCacheFromStorage();
+        if (cachedCount > 0) {
+            console.log(`🚀 Fast start: ${cachedCount} images in cache`);
+        }
+
+        function scaleUpImage(imgElement) {
+            imgElement.onload = function() {
+                const naturalWidth = this.naturalWidth;
+                const naturalHeight = this.naturalHeight;
+                const viewportWidth = window.innerWidth * 0.8; // 80% от ширины (feed-area)
+                const viewportHeight = window.innerHeight;
+                
+                // Если фото маленькое (меньше 40% viewport), увеличиваем его
+                const widthRatio = naturalWidth / viewportWidth;
+                const heightRatio = naturalHeight / viewportHeight;
+                const minRatio = Math.max(widthRatio, heightRatio);
+                
+                if (minRatio < 0.4) {
+                    // Увеличиваем до 60% viewport
+                    const scale = 0.6 / minRatio;
+                    this.style.width = (naturalWidth * scale) + 'px';
+                    this.style.height = (naturalHeight * scale) + 'px';
+                    this.style.maxWidth = '80vw';
+                    this.style.maxHeight = '75vh';
+                }
+            };
+        }
+
+        // ========== OPTIMIZED IMAGE PRELOADING ==========
+        
+        function preloadImage(url) {
+            if (!url || imageCache.has(url) || loadingQueue.has(url)) {
+                return Promise.resolve();
+            }
+
+            loadingQueue.add(url);
+
+            return new Promise((resolve) => {
+                const img = new Image();
+                // Убрали crossOrigin - не нужен для простого отображения
+                
+                img.onload = () => {
+                    imageCache.set(url, true); // Кешируем только URL, не сам объект
+                    loadingQueue.delete(url);
+                    saveCacheToStorage(); // Сохраняем в localStorage
+                    resolve(true);
+                };
+                
+                img.onerror = () => {
+                    console.warn(`Failed to load: ${url}`);
+                    loadingQueue.delete(url);
+                    resolve(null);
+                };
+                
+                img.src = url;
+            });
+        }
+
+        // Параллельная предзагрузка следующих N фото
+        function preloadAhead(fromIndex, count = PRELOAD_AHEAD) {
+            const promises = [];
+            for (let i = 0; i < count; i++) {
+                const idx = (fromIndex + i) % approvedPhotos.length;
+                if (approvedPhotos[idx]) {
+                    promises.push(preloadImage(approvedPhotos[idx].photo));
+                }
+            }
+            return Promise.allSettled(promises);
+        }
+
+        // ========== DOM POOL MANAGEMENT ==========
+        
+        function getCardFromPool() {
+            if (cardPool.length > 0) {
+                return cardPool.pop();
+            }
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            return card;
+        }
+
+        function returnCardToPool(card) {
+            if (cardPool.length < MAX_POOL_SIZE) {
+                card.className = 'photo-card'; // Reset animation
+                card.style.cssText = '';
+                cardPool.push(card);
+            }
+        }
+
+        // ========== FIREBASE LISTENER ==========
+        
+        let updateTimeout = null;
 
         onValue(ref(db, 'competition'), (snapshot) => {
             const data = snapshot.val() || {};
             
-            const messages = data.allMessages || {};
-            approvedPhotos = Object.values(messages).filter(m => m.isImage && m.approved);
-            approvedPhotos.forEach(p => preloadImage(p.photo));
+            // Дебаунс для частых обновлений
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                const messages = data.allMessages || {};
+                const newPhotos = Object.values(messages).filter(m => m.isImage && m.approved);
+                
+                // Проверяем изменения
+                if (JSON.stringify(newPhotos) !== JSON.stringify(approvedPhotos)) {
+                    approvedPhotos = newPhotos;
+                    
+                    // НЕ ЖДЕМ загрузку! Просто запускаем фоновую предзагрузку
+                    if (approvedPhotos.length > 0) {
+                        preloadAhead(currentIndex);
+                    }
+                }
 
-            // ПЛАВНОЕ ПЕРЕКЛЮЧЕНИЕ ЧЕРЕЗ КЛАССЫ
-            if (data.slideshowState === 'slideshow_qr') {
-                qrScreen.classList.add('active');
-                mainUI.classList.add('hidden');
-                currentState = 'qr';
-            } else {
-                qrScreen.classList.remove('active');
-                mainUI.classList.remove('hidden');
-                currentState = 'photo_feed';
-            }
+                // Плавное переключение состояний
+                const newState = data.slideshowState === 'slideshow_qr' ? 'qr' : 'photo_feed';
+                
+                if (newState !== currentState) {
+                    currentState = newState;
+                    
+                    if (currentState === 'qr') {
+                        qrScreen.classList.add('active');
+                        mainUI.classList.add('hidden');
+                    } else {
+                        qrScreen.classList.remove('active');
+                        mainUI.classList.remove('hidden');
+                    }
+                }
+            }, 100); // 100ms debounce
         });
 
-        function showNextPhoto() {
-            if (currentState === 'qr' || approvedPhotos.length === 0) {
-                setTimeout(showNextPhoto, 2000);
+        // ========== PHOTO DISPLAY LOOP ==========
+        
+        let animationFrameId = null;
+        let lastPhotoTime = 0;
+
+        function showNextPhoto(timestamp) {
+            animationFrameId = requestAnimationFrame(showNextPhoto);
+
+            // Проверка таймингов
+            if (timestamp - lastPhotoTime < ANIMATION_DURATION + TRANSITION_BUFFER) {
                 return;
             }
 
-            if (currentIndex >= approvedPhotos.length) currentIndex = 0;
+            if (currentState === 'qr' || approvedPhotos.length === 0) {
+                return;
+            }
+
+            if (currentIndex >= approvedPhotos.length) {
+                currentIndex = 0;
+            }
+
             const item = approvedPhotos[currentIndex];
 
-            if (!imageCache.has(item.photo)) {
-                currentIndex++;
-                setTimeout(showNextPhoto, 500);
-                return;
-            }
-
+            // ПОКАЗЫВАЕМ СРАЗУ, не ждем кеш!
+            // Браузер сам загрузит фото, если его нет
+            
+            // Получаем карточку из пула
+            const card = getCardFromPool();
+            
             const randomRot = (Math.random() * 8 - 4) + 'deg';
-            const card = document.createElement('div');
-            card.className = 'photo-card animate-card';
             card.style.setProperty('--rot', randomRot);
 
+            // Используем URL напрямую - браузер загрузит автоматически
             card.innerHTML = `
                 <div class="user-badge">
                     <img src="${item.userPhoto || 'media/tg_logo.png'}">
@@ -218,16 +484,45 @@
                 <img src="${item.photo}" class="photo-image">
             `;
 
-            feedContainer.innerHTML = '';
-            feedContainer.appendChild(card);
+            // Удаляем предыдущую карточку с задержкой
+            const oldCards = feedContainer.querySelectorAll('.photo-card');
+            setTimeout(() => {
+                oldCards.forEach(old => {
+                    if (old !== card) {
+                        returnCardToPool(old);
+                        old.remove();
+                    }
+                });
+            }, 500);
 
+            feedContainer.appendChild(card);
+            
+            // Trigger reflow для анимации
+            void card.offsetWidth;
+            card.classList.add('animate-card');
+
+            lastPhotoTime = timestamp;
             currentIndex++;
-            setTimeout(showNextPhoto, 3200);
+
+            // Запускаем фоновую предзагрузку следующих фото
+            preloadAhead(currentIndex);
         }
 
-        showNextPhoto();
+        // Запуск цикла
+        requestAnimationFrame(showNextPhoto);
+
+        // ========== PERFORMANCE MONITORING (optional) ==========
+        
+        if (window.performance && window.performance.memory) {
+            setInterval(() => {
+                const memory = window.performance.memory;
+                console.log(`Memory: ${(memory.usedJSHeapSize / 1048576).toFixed(2)} MB`);
+            }, 10000);
+        }
+
     </script>
 </body>
-
 </html>
+
+
 
