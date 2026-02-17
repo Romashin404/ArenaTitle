@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sibir Interactive Overlay</title>
+    <style>
+        @font-face {
+            font-family: 'DrukCyr';
+            src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        :root {
+            --sibir-blue: #05caff;
+            --sibir-dark: #253566;
+        }
+
+        body { 
+            margin: 0; padding: 0; overflow: hidden; 
+            font-family: 'DrukCyr', sans-serif; 
+            background: transparent;
+        }
+
+        /* ВИДЕО-ФОН */
+        #bg-video {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; object-fit: cover;
+            clip-path: inset(0 0 0 0);
+        }
+        body.fan-mode #bg-video { clip-path: inset(0 0 0 50%); }
+
+        .scene {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+        .scene.active { opacity: 1; visibility: visible; }
+
+        /* ИНТЕРАКТИВНЫЙ КОНТЕЙНЕР */
+        .ll-split-container { width: 100%; height: 100%; position: relative; }
+
+        /* ДВИГАЮЩИЙСЯ БЛОК */
+        #char-mover {
+            position: absolute; top: 0; width: 50%; height: 100%;
+            left: 0;
+            z-index: 10; overflow: hidden;
+            opacity: 1;
+        }
+
+        /* Анимация LEFT работает только когда мы ПЕРЕХОДИМ В ФАНАТА */
+        body.animate-to-fan #char-mover {
+            transition: left 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        /* Состояние: Болельщик */
+        body.fan-mode #char-mover { left: 50%; }
+
+        /* Состояние: Персонаж (плавное появление самого блока) */
+        body.char-mode #char-mover {
+            left: 0;
+            animation: fadeInOnly 0.5s ease;
+        }
+
+        @keyframes fadeInOnly {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .char-full-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+ /* НОВАЯ ПЛАШКА ПО ЦЕНТРУ */
+        .name-plate-wrapper {
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 15;
+        }
+
+        .name-plate {
+            background: var(--sibir-blue);
+            /* Увеличили вертикальный padding (25px вместо 10px) для ширины/высоты */
+            padding: 25px 50px; 
+            /* Уменьшили наклон до -8deg (был -15deg) */
+            transform: skewX(-8deg); 
+            box-shadow: 8px 8px 0px var(--sibir-dark);
+            width: fit-content;
+        }
+
+        .char-name-plate {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 80px 30px 40px 30px; color: white; box-sizing: border-box;
+        }
+        .char-name-text {
+            font-size: 90px;
+            text-transform: uppercase;
+            /* Цвет текста — белый */
+            color: #ffffff; 
+            /* Наклон текста в обратную сторону должен совпадать с плашкой */
+            transform: skewX(8deg); 
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        #text-placeholder {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 5;
+            transition: opacity 0.3s;
+        }
+        body.fan-mode #text-placeholder { opacity: 0; }
+        body.char-mode #text-placeholder { opacity: 1; }
+
+        .placeholder-h2 {
+            color: white; font-size: 100px; text-transform: uppercase; 
+            max-width: 80%; text-align: center;
+            text-shadow: 3px 3px 0px var(--sibir-blue);
+        }
+
+    </style>
+</head>
+<body>
+
+    <video id="bg-video" loop muted autoplay>
+        <source src="media/backgroundvideo.webm" type="video/webm">
+    </video>
+    
+    <div id="scene-announcement" class="scene">
+        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+            <div class="ll-title-big" style="transform:skewX(-10deg); color:white; text-shadow: 3px 3px 0px var(--sibir-blue);; font-size: 170px; text-transform:uppercase; text-align:center;">
+                <span style="display:block; transform:skewX(10deg);">На какого персонажа вы похожи?</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene-split" class="scene">
+        <div class="ll-split-container">
+            <div id="text-placeholder">
+                <h2 class="placeholder-h2">На какого персонажа вы похожи?</h2>
+            </div>
+            <div id="char-mover">
+                <img id="char-img" src="" class="char-full-img">
+                
+                <div class="name-plate-wrapper">
+                    <div class="name-plate">
+                        <div id="char-name" class="char-name-text"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+        authDomain: "arenawork-94e68.firebaseapp.com",
+        databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+        projectId: "arenawork-94e68",
+        storageBucket: "arenawork-94e68.firebasestorage.app",   
+        messagingSenderId: "504372844993",
+        appId: "1:504372844993:web:1783bb75879ee074953740"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let lastState = '';
+
+    onValue(ref(db, 'competition'), (snapshot) => {
+        const data = snapshot.val();
+        if(!data || data.activeMode !== 'lookslike') return;
+
+        const state = data.lookslikeState || 'announcement';
+        const activeCharId = data.lookslike?.activeCharacter;
+        const charData = activeCharId ? data.lookslike.characters[activeCharId] : null;
+
+        if (charData) {
+            const img = document.getElementById('char-img');
+            if(img.src !== charData.image) img.src = charData.image;
+            document.getElementById('char-name').textContent = charData.name;
+        }
+
+        // УПРАВЛЕНИЕ АНИМАЦИЕЙ
+        if (state === 'fan' && lastState === 'character') {
+            // Едем вправо
+            document.body.classList.add('animate-to-fan');
+        } else {
+            // Во всех остальных случаях (включая возврат на персонажа) анимацию перемещения отключаем
+            document.body.classList.remove('animate-to-fan');
+        }
+
+        // КЛАССЫ СОСТОЯНИЙ
+        document.body.classList.remove('fan-mode', 'char-mode');
+        if (state === 'fan') document.body.classList.add('fan-mode');
+        if (state === 'character') document.body.classList.add('char-mode');
+
+        // ПЕРЕКЛЮЧЕНИЕ СЦЕН (FADE)
+        if (state === 'announcement') {
+            document.getElementById('scene-announcement').classList.add('active');
+            document.getElementById('scene-split').classList.remove('active');
+        } else {
+            document.getElementById('scene-announcement').classList.remove('active');
+            document.getElementById('scene-split').classList.add('active');
+        }
+
+        lastState = state;
+    });
+</script>
+</body>
+</html>
