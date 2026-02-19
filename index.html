@@ -130,37 +130,28 @@
             border-radius: 20px; font-size: 0.75rem; font-weight: 600;
         }
 
-        /* --- STYLES FOR CROPPER AND LOOKS LIKE --- */
         .crop-container {
-            max-width: 100%;
-            height: 400px;
-            background: #333;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            overflow: hidden;
-            display: none; /* Скрыт пока не выбрано фото */
+            max-width: 100%; height: 400px; background: #333;
+            margin-bottom: 15px; border-radius: 12px; overflow: hidden; display: none;
         }
-        .crop-container img {
-            max-width: 100%;
-        }
+        .crop-container img { max-width: 100%; }
         
-        .char-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
-        }
-        .char-card {
-            background: var(--gray); border-radius: 12px; overflow: hidden;
-            border: 3px solid transparent; transition: 0.2s;
-        }
-        .char-card.active-char {
-            border-color: #9ef01a; /* Оранжевая обводка активного */
-            background: #fff;
-            box-shadow: 0 0 15px rgba(24, 164, 14, 0.4);
-        }
-        .char-img {
-            width: 100%; aspect-ratio: 8/9; object-fit: cover; display: block; background: #000;
-        }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .char-card { background: var(--gray); border-radius: 12px; overflow: hidden; border: 3px solid transparent; transition: 0.2s; }
+        .char-card.active-char { border-color: #9ef01a; background: #fff; box-shadow: 0 0 15px rgba(24, 164, 14, 0.4); }
+        .char-img { width: 100%; aspect-ratio: 8/9; object-fit: cover; display: block; background: #000; }
         .char-info { padding: 10px; }
         .char-name { font-weight: 700; font-size: 1rem; margin-bottom: 10px; text-align: center; }
+
+        .upload-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .upload-box {
+            background: white; border-radius: 20px; padding: 40px;
+            text-align: center; min-width: 280px;
+        }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -168,7 +159,6 @@
 <body>
 
 <div class="sidebar">
-
     <h2>Активный режим</h2>
     <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
         <div style="display: flex; gap: 10px;">
@@ -221,12 +211,14 @@
         </p>
     </div>
 
+    <!-- ✅ ОБНОВЛЕНО: Сцены MVP — убраны Результаты, добавлены Winline и Анонс -->
     <div id="controls-mvp" style="display: none;"> 
         <h2>Сцены: Игрок матча</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button id="scene-mvp-winline_logo" class="btn btn-scene" onclick="setScene('winline_logo')">🟡 Winline</button>
+            <button id="scene-mvp-announcement" class="btn btn-scene" onclick="setScene('announcement')">📢 Анонс</button>
             <button id="scene-mvp-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
-            <button id="scene-mvp-results" class="btn btn-scene" onclick="setScene('results')">Результаты</button>
-            <button id="scene-mvp-winner" class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
+            <button id="scene-mvp-winner" class="btn btn-scene" onclick="setScene('winner')">🏆 Победитель</button>
         </div>
     </div>
 
@@ -240,7 +232,6 @@
     <div id="players-controls">
         <h2>Автор гола</h2>
         <select id="goalScorer" onchange="setScorer(this.value)"></select>
-
         <h2>База игроков</h2>
         <input type="text" id="pName" placeholder="Имя игрока">
         <input type="text" id="pKeys" placeholder="Номер, фамилия (через запятую)">
@@ -284,14 +275,11 @@
             <h3 style="margin-top:0">Добавить персонажа</h3>
             <input type="text" id="charName" placeholder="Имя персонажа">
             <input type="file" id="charFile" accept="image/*" style="padding-top: 10px;">
-            
             <div id="cropWrapper" class="crop-container">
                 <img id="imageToCrop" src="">
             </div>
-            
             <button id="btnSaveChar" class="btn btn-primary" onclick="saveCharacter()" style="display: none;">💾 Сохранить персонажа</button>
         </div>
-
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0;">Список персонажей</h3>
             <button class="btn" style="background: #ee5253; color: white;" onclick="clearAllCharacters()">🗑️ Удалить всех</button>
@@ -300,13 +288,10 @@
     </div>
 
     <div id="tab-mvp" class="tab-content">
-        <!-- Секция игроков с фото -->
         <div style="background: #f1f2f6; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
             <h3 style="margin: 0 0 15px 0;">База игроков (фото для оверлея)</h3>
             <div id="mvpPlayersList"></div>
         </div>
-
-        <!-- Секция голосов -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0;">Голоса за игрока матча</h3>
             <div style="display: flex; align-items: center; gap: 15px;">
@@ -338,16 +323,46 @@
     const db = getDatabase(app);
     let currentData = {};
     const tgLogo = "media/tg_logo.png";
-    let cropper; // Глобальная переменная для кроппера
+    let cropper;
     let editingCharId = null;
-    let currentMvpVotesData = {};
 
-    // --- ЛОГИКА ОКНА ---
+    const UPLOAD_URL = 'http://localhost:3000/upload';
+
+    async function uploadViaBot(blob, folder) {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('folder', folder);
+        const res = await fetch(UPLOAD_URL, { method: 'POST', body: formData });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.url) throw new Error('Нет URL в ответе');
+        return data.url;
+    }
+
+    function showUploadOverlay(text) {
+        const el = document.createElement('div');
+        el.className = 'upload-overlay';
+        el.id = 'upload-overlay';
+        el.innerHTML = `<div class="upload-box">
+            <div style="font-size:2rem;margin-bottom:10px">☁️</div>
+            <div style="font-weight:700;font-size:1.1rem">${text}</div>
+            <div style="color:#999;font-size:0.85rem;margin-top:8px">Загружаем на Yandex Cloud...</div>
+        </div>`;
+        document.body.appendChild(el);
+    }
+
+    function hideUploadOverlay(success = true) {
+        const el = document.getElementById('upload-overlay');
+        if (!el) return;
+        el.querySelector('.upload-box').innerHTML = `
+            <div style="font-size:2.5rem">${success ? '✅' : '❌'}</div>
+            <div style="font-weight:700;margin-top:10px">${success ? 'Готово!' : 'Ошибка загрузки'}</div>`;
+        setTimeout(() => el.remove(), 1000);
+    }
 
     window.toggleVoting = () => {
         const votingMode = currentData.votingMode || 'first_goal';
         const isAccepting = votingMode === 'first_goal' ? currentData.acceptingVotes : currentData.acceptingMvpVotes;
-        
         if (votingMode === 'first_goal') {
             set(ref(db, 'competition/acceptingVotes'), !isAccepting);
         } else {
@@ -360,28 +375,18 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         event.currentTarget.classList.add('active');
         document.getElementById(`tab-${tab}`).classList.add('active');
-        
-        // Загружаем фото игроков только при открытии вкладки MVP
-        if (tab === 'mvp') {
-            renderMvpPlayers();
-        }
+        if (tab === 'mvp') renderMvpPlayers();
     };
 
     window.setActiveMode = (mode) => {
         set(ref(db, 'competition/activeMode'), mode);
-        // При смене режима автоматически открываем нужную вкладку для удобства
         if(mode === 'lookslike') window.switchTab('lookslike');
     };
 
     window.setVotingMode = (mode) => {
-        // Останавливаем оба режима
         set(ref(db, 'competition/acceptingVotes'), false);
         set(ref(db, 'competition/acceptingMvpVotes'), false);
-        
-        // Устанавливаем новый режим
         set(ref(db, 'competition/votingMode'), mode);
-        
-        // Запускаем выбранный режим
         if (mode === 'first_goal') {
             set(ref(db, 'competition/acceptingVotes'), true);
         } else {
@@ -389,17 +394,12 @@
         }
     };
 
-
     window.resetMvpVotes = () => {
-        if(confirm("Полная очистка голосов за игрока матча?")) {
-            remove(ref(db, 'competition/mvpVotes'));
-        }
+        if(confirm("Полная очистка голосов за игрока матча?")) remove(ref(db, 'competition/mvpVotes'));
     };
     
-    // --- ЛОГИКА СЦЕН ---
     window.setScene = (scene) => {
         const mode = currentData.activeMode || 'voting';
-
         if (mode === 'voting') {
             if (scene === 'roulette') {
                 const votes = currentData.votes || {};
@@ -417,24 +417,18 @@
             } else {
                 set(ref(db, 'competition/votingState'), scene);
             }
-        } 
-        else if (mode === 'slideshow') {
+        } else if (mode === 'slideshow') {
             set(ref(db, 'competition/slideshowState'), scene);
-        }
-        else if (mode === 'lookslike') {
+        } else if (mode === 'lookslike') {
             if (scene === 'character') {
                 const pending = currentData.lookslike?.pendingCharacter;
-                if (pending) {
-                    set(ref(db, 'competition/lookslike/activeCharacter'), pending);
-                }
+                if (pending) set(ref(db, 'competition/lookslike/activeCharacter'), pending);
             }
             set(ref(db, 'competition/lookslikeState'), scene);
-        }
-        else if (mode === 'mvp') {
+        } else if (mode === 'mvp') {
             set(ref(db, 'competition/mvpState'), scene);
         }
     };
-
 
     window.pickWinnerManual = () => {
         const votes = currentData.votes || {};
@@ -450,7 +444,6 @@
             alert("Никто не угадал этого игрока!");
         }
     };
-    // -----------------------------------------------------------
 
     window.updateBg = () => { const url = document.getElementById('bgUrl').value; if(url) set(ref(db, 'competition/background'), url); };
     window.removeBackground = () => {
@@ -477,9 +470,7 @@
     };
 
     window.clearAllCharacters = () => {
-        if(confirm("Удалить всех персонажей из базы?")) {
-            remove(ref(db, 'competition/lookslike/characters'));
-        }
+        if(confirm("Удалить всех персонажей из базы?")) remove(ref(db, 'competition/lookslike/characters'));
     };
 
     window.sendReply = (chatId, name) => {
@@ -502,82 +493,23 @@
     window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
     window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
 
-    // --- ЗАГРУЗКА ФОТО ДЛЯ MVP ---
     window.uploadPlayerPhoto = (playerId) => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/png,image/jpeg,image/jpg';
-        input.onchange = (e) => {
+        input.onchange = async (e) => {
             const file = e.target.files[0];
-            if (file) {
-                // Проверка размера (макс 5MB)
-                if (file.size > 11 * 1024 * 1024) {
-                    alert('Файл слишком большой! Максимум 11MB');
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        // Создаем canvas для возможного ресайза
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Масштабируем если очень большое (макс 1200x1200)
-                        let width = img.width;
-                        let height = img.height;
-                        const maxSize = 1200;
-                        
-                        if (width > maxSize || height > maxSize) {
-                            if (width > height) {
-                                height = (height / width) * maxSize;
-                                width = maxSize;
-                            } else {
-                                width = (width / height) * maxSize;
-                                height = maxSize;
-                            }
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Сохраняем в том же формате что и было
-                        const mimeType = file.type || 'image/png';
-                        
-                        console.log('Размер base64:', (base64Image.length / 1024).toFixed(2), 'KB');
-                        
-                        const blob = await new Promise(resolve => canvas.toBlob(resolve, file.type, 0.92));
-
-                        const formData = new FormData();
-                        formData.append('file', blob);
-                        formData.append('folder', 'players');
-
-                        fetch('https://ТВОЙ_ДОМЕН/upload', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            update(ref(db, `competition/players/${playerId}`), {
-                                photo: data.url
-                            });
-                        })
-                        .catch(err => {
-                            alert('Ошибка загрузки: ' + err.message);
-                        });
-
-                    };
-                    img.onerror = () => {
-                        alert('Ошибка загрузки изображения');
-                    };
-                    img.src = event.target.result;
-                };
-                reader.onerror = () => {
-                    alert('Ошибка чтения файла');
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+            showUploadOverlay('📷 Загружаем фото игрока...');
+            try {
+                const photoUrl = await uploadViaBot(file, 'players');
+                await update(ref(db, `competition/players/${playerId}`), { photo: photoUrl });
+                hideUploadOverlay(true);
+                renderMvpPlayers();
+            } catch (err) {
+                console.error('Ошибка:', err);
+                hideUploadOverlay(false);
+                alert('Ошибка загрузки: ' + err.message + '\nУбедитесь что бот запущен (порт 3000)');
             }
         };
         input.click();
@@ -585,15 +517,10 @@
 
     window.deletePlayerPhoto = (playerId) => {
         if (confirm('Удалить фото игрока?')) {
-            update(ref(db, `competition/players/${playerId}`), {
-                photo: null
-            });
+            update(ref(db, `competition/players/${playerId}`), { photo: null });
         }
     };
 
-    // --- ЛОГИКА LOOKS LIKE CAM (CROPPER & MANAGEMENT) ---
-    
-    // 1. Инициализация кроппера при выборе файла
     document.getElementById('charFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -601,116 +528,87 @@
             reader.onload = (event) => {
                 const image = document.getElementById('imageToCrop');
                 image.src = event.target.result;
-                
                 document.getElementById('cropWrapper').style.display = 'block';
                 document.getElementById('btnSaveChar').style.display = 'block';
-
-                if (cropper) { cropper.destroy(); }
-                
-                cropper = new Cropper(image, {
-                    aspectRatio: 8 / 9, // Фиксированное соотношение для половины экрана (960x1080)
-                    viewMode: 1,
-                });
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(image, { aspectRatio: 8 / 9, viewMode: 1 });
             };
             reader.readAsDataURL(file);
         }
     });
 
-    // 2. Сохранение персонажа
-    window.saveCharacter = () => {
+    window.saveCharacter = async () => {
         const name = document.getElementById('charName').value;
         if (!name) { alert("Введите имя персонажа!"); return; }
         if (!cropper) { alert("Выберите фото!"); return; }
-
-        // Получаем обрезанное изображение в формате base64
-        // Уменьшаем размер до разумного предела (высота 800px) для оптимизации базы
-        const canvas = cropper.getCroppedCanvas({ height: 800 }); 
-    
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('file', blob);
-            formData.append('folder', 'lookslike');
-
-            const res = await fetch('https://ТВОЙ_ДОМЕН/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await res.json();
-
-            push(ref(db, 'competition/lookslike/characters'), {
-                name: name,
-                image: data.url
-            });
-        }, 'image/jpeg', 0.85).then(() => {
-            // Сброс формы
-            cropper.destroy();
-            cropper = null;
+        showUploadOverlay('👯 Загружаем персонажа...');
+        try {
+            const canvas = cropper.getCroppedCanvas({ height: 800 });
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const imageUrl = await uploadViaBot(blob, 'characters');
+            await push(ref(db, 'competition/lookslike/characters'), { name, image: imageUrl });
+            hideUploadOverlay(true);
+            cropper.destroy(); cropper = null;
             document.getElementById('charName').value = '';
             document.getElementById('charFile').value = '';
             document.getElementById('imageToCrop').src = '';
             document.getElementById('cropWrapper').style.display = 'none';
             document.getElementById('btnSaveChar').style.display = 'none';
-        });
+        } catch (err) {
+            console.error('Ошибка:', err);
+            hideUploadOverlay(false);
+            alert('Ошибка загрузки: ' + err.message + '\nУбедитесь что бот запущен (порт 3000)');
+        }
     };
 
-    // 3. Управление персонажами
     window.setActiveCharacter = (id) => set(ref(db, 'competition/lookslike/pendingCharacter'), id);
     window.deleteCharacter = (id) => {
         if(confirm("Удалить персонажа?")) remove(ref(db, `competition/lookslike/characters/${id}`));
     };
 
-
-    // --- СЛУШАТЕЛЬ ДАННЫХ ---
-
+    // =============================================
+    // ✅ ОБНОВЛЕНО: карта сцен MVP
+    // =============================================
     function updateActiveSceneButtons() {
         const mode = currentData.activeMode || 'voting';
-
         document.querySelectorAll('[id^="scene-"]').forEach(btn => btn.classList.remove('active'));
-
         if (mode === 'voting') {
-            const votingState = currentData.votingState || 'announcement';
-            const activeBtn = document.getElementById(`scene-${votingState}`);
-            if (activeBtn) activeBtn.classList.add('active');
-        } 
-        else if (mode === 'slideshow') {
-            const slideshowState = currentData.slideshowState || 'photo_feed';
-            let targetId = '';
-            if (slideshowState === 'slideshow_qr') targetId = 'scene-slideshow-qr';
-            if (slideshowState === 'slideshow_photo') targetId = 'scene-slideshow-photo_feed';
-            const activeBtn = document.getElementById(targetId);
-            if (activeBtn) activeBtn.classList.add('active');
-        }
-        else if (mode === 'lookslike') {
-            const llState = currentData.lookslikeState || 'announcement';
-            // Маппинг для лукс лайка
-            let targetId = '';
-            if (llState === 'announcement') targetId = 'scene-ll-announcement';
-            if (llState === 'character') targetId = 'scene-ll-character';
-            if (llState === 'fan') targetId = 'scene-ll-fan';
-            
-            const activeBtn = document.getElementById(targetId);
-            if (activeBtn) activeBtn.classList.add('active');
+            const btn = document.getElementById(`scene-${currentData.votingState || 'announcement'}`);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'slideshow') {
+            const map = { slideshow_qr: 'scene-slideshow-qr', slideshow_photo: 'scene-slideshow-photo_feed' };
+            const btn = document.getElementById(map[currentData.slideshowState]);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'lookslike') {
+            const map = { announcement: 'scene-ll-announcement', character: 'scene-ll-character', fan: 'scene-ll-fan' };
+            const btn = document.getElementById(map[currentData.lookslikeState]);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'mvp') {
+            // winline_logo и announcement — новые сцены; qr и winner — старые
+            const map = {
+                winline_logo: 'scene-mvp-winline_logo',
+                announcement: 'scene-mvp-announcement',
+                qr:           'scene-mvp-qr',
+                winner:       'scene-mvp-winner'
+            };
+            const btn = document.getElementById(map[currentData.mvpState]);
+            if (btn) btn.classList.add('active');
         }
     }
 
     onValue(ref(db, 'competition'), (snapshot) => {
         currentData = snapshot.val() || {};
-        
         updateActiveSceneButtons();
 
-        // Управление видимостью панелей
         const mode = currentData.activeMode || 'voting';
         document.getElementById('mode-voting').classList.toggle('active', mode === 'voting');
         document.getElementById('mode-slideshow').classList.toggle('active', mode === 'slideshow');
         document.getElementById('mode-lookslike').classList.toggle('active', mode === 'lookslike');
         document.getElementById('mode-mvp').classList.toggle('active', mode === 'mvp');
         
-        document.getElementById('controls-voting').style.display = 'none';
-        document.getElementById('controls-slideshow').style.display = 'none';
-        document.getElementById('controls-lookslike').style.display = 'none';
-        document.getElementById('controls-mvp').style.display = 'none';
-        document.getElementById('players-controls').style.display = 'none';
+        ['controls-voting','controls-slideshow','controls-lookslike','controls-mvp','players-controls']
+            .forEach(id => document.getElementById(id).style.display = 'none');
+        document.getElementById('voting-mode-switch').style.display = 'none';
 
         if (mode === 'voting') {
             document.getElementById('controls-voting').style.display = 'block';
@@ -728,7 +626,6 @@
 
         const votingMode = currentData.votingMode || 'first_goal';
         const isAccepting = votingMode === 'first_goal' ? currentData.acceptingVotes : currentData.acceptingMvpVotes;
-
         document.getElementById('vote-first-goal')?.classList.toggle('active', votingMode === 'first_goal');
         document.getElementById('vote-mvp')?.classList.toggle('active', votingMode === 'match_mvp');
 
@@ -745,23 +642,20 @@
         renderMvpResults();
     });
 
-    // Переменные для кеширования DOM
     let lastMsgsHtml = "";
     let lastVotesHtml = "";
 
     function renderCharacters() {
         const container = document.getElementById('charactersList');
-        const chars = (currentData.lookslike && currentData.lookslike.characters) ? currentData.lookslike.characters : {};
+        const chars = currentData.lookslike?.characters || {};
         const pendingId = currentData.lookslike?.pendingCharacter;
         const activeId = currentData.lookslike?.activeCharacter;
-
         let html = '';
         for (let id in chars) {
             const char = chars[id];
             const isPending = (id === pendingId);
             const isActiveInAir = (id === activeId);
             const isEditing = (id === editingCharId);
-            
             html += `
             <div class="char-card ${isActiveInAir ? 'active-char' : ''}">
                 <img src="${char.image}" class="char-img">
@@ -778,16 +672,11 @@
                             <span style="cursor:pointer; font-size:12px; opacity:0.5" onclick="startEditName('${id}')">✏️</span>
                         </div>`
                     }
-                    
-                    <button class="btn" style="width:100%; margin-bottom:5px; 
-                            background: ${isPending ? '#9ef01a' : '#ecf0f1'}; 
-                            color: ${isPending ? 'white' : 'black'}" 
-                            onclick="setActiveCharacter('${id}')">
+                    <button class="btn" style="width:100%; margin-bottom:5px; background: ${isPending ? '#9ef01a' : '#ecf0f1'}; color: ${isPending ? 'white' : 'black'}" onclick="setActiveCharacter('${id}')">
                         ${isPending ? '📺 В ЭФИРЕ' : '📺 В ЭФИР'}
                     </button>
                     ${isActiveInAir ? '<div style="font-size:10px; color:green; text-align:center">● СЕЙЧАС В OBS</div>' : ''}
-                    <button class="btn" style="width:100%; background:#fab1a0; color:#c0392b; font-size: 0.8rem; margin-top:5px" 
-                            onclick="deleteCharacter('${id}')">Удалить</button>
+                    <button class="btn" style="width:100%; background:#fab1a0; color:#c0392b; font-size: 0.8rem; margin-top:5px" onclick="deleteCharacter('${id}')">Удалить</button>
                 </div>
             </div>`;
         }
@@ -797,16 +686,13 @@
     function renderMessages() {
         const container = document.getElementById('messagesList');
         const msgs = currentData.allMessages || {};
-        
         let list = Object.keys(msgs).map(id => ({id, ...msgs[id]}));
         list.sort((a, b) => b.timestamp - a.timestamp);
-
         let newHtml = '';
         list.forEach(m => {
             const userAvatar = (m.userPhoto && m.userPhoto.length > 10) ? m.userPhoto : tgLogo;
             const date = m.timestamp ? new Date(m.timestamp) : new Date();
             const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
-            
             newHtml += `    
                 <div class="message-item" style="border-left: 5px solid ${m.approved ? '#10ac84' : '#d1d8e0'}">
                     <div class="message-left">
@@ -821,9 +707,7 @@
                             <div style="width:40px; height:40px; flex-shrink:0;">
                                 <img src="${userAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:40px; height:40px; border-radius:50%; object-fit: cover; background: #eee;">
                             </div>
-                            <div>
-                                <b>${m.name}</b> <span style="color:#7f8c8d; font-size:0.9em">@${m.handle || ''}</span>
-                            </div>
+                            <div><b>${m.name}</b> <span style="color:#7f8c8d; font-size:0.9em">@${m.handle || ''}</span></div>
                         </div>
                         <div>${m.text || ''}</div>
                         ${m.isImage ? `<div class="photo-container"><img src="${m.photo}" onclick="window.open('${m.photo}')" style="cursor:pointer"></div>` : ''}
@@ -834,43 +718,28 @@
                     </div>
                 </div>`;
         });
-
-        if (lastMsgsHtml !== newHtml) {
-            container.innerHTML = newHtml;
-            lastMsgsHtml = newHtml;
-        }
+        if (lastMsgsHtml !== newHtml) { container.innerHTML = newHtml; lastMsgsHtml = newHtml; }
     }
 
     function renderMvpResults() {
         const container = document.getElementById('mvpResultsList');
         const votes = currentData.mvpVotes || {};
-        
-        // Подсчет голосов (теперь votes это объект где ключ = userId)
         const voteCounts = {};
-        const votersList = {}; // Для отображения кто проголосовал
-        
+        const votersList = {};
         Object.entries(votes).forEach(([userId, vote]) => {
             const player = vote.votedFor;
             voteCounts[player] = (voteCounts[player] || 0) + 1;
-            
             if (!votersList[player]) votersList[player] = [];
             votersList[player].push(vote);
         });
-
-        // Сортировка
         const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
-        
         document.getElementById('mvpCount').textContent = `Всего: ${Object.keys(votes).length} голосов`;
-
         let html = '<div class="votes-list">';
         sorted.forEach(([player, count], index) => {
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-            
-            // Список проголосовавших за этого игрока
             const voters = votersList[player] || [];
             const votersPreview = voters.slice(0, 3).map(v => v.name).join(', ');
             const moreVoters = voters.length > 3 ? ` и ещё ${voters.length - 3}` : '';
-            
             html += `
                 <div class="vote-card ${index === 0 ? 'correct' : ''}" style="cursor: pointer" onclick="showVotersPopup('${player}')">
                     <div style="font-size: 36px;">${medal}</div>
@@ -881,142 +750,75 @@
                 </div>`;
         });
         html += '</div>';
-        
         container.innerHTML = html;
-        
-        // Сохраняем данные для попапа
         window.mvpVotersData = votersList;
     }
 
-    // Оптимизированный рендер игроков с lazy loading изображений
     function renderMvpPlayers() {
         const container = document.getElementById('mvpPlayersList');
         if (!container) return;
-        
         const players = currentData.players || {};
         const votes = currentData.mvpVotes || {};
-        
-        // Подсчитываем голоса для каждого игрока
         const voteCounts = {};
         Object.values(votes).forEach(vote => {
-            const player = vote.votedFor;
-            voteCounts[player] = (voteCounts[player] || 0) + 1;
+            voteCounts[vote.votedFor] = (voteCounts[vote.votedFor] || 0) + 1;
         });
-
-        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">';
-        
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">';
         for (let id in players) {
             const player = players[id];
             const voteCount = voteCounts[player.name] || 0;
-            const hasPhoto = player.photo && player.photo.length > 50;
-
+            const hasPhoto = player.photo && player.photo.startsWith('http');
             html += `
                 <div style="background: var(--white); border-radius: 12px; padding: 15px; border: 2px solid ${hasPhoto ? '#10ac84' : '#ddd'};">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                         <div style="font-weight: 700; font-size: 1rem;">${player.name}</div>
-                        <div style="background: var(--sibir-blue); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
-                            ${voteCount}
-                        </div>
+                        <div style="background: var(--sibir-blue); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">${voteCount}</div>
                     </div>
-                    
-                    <div style="width: 100%; aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; overflow: hidden; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 100%; aspect-ratio: 8/9; background: #f0f0f0; border-radius: 8px; overflow: hidden; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
                         ${hasPhoto ? 
-                            `<img data-lazy-src="${player.photo}" class="lazy-photo" style="width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s;">` : 
+                            `<img src="${player.photo}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">` : 
                             `<span style="color: #999; font-size: 3rem;">👤</span>`
                         }
                     </div>
-                    
                     <div style="display: flex; gap: 5px;">
                         <button class="btn" style="flex: 1; font-size: 0.75rem; padding: 8px; background: ${hasPhoto ? '#ff9f43' : '#10ac84'}; color: white;" 
                                 onclick="uploadPlayerPhoto('${id}')">
                             ${hasPhoto ? '🔄 Заменить' : '📷 Добавить'}
                         </button>
-                        ${hasPhoto ? `
-                            <button class="btn" style="padding: 8px; background: #ee5253; color: white; font-size: 0.75rem;" 
-                                    onclick="deletePlayerPhoto('${id}')">
-                                🗑️
-                            </button>
-                        ` : ''}
+                        ${hasPhoto ? `<button class="btn" style="padding: 8px; background: #ee5253; color: white; font-size: 0.75rem;" onclick="deletePlayerPhoto('${id}')">🗑️</button>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-        
         html += '</div>';
         container.innerHTML = html;
-        
-        // Lazy load изображений после рендера
-        setTimeout(() => lazyLoadImages(), 100);
     }
 
-    // Функция для ленивой загрузки изображений
-    function lazyLoadImages() {
-        const lazyImages = document.querySelectorAll('.lazy-photo[data-lazy-src]');
-        
-        lazyImages.forEach(img => {
-            const src = img.getAttribute('data-lazy-src');
-            if (src) {
-                img.src = src;
-                img.onload = () => {
-                    img.style.opacity = '1';
-                    img.removeAttribute('data-lazy-src');
-                };
-            }
-        });
-    }
-
-    // Функция для показа полного списка проголосовавших
     window.showVotersPopup = (player) => {
         const voters = window.mvpVotersData[player] || [];
         const list = voters.map(v => `${v.name} (@${v.handle || 'без ника'})`).join('\n');
         alert(`Проголосовали за ${player}:\n\n${list}`);
     };
 
-    // Начать редактирование (запоминаем ID и перерисовываем)
-    window.startEditName = (id) => {
-        editingCharId = id;
-        renderCharacters();
-    };
-
-    // Отмена
-    window.cancelEditName = () => {
-        editingCharId = null;
-        renderCharacters();
-    };
-
-    // Сохранение в Firebase
+    window.startEditName = (id) => { editingCharId = id; renderCharacters(); };
+    window.cancelEditName = () => { editingCharId = null; renderCharacters(); };
     window.saveEditName = (id) => {
         const newName = document.getElementById(`edit-name-${id}`).value;
-        if (!newName) {
-            alert("Имя не может быть пустым");
-            return;
-        }
-
-        // Обновляем только поле name по конкретному пути в базе
-        update(ref(db, `competition/lookslike/characters/${id}`), {
-            name: newName
-        }).then(() => {
-            editingCharId = null; // Выходим из режима редактирования
-            // Рендер вызовется автоматически, так как сработает слушатель onValue
-        }).catch((error) => {
-            console.error("Ошибка при обновлении имени:", error);
-        });
+        if (!newName) { alert("Имя не может быть пустым"); return; }
+        update(ref(db, `competition/lookslike/characters/${id}`), { name: newName })
+            .then(() => { editingCharId = null; });
     };
 
     window.renderVotes = () => {
         const container = document.getElementById('votesList');
         const filter = document.getElementById('filterMode').value;
         const votes = currentData.votes || {};
-        
         let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
         if(filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
         document.getElementById('vCount').textContent = `Всего: ${list.length}`;
-
         let newHtml = '';
         list.reverse().forEach(v => {
             const isCorrect = v.votedFor === currentData.scorer;
             const voteAvatar = (v.photo && v.photo.length > 10) ? v.photo : tgLogo;
-
             newHtml += `
                 <div class="vote-card ${isCorrect ? 'correct' : ''}">
                     <span style="position:absolute; top:5px; right:10px; cursor:pointer; color:#ccc" onclick="removeVote('${v.id}')">×</span>
@@ -1028,41 +830,26 @@
                     <button class="btn" style="width:100%; margin-top:10px; font-size:10px; padding:5px;" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
                 </div>`;
         });
-
-        if (lastVotesHtml !== newHtml) {
-            container.innerHTML = newHtml;
-            lastVotesHtml = newHtml;
-        }
+        if (lastVotesHtml !== newHtml) { container.innerHTML = newHtml; lastVotesHtml = newHtml; }
     }
 
     function renderPlayers() {
         const pList = document.getElementById('playersList');
         const pSelect = document.getElementById('goalScorer');
         const players = currentData.players || {};
-        
         const scrollPos = pList.scrollTop;
-        
         pList.innerHTML = '';
         let optionsHtml = '<option value="">-- КТО ЗАБИЛ? --</option>';
-        
         for(let id in players) {
             const player = players[id];
-            
-            // Простой список без фото для сайдбара (без лагов)
             pList.innerHTML += `
                 <div class="player-tag" style="display: inline-flex; align-items: center; gap: 5px;">
                     ${player.name}
                     <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; margin-left:3px">×</span>
-                </div>
-            `;
-            
+                </div>`;
             optionsHtml += `<option value="${player.name}" ${currentData.scorer === player.name ? 'selected' : ''}>${player.name}</option>`;
         }
-        
-        if (pSelect.innerHTML !== optionsHtml) {
-            pSelect.innerHTML = optionsHtml;
-        }
-        
+        if (pSelect.innerHTML !== optionsHtml) pSelect.innerHTML = optionsHtml;
         pList.scrollTop = scrollPos;
     }
 </script>
