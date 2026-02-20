@@ -4,283 +4,162 @@
     <meta charset="UTF-8">
     <style>
         #bg-layer {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            z-index: -1; 
-            transition: opacity 1s ease-in-out;
-            background-color: transparent;
+            background-size: cover; background-position: center;
+            z-index: -1; transition: opacity 1s ease-in-out;
         }
-        @font-face {
-            font-family: 'PFDinComp';
-            font-weight: 400;
-            font-style: normal;
-            src: url('fonts/PFDinTextCompPro-Regular.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'PFDinComp';
-            font-weight: 700;
-            font-style: normal;
-            src: url('fonts/PFDinTextCompPro-Bold.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'PFDinComp';
-            font-weight: 700;
-            font-style: italic;
-            src: url('fonts/PFDinTextCompPro-BoldItalic.ttf') format('truetype');
-        }
+
+        @font-face { font-family: 'PFDinComp'; font-weight: 400; font-style: normal; src: url('fonts/PFDinTextCompPro-Regular.ttf') format('truetype'); }
+        @font-face { font-family: 'PFDinComp'; font-weight: 700; font-style: normal; src: url('fonts/PFDinTextCompPro-Bold.ttf') format('truetype'); }
+        @font-face { font-family: 'PFDinComp'; font-weight: 700; font-style: italic; src: url('fonts/PFDinTextCompPro-BoldItalic.ttf') format('truetype'); }
 
         @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
-            50% { transform: scale(1.03); text-shadow: 0 0 50px rgba(0, 242, 255, 0.9); }
+            0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0,242,255,0.6); }
+            50% { transform: scale(1.03); text-shadow: 0 0 50px rgba(0,242,255,0.9); }
         }
-
         @keyframes shimmer {
             0% { background-position: -200% center; }
             100% { background-position: 200% center; }
         }
 
+        /* Конечный inset отрицательный — чтобы перекрыть выступы скошенного ::before */
         @keyframes winExpandFromCenter {
             from { clip-path: inset(0 50% 0 50%); }
-            to   { clip-path: inset(0 0% 0 0%); }
+            to   { clip-path: inset(0 -20px 0 -20px); }
         }
-
         @keyframes winPhotoSlideIn {
             from { transform: translateX(-110%); }
             to   { transform: translateX(0); }
         }
-
         @keyframes winSlideFromRight {
             from { transform: translate(calc(-50% + 110vw), -50%); }
             to   { transform: translate(-50%, -50%); }
         }
 
         body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
+            margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden;
             background: url('media/BG.png') center/cover no-repeat;
-            font-family: 'PFDinComp', sans-serif;
-            color: white;
-        }
-        
-        .scene {
-            position: absolute; 
-            width: 100%; 
-            height: 100%;
-            display: flex;
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            text-align: center;
-            opacity: 0;
-            visibility: hidden;
-            transform: scale(0.95);
-            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+            font-family: 'PFDinComp', sans-serif; color: white;
         }
 
-        .scene.active {
-            opacity: 1;
-            visibility: visible;
-            transform: scale(1);
-            z-index: 5;
+        .scene {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; opacity: 0; visibility: hidden; transform: scale(0.95);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1), visibility 0.8s;
         }
+        .scene.active { opacity: 1; visibility: visible; transform: scale(1); z-index: 5; }
 
         h1 { font-size: 80px; text-transform: uppercase; text-shadow: 4px 4px 15px rgba(0,0,0,0.8); margin: 20px; }
 
         .video-scene video {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            z-index: 1;
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; object-fit: cover; z-index: 1;
         }
 
         .qr-row { display: flex; gap: 100px; justify-content: center; align-items: flex-start; }
         .qr-item { display: flex; flex-direction: column; align-items: center; }
         .qr-item img { width: 700px; border: 10px solid white; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
 
-        #winner {
-            padding: 0;
-            overflow: hidden;
-        }
+        #winner { padding: 0; overflow: hidden; }
 
         .winner-photo-container {
-            position: absolute;
-            left: 0; bottom: 0;
-            height: 100%;
-            width: 50%;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            position: absolute; left: 0; bottom: 0;
+            height: 100%; width: 50%;
+            display: flex; align-items: flex-end; justify-content: center;
         }
-
         .winner-photo {
-            height: 100%;
-            width: auto;
-            max-width: 100%;
-            object-fit: contain;
-            object-position: bottom center;
-            transition: opacity 0.5s ease;
-            display: block;
+            height: 100%; width: auto; max-width: 100%;
+            object-fit: contain; object-position: bottom center;
+            transition: opacity 0.5s ease; display: block;
         }
-
         .winner-photo.loading { opacity: 0; }
 
         .photo-placeholder {
-            width: 60%;
-            height: 70%;
-            border-radius: 20px;
-            background: linear-gradient(
-                90deg,
-                rgba(5, 202, 255, 0.05) 25%,
-                rgba(5, 202, 255, 0.15) 50%,
-                rgba(5, 202, 255, 0.05) 75%
-            );
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            align-self: center;
+            width: 60%; height: 70%; border-radius: 20px; align-self: center;
+            background: linear-gradient(90deg, rgba(5,202,255,0.05) 25%, rgba(5,202,255,0.15) 50%, rgba(5,202,255,0.05) 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite;
         }
 
+        /* overflow: visible нужен, чтобы ::before с inset: 0 -20px не срезался родителем */
         .winner-panel-number {
-            position: absolute;
-            left: 1244.8159px;
-            top: 262.4047px;
-            font-family: 'PFDinComp', sans-serif;
-            font-weight: 700;
-            font-style: italic;
-            font-size: 80px;
-            line-height: 1;
-            color: white;
-            white-space: nowrap;
-            padding: 10px 32px;
-            transform: translate(-50%, -50%);
-            background: transparent;
+            position: absolute; left: 1244.8159px; top: 262.4047px;
+            font-family: 'PFDinComp', sans-serif; font-weight: 700; font-style: italic;
+            font-size: 80px; line-height: 1; color: white; white-space: nowrap;
+            padding: 10px 40px; transform: translate(-50%, -50%);
+            background: transparent; overflow: visible;
         }
         .winner-panel-number::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: #1761FF;
-            transform: skewX(-8deg);
-            z-index: -1;
+            content: ''; position: absolute; inset: 0 -20px;
+            background: #1761FF; transform: skewX(-8deg); z-index: -1;
         }
 
         .winner-panel-name {
-            position: absolute;
-            left: 1333.7986px;
-            top: 428.8628px;
-            font-family: 'PFDinComp', sans-serif;
-            font-weight: 700;
-            font-style: italic;
-            font-size: 80px;
-            line-height: 1;
-            text-transform: uppercase;
-            color: white;
-            white-space: nowrap;
-            padding: 10px 32px;
-            transform: translate(-50%, -50%);
-            background: transparent;
+            position: absolute; left: 1333.7986px; top: 428.8628px;
+            font-family: 'PFDinComp', sans-serif; font-weight: 700; font-style: italic;
+            font-size: 80px; line-height: 1; text-transform: uppercase;
+            color: white; white-space: nowrap;
+            padding: 10px 40px; transform: translate(-50%, -50%);
+            background: transparent; overflow: visible;
         }
         .winner-panel-name::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: #1761FF;
-            transform: skewX(-8deg);
-            z-index: -1;
+            content: ''; position: absolute; inset: 0 -20px;
+            background: #1761FF; transform: skewX(-8deg); z-index: -1;
         }
 
         .winner-label-made {
-            position: absolute;
-            left: 1257.1521px;
-            top: 605.8955px;
-            font-family: 'PFDinComp', sans-serif;
-            font-weight: 700;
-            font-style: italic;
-            font-size: 215.2px;
-            line-height: 1;
-            text-transform: uppercase;
-            transform: translate(-50%, -50%);
-            color: white;
-            white-space: nowrap;
+            position: absolute; left: 1257.1521px; top: 605.8955px;
+            font-family: 'PFDinComp', sans-serif; font-weight: 700; font-style: italic;
+            font-size: 215.2px; line-height: 1; text-transform: uppercase;
+            transform: translate(-50%, -50%); color: white; white-space: nowrap;
         }
-
         .winner-label-diff {
-            position: absolute;
-            left: 1344.0158px;
-            top: 798.583px;
-            font-family: 'PFDinComp', sans-serif;
-            font-weight: 700;
-            font-style: italic;
-            font-size: 215.2px;
-            line-height: 1;
-            text-transform: uppercase;
-            transform: translate(-50%, -50%);
-            color: #FF6A13;
-            white-space: nowrap;
+            position: absolute; left: 1344.0158px; top: 798.583px;
+            font-family: 'PFDinComp', sans-serif; font-weight: 700; font-style: italic;
+            font-size: 215.2px; line-height: 1; text-transform: uppercase;
+            transform: translate(-50%, -50%); color: #FF6A13; white-space: nowrap;
         }
 
-        #winner.anim-active .winner-panel-number {
-            animation: winExpandFromCenter 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0s both;
-        }
-        #winner.anim-active .winner-panel-name {
-            animation: winExpandFromCenter 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
-        }
-        #winner.anim-active .winner-photo-container {
-            animation: winPhotoSlideIn 0.70s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.72s both;
-        }
-        #winner.anim-active .winner-label-made {
-            animation: winSlideFromRight 0.80s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.85s both;
-        }
-        #winner.anim-active .winner-label-diff {
-            animation: winSlideFromRight 0.80s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1.41s both;
-        }
-
-        #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: opacity 1s ease-in-out; }
+        #winner.anim-active .winner-panel-number    { animation: winExpandFromCenter 0.45s cubic-bezier(0.4,0,0.2,1) 0.1s both; }
+        #winner.anim-active .winner-panel-name      { animation: winExpandFromCenter 0.45s cubic-bezier(0.4,0,0.2,1) 0.35s both; }
+        #winner.anim-active .winner-photo-container { animation: winPhotoSlideIn 0.70s cubic-bezier(0.25,0.46,0.45,0.94) 0.72s both; }
+        #winner.anim-active .winner-label-made      { animation: winSlideFromRight 0.80s cubic-bezier(0.25,0.46,0.45,0.94) 0.85s both; }
+        #winner.anim-active .winner-label-diff      { animation: winSlideFromRight 0.80s cubic-bezier(0.25,0.46,0.45,0.94) 1.0s both; }
     </style>
 </head>
 <body>
     <div id="bg-layer"></div>
 
-    <!-- СЦЕНА: Логотип Winline -->
     <div id="winline_logo" class="scene video-scene">
-        <video id="video-winline-logo" muted playsinline loop>
+        <video id="video-winline-logo" muted playsinline>
             <source src="media/WINLINE_logo.webm" type="video/webm">
         </video>
     </div>
 
-    <!-- СЦЕНА: Анонс -->
     <div id="announcement" class="scene video-scene">
-        <video id="video-announcement" muted playsinline loop>
+        <video id="video-announcement" muted playsinline>
             <source src="media/WINLINE_anons.webm" type="video/webm">
         </video>
     </div>
 
-    <!-- СЦЕНА: QR -->
     <div id="qr" class="scene">
         <div class="qr-row">
             <div class="qr-item"><img src="media/telegramqr.png"></div>
             <div class="qr-item"><img src="media/max.jpg"></div>
         </div>
-        <h1 style="text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); font-size: 160px; animation: pulse-glow 2s ease-in-out infinite;">
+        <h1 style="text-shadow: 0 0 20px rgba(0,242,255,0.6); font-size: 160px; animation: pulse-glow 2s ease-in-out infinite;">
             Голосуй за игрока матча!
         </h1>
     </div>
 
-    <!-- СЦЕНА: Победитель -->
     <div id="winner" class="scene">
         <div id="winner-photo"  class="winner-photo-container"></div>
         <div id="winner-number" class="winner-panel-number"></div>
         <div id="winner-name"   class="winner-panel-name"></div>
         <div class="winner-label-made">СДЕЛАЛ</div>
         <div class="winner-label-diff">РАЗНИЦУ</div>
-    </div>
-
-    <div id="bg-video">
-        <source src="media/BG.png" type="image/png">
     </div>
 
     <script type="module">
@@ -298,70 +177,54 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db  = getDatabase(app);
 
-        const bgLayer = document.getElementById('bg-layer');
+        const bgLayer    = document.getElementById('bg-layer');
         const imageCache = new Set();
 
         const videoScenes = {
             winline_logo: document.getElementById('video-winline-logo'),
-            announcement:  document.getElementById('video-announcement'),
+            announcement: document.getElementById('video-announcement'),
         };
 
-        // Разблокируем autoplay одним кликом по странице (нужно для OBS и браузеров)
-        let audioUnlocked = false;
+        // Разблокируем autoplay одним кликом (нужно для OBS / браузеров)
         document.addEventListener('click', () => {
-            if (audioUnlocked) return;
-            audioUnlocked = true;
-            Object.values(videoScenes).forEach(v => v && v.play().catch(() => {}));
+            Object.values(videoScenes).forEach(v => v?.play().catch(() => {}));
         }, { once: true });
+
+        // ── Кэш: обновляется только нужными подписками ────────────────────
+        let cachedPlayers = {};
+        let cachedVotes   = {};
+        let lastScene     = null;
+        let lastTs        = null;
 
         function preloadImage(src) {
             if (!src || imageCache.has(src)) return Promise.resolve();
             imageCache.add(src);
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
                 const img = new Image();
-                img.onload  = resolve;
-                img.onerror = resolve;
+                img.onload = img.onerror = resolve;
                 img.src = src;
             });
         }
 
-        function preloadAllAssets(data) {
-            const urls = ['media/telegramqr.png', 'media/max.jpg', data.background];
-            if (data.players) Object.values(data.players).forEach(p => { if (p.photo) urls.push(p.photo); });
-            urls.forEach(url => preloadImage(url));
-        }
-
-        // Не используем lastScene для блокировки — всегда обрабатываем обновления
-        let lastScene = null;
-        let lastTs = null;
-
         function switchScene(targetId) {
-            // Видео: останавливаем все, запускаем нужное
-            Object.entries(videoScenes).forEach(([key, videoEl]) => {
-                if (!videoEl) return;
-                if (key === targetId) {
-                    videoEl.currentTime = 0;
-                    videoEl.play().catch(() => {});
-                } else {
-                    videoEl.pause();
-                    videoEl.currentTime = 0;
-                }
+            Object.entries(videoScenes).forEach(([key, el]) => {
+                if (!el) return;
+                if (key === targetId) { el.currentTime = 0; el.play().catch(() => {}); }
+                else { el.pause(); el.currentTime = 0; }
             });
 
-            // Анимации победителя: сбрасываем если уходим
             if (lastScene === 'winner' && targetId !== 'winner') {
                 document.getElementById('winner').classList.remove('anim-active');
             }
 
-            // Переключаем активную сцену
             document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(targetId);
             if (target) target.classList.add('active');
 
-            // Запускаем анимации победителя
             if (targetId === 'winner') {
+                displayWinner();
                 document.getElementById('winner').classList.remove('anim-active');
                 requestAnimationFrame(() => requestAnimationFrame(() => {
                     document.getElementById('winner').classList.add('anim-active');
@@ -371,48 +234,52 @@
             lastScene = targetId;
         }
 
-        onValue(ref(db, 'competition'), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            preloadAllAssets(data);
-
-            // Фон
-            if (data.background && data.background.trim() !== "") {
-                bgLayer.style.backgroundImage = `url('${data.background}')`;
-                bgLayer.style.opacity = "1";
+        // ── 1. Фон — меняется редко ────────────────────────────────────────
+        onValue(ref(db, 'competition/background'), snap => {
+            const bg = snap.val() || '';
+            if (bg.trim()) {
+                bgLayer.style.backgroundImage = `url('${bg}')`;
+                bgLayer.style.opacity = '1';
             } else {
                 bgLayer.style.backgroundImage = '';
-                bgLayer.style.opacity = "0";
-            }
-
-            const currentScene = data.mvpState || null;
-            const currentTs = data.mvpStateTs || null;
-
-            // Переключаем сцену если изменилась сцена ИЛИ timestamp (повторный клик той же кнопки)
-            const sceneChanged = currentScene && currentScene !== lastScene;
-            const tsChanged = currentTs && currentTs !== lastTs;
-
-            if (currentScene && (sceneChanged || tsChanged)) {
-                lastTs = currentTs;
-                if (currentScene === 'winner') {
-                    displayWinner(data.mvpVotes, data.players);
-                }
-                switchScene(currentScene);
-            }
-
-            // Обновляем данные победителя если сцена уже открыта (но не перезапускаем анимацию)
-            if (currentScene === 'winner' && lastScene === 'winner' && !sceneChanged && !tsChanged) {
-                displayWinner(data.mvpVotes, data.players);
+                bgLayer.style.opacity = '0';
             }
         });
 
-        function displayWinner(votes, players) {
+        // ── 2. Активная сцена ──────────────────────────────────────────────
+        onValue(ref(db, 'competition/mvpState'), snap => {
+            const scene = snap.val();
+            if (scene && scene !== lastScene) switchScene(scene);
+        });
+
+        // Timestamp — повторный клик той же кнопки тоже срабатывает
+        onValue(ref(db, 'competition/mvpStateTs'), snap => {
+            const ts = snap.val();
+            if (!ts || ts === lastTs) return;
+            lastTs = ts;
+            if (lastScene) switchScene(lastScene);
+        });
+
+        // ── 3. Игроки — предзагружаем фото сразу при получении ────────────
+        onValue(ref(db, 'competition/players'), snap => {
+            cachedPlayers = snap.val() || {};
+            Object.values(cachedPlayers).forEach(p => { if (p.photo) preloadImage(p.photo); });
+            if (lastScene === 'winner') displayWinner();
+        });
+
+        // ── 4. Голоса MVP — обновляем победителя в реальном времени ───────
+        onValue(ref(db, 'competition/mvpVotes'), snap => {
+            cachedVotes = snap.val() || {};
+            if (lastScene === 'winner') displayWinner();
+        });
+
+        // ── Рендер победителя ──────────────────────────────────────────────
+        function displayWinner() {
             const photoContainer = document.getElementById('winner-photo');
             const namePanel      = document.getElementById('winner-name');
             const numberPanel    = document.getElementById('winner-number');
 
-            if (!votes) {
+            if (!cachedVotes || Object.keys(cachedVotes).length === 0) {
                 namePanel.textContent    = '';
                 numberPanel.textContent  = '';
                 photoContainer.innerHTML = '';
@@ -420,46 +287,35 @@
             }
 
             const voteCounts = {};
-            Object.values(votes).forEach(vote => {
-                voteCounts[vote.votedFor] = (voteCounts[vote.votedFor] || 0) + 1;
+            Object.values(cachedVotes).forEach(v => {
+                voteCounts[v.votedFor] = (voteCounts[v.votedFor] || 0) + 1;
             });
 
-            const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
-            if (sorted.length === 0) return;
+            const [[winnerName]] = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
 
-            const [winnerName] = sorted[0];
-
-            let winnerPhotoSrc = null;
-            if (players) {
-                for (let id in players) {
-                    if (players[id].name === winnerName) {
-                        winnerPhotoSrc = players[id].photo || null;
-                        break;
-                    }
+            let photoSrc = null;
+            for (const id in cachedPlayers) {
+                if (cachedPlayers[id].name === winnerName) {
+                    photoSrc = cachedPlayers[id].photo || null;
+                    break;
                 }
             }
 
-            // Парсим номер из начала имени: "11 Кошелев Семен" → номер "11", имя "Кошелев Семен"
-            const nameMatch = winnerName.match(/^(\d+)\s+(.+)$/);
-            const displayNumber = nameMatch ? `#${nameMatch[1]}` : '';
-            const displayName   = nameMatch ? nameMatch[2] : winnerName;
+            // "11 Кошелев Семён" → панель "#11" + имя "Кошелев Семён"
+            const m = winnerName.match(/^(\d+)\s+(.+)$/);
+            namePanel.textContent   = m ? m[2] : winnerName;
+            numberPanel.textContent = m ? `#${m[1]}` : '';
 
-            namePanel.textContent   = displayName;
-            numberPanel.textContent = displayNumber;
+            if (!photoSrc) { photoContainer.innerHTML = ''; return; }
 
-            if (!winnerPhotoSrc) {
-                photoContainer.innerHTML = '';
-                return;
-            }
-
-            if (imageCache.has(winnerPhotoSrc)) {
-                photoContainer.innerHTML = `<img src="${winnerPhotoSrc}" class="winner-photo">`;
+            if (imageCache.has(photoSrc)) {
+                photoContainer.innerHTML = `<img src="${photoSrc}" class="winner-photo">`;
             } else {
                 photoContainer.innerHTML = `<div class="photo-placeholder"></div>`;
-                preloadImage(winnerPhotoSrc).then(() => {
+                preloadImage(photoSrc).then(() => {
                     if (lastScene !== 'winner') return;
                     const img = document.createElement('img');
-                    img.src = winnerPhotoSrc;
+                    img.src = photoSrc;
                     img.className = 'winner-photo loading';
                     photoContainer.innerHTML = '';
                     photoContainer.appendChild(img);
@@ -469,4 +325,5 @@
         }
     </script>
 </body>
-</html>
+</html> 
+
