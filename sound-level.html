@@ -15,35 +15,18 @@
             font-family: 'MyCustomFont', sans-serif; color: white;
         }
 
-        /* Фоновое видео */
         #bg-video {
             position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
+            right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
             z-index: 0;
             object-fit: cover;
-            background-size: cover;
         }
 
         .video-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; 
-        }
-
-        .video-side { 
-            width: 55%; height: 100%; 
-            display: flex; align-items: center; justify-content: center; /* Центрируем видео */
-        }
-
-        /* Стиль для видео с танцем */
-        .dance-video {
-            max-width: 95%; /* Чтобы не прилипало к краям */
-            max-height: 90%;
-            object-fit: contain;
+            z-index: -1;
         }
 
         .noise-container {
@@ -52,7 +35,16 @@
             position: relative;
         }
 
-        .video-side { width: 55%; height: 100%; }
+        .video-side {
+            width: 55%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .dance-video {
+            max-width: 95%;
+            max-height: 90%;
+            object-fit: contain;
+        }
 
         .ui-side {
             width: 45%; height: 100%;
@@ -61,28 +53,41 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+            0%   { transform: scale(1);    opacity: 1; }
+            50%  { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1);    opacity: 1; }
         }
 
         .label-top {
             font-size: 150px; text-transform: uppercase;
-            margin-bottom: 30px; 
+            margin-bottom: 30px;
             text-shadow: 0 0 20px rgba(0, 242, 255, 0.8);
             letter-spacing: 2px;
-            animation: pulse 1.5s infinite ease-in-out; /* Применяем пульсацию */
+            animation: pulse 1.5s infinite ease-in-out;
             display: inline-block;
         }
 
         .meter-wrapper { display: flex; align-items: center; gap: 50px; }
-        .scale-column { display: flex; flex-direction: column-reverse; gap: 10px; }
+        .scale-column  { display: flex; flex-direction: column-reverse; gap: 10px; }
 
         .segment {
             width: 170px; height: 32px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.2);
-            transition: background 0.15s ease, box-shadow 0.15s ease; /* Плавная смена цвета */
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+
+        /* Маркер пика на шкале */
+        .segment.peak-marker::after {
+            content: '';
+            position: absolute;
+            right: -8px; top: 50%;
+            transform: translateY(-50%);
+            width: 6px; height: 22px;
+            border-radius: 3px;
+            background: white;
+            box-shadow: 0 0 8px white;
         }
 
         .db-circle {
@@ -94,16 +99,49 @@
             position: relative;
         }
 
-        .db-value { font-size: 120px; color: white; font-weight: bold; font-style: italic; }
+        /* Основное значение */
+        .db-value {
+            font-size: 96px; color: white;
+            font-weight: bold; font-style: italic;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        /* Десятые доли — чуть меньше */
+        .db-decimal {
+            font-size: 54px; color: #00f2ff;
+            font-style: italic;
+            vertical-align: baseline;
+        }
+
         .db-unit { position: absolute; bottom: 65px; font-size: 24px; color: #00f2ff; }
 
+        /* Значение пика вверху круга */
+        .db-peak {
+            position: absolute; top: 38px;
+            font-size: 18px; color: rgba(255,255,255,0.55);
+            letter-spacing: 1px;
+        }
+        .db-peak span { color: #ffff00; }
+
         .circle-svg { position: absolute; transform: rotate(-90deg); }
+
+        /* Основное кольцо (текущий уровень) */
         .circle-progress {
             fill: none; stroke: #ffff00;
             stroke-width: 12;
             stroke-dasharray: 880; stroke-dashoffset: 880;
             stroke-linecap: round;
-            transition: stroke-dashoffset 0.2s ease-out; /* Плавное кольцо */
+            transition: stroke-dashoffset 0.18s ease-out;
+        }
+
+        /* Кольцо пика — тонкая белая дуга */
+        .circle-peak {
+            fill: none; stroke: rgba(255,255,255,0.5);
+            stroke-width: 4;
+            stroke-dasharray: 880; stroke-dashoffset: 880;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease-out; /* медленно спадает */
         }
     </style>
 </head>
@@ -112,111 +150,208 @@
 <video autoplay muted loop playsinline id="bg-video">
     <source src="media/backgroundvideo.mp4" type="video/mp4">
     <source src="media/backgroundvideo.webm" type="video/webm">
-    </video>
+</video>
 
 <div class="noise-container">
 
     <div class="video-side">
         <video autoplay muted loop playsinline class="dance-video">
             <source src="media/dance.webm" type="video/webm">
-            </video>
+        </video>
     </div>
-    
+
     <div class="ui-side">
         <div class="label-top">ГРОМЧЕ!</div>
         <div class="meter-wrapper">
             <div class="scale-column" id="scale"></div>
+
             <div class="db-circle">
                 <svg class="circle-svg" width="320" height="320">
-                    <circle cx="160" cy="160" r="140" fill="none" stroke="#00f2ff" stroke-width="4" opacity="0.3"></circle>
+                    <!-- Фоновый трек -->
+                    <circle cx="160" cy="160" r="140"
+                            fill="none" stroke="#00f2ff" stroke-width="4" opacity="0.3"></circle>
+                    <!-- Пик -->
+                    <circle class="circle-peak" id="peakRing" cx="160" cy="160" r="140"></circle>
+                    <!-- Текущий уровень -->
                     <circle class="circle-progress" id="progress" cx="160" cy="160" r="140"></circle>
                 </svg>
-                <div class="db-value" id="dbText">0</div>
-                <div class="db-unit">ДЦБ</div>
+
+                <div class="db-peak">PEAK: <span id="peakText">—</span></div>
+
+                <!-- Значение: целая часть + десятые -->
+                <div class="db-value">
+                    <span id="dbInt">0</span><span class="db-decimal">.<span id="dbFrac">0</span></span>
+                </div>
+                <div class="db-unit">ДБ</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const scale = document.getElementById('scale');
-    const dbText = document.getElementById('dbText');
-    const progress = document.getElementById('progress');
-    const segments = [];
-    
-    // Переменные для контроля частоты обновления цифр
-    let lastUpdateTime = 0;
-    const updateInterval = 200; // Обновлять цифры каждые 100мс (10 раз в секунду)
+    const scaleEl   = document.getElementById('scale');
+    const dbInt     = document.getElementById('dbInt');
+    const dbFrac    = document.getElementById('dbFrac');
+    const peakText  = document.getElementById('peakText');
+    const progress  = document.getElementById('progress');
+    const peakRing  = document.getElementById('peakRing');
+    const segments  = [];
 
+    // ── Настройки поведения ────────────────────────────────────────────
+    const DB_MIN = 55;   // нижняя граница шкалы (тишина в арене ~55 дБ)
+    const DB_MAX = 110;  // верхняя граница (громкий рёв болельщиков)
+
+    // Скорости: быстрый рост, медленный спад — ощущение эха в зале
+    const RISE_SPEED  = 0.65;   // скорость нарастания (0..1 за кадр, меньше = плавнее)
+    const DECAY_SPEED = 0.018;  // скорость спада в дБ/кадр (маленькое = долго держится)
+
+    // Пик: сколько секунд держится до начала спада
+    const PEAK_HOLD_SEC  = 3.0;
+    const PEAK_DECAY_DB  = 0.08; // скорость падения пика, дБ/кадр
+    // ──────────────────────────────────────────────────────────────────
+
+    let displayDb  = DB_MIN;   // текущее отображаемое значение (с инерцией)
+    let peakDb     = DB_MIN;   // пиковое значение
+    let peakHoldMs = 0;        // таймер удержания пика
+    let lastTs     = 0;
+
+    // Создаём сегменты шкалы
     for (let i = 0; i < 15; i++) {
         const seg = document.createElement('div');
         seg.className = 'segment';
-        scale.appendChild(seg);
+        scaleEl.appendChild(seg);
         segments.push(seg);
     }
 
     function getSegmentColor(index) {
-        if (index < 5) return '#00ff00'; 
-        if (index < 10) return '#ffff00'; 
-        return '#ff0000'; 
+        if (index < 5)  return '#00ff00';
+        if (index < 10) return '#ffff00';
+        return '#ff0000';
+    }
+
+    // Переводим «сырой» средний байт (0–255) → дБ по логарифмической шкале
+    // Минимальный порог исключает фоновый шум
+    function rawToDb(avg) {
+        const noise_floor = 3;   // значения ниже — считаем тишиной
+        const val = Math.max(0, avg - noise_floor);
+        if (val <= 0) return DB_MIN;
+        // логарифмическая шкала: 0 → DB_MIN, 200 → DB_MAX (примерно)
+        const db = DB_MIN + (DB_MAX - DB_MIN) * (Math.log1p(val) / Math.log1p(200));
+        return Math.min(DB_MAX, db);
+    }
+
+    function formatDb(db) {
+        const fixed = db.toFixed(1);
+        const parts = fixed.split('.');
+        return { int: parts[0], frac: parts[1] };
+    }
+
+    // Нормализуем дБ → 0..1 для шкал
+    function dbToNorm(db) {
+        return Math.max(0, Math.min(1, (db - DB_MIN) / (DB_MAX - DB_MIN)));
     }
 
     async function startAudio() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
-            
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioCtx.createAnalyser();
+            const source   = audioCtx.createMediaStreamSource(stream);
+
             analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.85; // Сделали еще чуть плавнее
+            // Чуть меньше встроенного сглаживания — мы сами управляем спадом
+            analyser.smoothingTimeConstant = 0.75;
             source.connect(analyser);
 
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-            function update(currentTime) {
-                analyser.getByteFrequencyData(dataArray);
-                let sum = 0;
-                for(let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                let average = sum / dataArray.length;
+            function update(ts) {
+                const dt = ts - lastTs;
+                lastTs = ts;
 
-                let volume = Math.min(100, Math.round(average * 1.8)); 
-                
-                // ОБНОВЛЕНИЕ ЦИФР: только если прошло достаточно времени
-                if (currentTime - lastUpdateTime > updateInterval) {
-                    dbText.innerText = volume;
-                    lastUpdateTime = currentTime;
+                analyser.getByteFrequencyData(dataArray);
+
+                // Среднее по частотам
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length;
+
+                const targetDb = rawToDb(avg);
+
+                // ── Инерция нарастания / спада ──────────────────────────
+                if (targetDb > displayDb) {
+                    // Быстро растём навстречу пику
+                    displayDb += (targetDb - displayDb) * RISE_SPEED;
+                } else {
+                    // Медленно спадаем — эффект эха арены
+                    displayDb = Math.max(DB_MIN, displayDb - DECAY_SPEED * (dt / 16.67));
                 }
 
-                // ОБНОВЛЕНИЕ ШКАЛЫ (оставляем 60fps для плавности анимации)
-                let activeCount = Math.floor((volume / 100) * 15);
+                // ── Пик ────────────────────────────────────────────────
+                if (displayDb >= peakDb) {
+                    peakDb     = displayDb;
+                    peakHoldMs = PEAK_HOLD_SEC * 1000;
+                } else {
+                    peakHoldMs -= dt;
+                    if (peakHoldMs <= 0) {
+                        peakHoldMs = 0;
+                        peakDb = Math.max(displayDb, peakDb - PEAK_DECAY_DB * (dt / 16.67));
+                    }
+                }
+
+                // ── Обновляем UI ────────────────────────────────────────
+                const { int, frac } = formatDb(displayDb);
+                dbInt.textContent  = int;
+                dbFrac.textContent = frac;
+                peakText.textContent = peakDb.toFixed(1);
+
+                // Прогресс-кольцо (текущее)
+                const norm     = dbToNorm(displayDb);
+                progress.style.strokeDashoffset = 880 - norm * 880;
+
+                // Пик-кольцо
+                const peakNorm = dbToNorm(peakDb);
+                // Рисуем тонкую дугу только у точки пика (±1%)
+                const peakOff  = 880 - peakNorm * 880;
+                peakRing.style.strokeDasharray  = `4 ${880 - 4}`;
+                peakRing.style.strokeDashoffset = peakOff;
+
+                // Сегменты
+                const activeCount = Math.round(norm * 15);
+                // Сегмент пика
+                const peakSeg = Math.round(peakNorm * 15) - 1;
+
                 segments.forEach((s, i) => {
+                    s.classList.remove('peak-marker');
                     if (i < activeCount) {
                         const color = getSegmentColor(i);
                         s.style.background = color;
-                        s.style.boxShadow = `0 0 15px ${color}`;
+                        s.style.boxShadow  = `0 0 15px ${color}`;
                     } else {
                         s.style.background = 'rgba(255,255,255,0.2)';
-                        s.style.boxShadow = 'none';
+                        s.style.boxShadow  = 'none';
+                    }
+                    // Белый маркер пика
+                    if (i === peakSeg && peakSeg >= activeCount) {
+                        s.classList.add('peak-marker');
                     }
                 });
 
-                const offset = 880 - (volume / 100) * 880;
-                progress.style.strokeDashoffset = offset;
-
                 requestAnimationFrame(update);
             }
+
             requestAnimationFrame(update);
+
         } catch (e) {
             console.error("Ошибка аудио:", e);
-            dbText.innerText = "Err";
+            dbInt.textContent  = "Err";
+            dbFrac.textContent = "";
         }
     }
 
     window.addEventListener('click', startAudio, { once: true });
-    // Для OBS автозапуск через секунду
     setTimeout(() => {
-        if (dbText.innerText === "0") startAudio();
+        if (dbInt.textContent === "0") startAudio();
     }, 1000);
 </script>
 </body>
