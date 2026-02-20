@@ -51,11 +51,61 @@
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
         }
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Шумомер - ХК Сибирь</title>
+    <style>
+        @font-face {
+            font-family: 'MyCustomFont';
+            src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: transparent;
+            font-family: 'MyCustomFont', sans-serif; color: white;
+        }
+
+        #bg-video {
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
+            z-index: 0; object-fit: cover;
+        }
+
+        .noise-container {
+            display: flex; width: 100%; height: 100%;
+            background: transparent; position: relative;
+        }
+
+        /* ── Левая половина: видео игрока ───────────────────────── */
+        .video-side {
+            width: 55%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        .player-video {
+            max-width: 95%; max-height: 90%;
+            object-fit: contain;
+            position: absolute;
+            /* плавный кроссфейд при смене игрока */
+            transition: opacity 0.5s ease;
+        }
+        .player-video.hidden { opacity: 0; pointer-events: none; }
+
+        /* ── Правая половина: шкала + круг ─────────────────────── */
+        .ui-side {
+            width: 45%; height: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
 
         @keyframes pulse {
-            0%   { transform: scale(1);    opacity: 1; }
-            50%  { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1);    opacity: 1; }
+            0%, 100% { transform: scale(1);    opacity: 1; }
+            50%       { transform: scale(1.05); opacity: 0.85; }
         }
 
         .label-top {
@@ -74,74 +124,51 @@
             width: 170px; height: 32px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.2);
-            transition: background 0.15s ease, box-shadow 0.15s ease;
+            transition: background 0.08s ease, box-shadow 0.08s ease;
             position: relative;
         }
 
-        /* Маркер пика на шкале */
         .segment.peak-marker::after {
             content: '';
-            position: absolute;
-            right: -8px; top: 50%;
+            position: absolute; right: -8px; top: 50%;
             transform: translateY(-50%);
             width: 6px; height: 22px;
-            border-radius: 3px;
-            background: white;
+            border-radius: 3px; background: white;
             box-shadow: 0 0 8px white;
         }
 
         .db-circle {
-            width: 320px; height: 320px;
-            border-radius: 50%;
-            background: rgba(0, 5, 26, 0.9);
-            border: 12px solid #001a33;
+            width: 320px; height: 320px; border-radius: 50%;
+            background: rgba(0, 5, 26, 0.9); border: 12px solid #001a33;
             display: flex; align-items: center; justify-content: center;
             position: relative;
         }
 
-        /* Основное значение */
         .db-value {
             font-size: 96px; color: white;
             font-weight: bold; font-style: italic;
-            line-height: 1;
-            letter-spacing: -2px;
+            line-height: 1; letter-spacing: -2px;
         }
-
-        /* Десятые доли — чуть меньше */
         .db-decimal {
-            font-size: 54px; color: #00f2ff;
-            font-style: italic;
+            font-size: 54px; color: #00f2ff; font-style: italic;
             vertical-align: baseline;
         }
-
-        .db-unit { position: absolute; bottom: 65px; font-size: 24px; color: #00f2ff; }
-
-        /* Значение пика вверху круга */
-        .db-peak {
-            position: absolute; top: 38px;
-            font-size: 18px; color: rgba(255,255,255,0.55);
-            letter-spacing: 1px;
-        }
+        .db-unit   { position: absolute; bottom: 65px; font-size: 24px; color: #00f2ff; }
+        .db-peak   { position: absolute; top: 38px; font-size: 18px; color: rgba(255,255,255,0.55); letter-spacing: 1px; }
         .db-peak span { color: #ffff00; }
 
         .circle-svg { position: absolute; transform: rotate(-90deg); }
 
-        /* Основное кольцо (текущий уровень) */
         .circle-progress {
-            fill: none; stroke: #ffff00;
-            stroke-width: 12;
+            fill: none; stroke: #ffff00; stroke-width: 12;
             stroke-dasharray: 880; stroke-dashoffset: 880;
             stroke-linecap: round;
-            transition: stroke-dashoffset 0.18s ease-out;
+            /* без CSS-transition — анимируем через JS для точного контроля */
         }
-
-        /* Кольцо пика — тонкая белая дуга */
         .circle-peak {
-            fill: none; stroke: rgba(255,255,255,0.5);
-            stroke-width: 4;
+            fill: none; stroke: rgba(255,255,255,0.5); stroke-width: 4;
             stroke-dasharray: 880; stroke-dashoffset: 880;
             stroke-linecap: round;
-            transition: stroke-dashoffset 1.5s ease-out; /* медленно спадает */
         }
     </style>
 </head>
@@ -155,8 +182,12 @@
 <div class="noise-container">
 
     <div class="video-side">
-        <video autoplay muted loop playsinline class="dance-video">
-            <source src="media/dance.webm" type="video/webm">
+        <!-- Два видео, переключаются через Firebase -->
+        <video id="video-38" class="player-video" autoplay muted loop playsinline>
+            <source src="media/38.webm" type="video/webm">
+        </video>
+        <video id="video-11" class="player-video hidden" autoplay muted loop playsinline>
+            <source src="media/11.webm" type="video/webm">
         </video>
     </div>
 
@@ -167,18 +198,13 @@
 
             <div class="db-circle">
                 <svg class="circle-svg" width="320" height="320">
-                    <!-- Фоновый трек -->
                     <circle cx="160" cy="160" r="140"
                             fill="none" stroke="#00f2ff" stroke-width="4" opacity="0.3"></circle>
-                    <!-- Пик -->
-                    <circle class="circle-peak" id="peakRing" cx="160" cy="160" r="140"></circle>
-                    <!-- Текущий уровень -->
+                    <circle class="circle-peak"     id="peakRing" cx="160" cy="160" r="140"></circle>
                     <circle class="circle-progress" id="progress" cx="160" cy="160" r="140"></circle>
                 </svg>
 
                 <div class="db-peak">PEAK: <span id="peakText">—</span></div>
-
-                <!-- Значение: целая часть + десятые -->
                 <div class="db-value">
                     <span id="dbInt">0</span><span class="db-decimal">.<span id="dbFrac">0</span></span>
                 </div>
@@ -188,32 +214,77 @@
     </div>
 </div>
 
-<script>
-    const scaleEl   = document.getElementById('scale');
-    const dbInt     = document.getElementById('dbInt');
-    const dbFrac    = document.getElementById('dbFrac');
-    const peakText  = document.getElementById('peakText');
-    const progress  = document.getElementById('progress');
-    const peakRing  = document.getElementById('peakRing');
-    const segments  = [];
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // ── Настройки поведения ────────────────────────────────────────────
-    const DB_MIN = 55;   // нижняя граница шкалы (тишина в арене ~55 дБ)
-    const DB_MAX = 110;  // верхняя граница (громкий рёв болельщиков)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+        authDomain: "arenawork-94e68.firebaseapp.com",
+        databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+        projectId: "arenawork-94e68",
+        storageBucket: "arenawork-94e68.firebasestorage.app",
+        messagingSenderId: "504372844993",
+        appId: "1:504372844993:web:1783bb75879ee074953740"
+    };
 
-    // Скорости: быстрый рост, медленный спад — ощущение эха в зале
-    const RISE_SPEED  = 0.65;   // скорость нарастания (0..1 за кадр, меньше = плавнее)
-    const DECAY_SPEED = 0.018;  // скорость спада в дБ/кадр (маленькое = долго держится)
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
 
-    // Пик: сколько секунд держится до начала спада
-    const PEAK_HOLD_SEC  = 3.0;
-    const PEAK_DECAY_DB  = 0.08; // скорость падения пика, дБ/кадр
-    // ──────────────────────────────────────────────────────────────────
+    // ── Firebase: переключение видео ─────────────────────────────────
+    const v38 = document.getElementById('video-38');
+    const v11 = document.getElementById('video-11');
 
-    let displayDb  = DB_MIN;   // текущее отображаемое значение (с инерцией)
-    let peakDb     = DB_MIN;   // пиковое значение
-    let peakHoldMs = 0;        // таймер удержания пика
+    let currentPlayer = '38';
+
+    onValue(ref(db, 'competition/noisePlayer'), snap => {
+        const player = snap.val() || '38';
+        if (player === currentPlayer) return;
+        currentPlayer = player;
+
+        if (player === '11') {
+            v38.classList.add('hidden');
+            v11.classList.remove('hidden');
+        } else {
+            v11.classList.add('hidden');
+            v38.classList.remove('hidden');
+        }
+    });
+
+    // ── Шумомер ──────────────────────────────────────────────────────
+    const scaleEl  = document.getElementById('scale');
+    const dbInt    = document.getElementById('dbInt');
+    const dbFrac   = document.getElementById('dbFrac');
+    const peakText = document.getElementById('peakText');
+    const progress = document.getElementById('progress');
+    const peakRing = document.getElementById('peakRing');
+    const segments = [];
+
+    // ── Настройки ────────────────────────────────────────────────────
+    const DB_MIN = 55;    // тишина в арене
+    const DB_MAX = 110;   // максимальный рёв
+
+    // Инерция: быстрый рост, медленный органичный спад
+    const RISE_ALPHA  = 0.72;  // скорость нарастания (0–1, ближе к 1 = резче)
+    const DECAY_RATE  = 0.022; // дБ/кадр базовый спад
+
+    // Пик
+    const PEAK_HOLD_SEC = 2.5;
+    const PEAK_DECAY_DB = 0.06;
+
+    // "Живость" — случайное микро-колебание симулирует диффузное поле зала
+    const JITTER_AMP    = 1.2;  // максимальная амплитуда дрожания в дБ
+    const JITTER_SPEED  = 0.07; // скорость блуждания (0–1)
+    // ─────────────────────────────────────────────────────────────────
+
+    let displayDb  = DB_MIN;
+    let peakDb     = DB_MIN;
+    let peakHoldMs = 0;
     let lastTs     = 0;
+
+    // Стейт случайного блуждания (для естественного дрожания)
+    let jitter     = 0;         // текущее смещение дрожания
+    let jitterVel  = 0;         // скорость блуждания
 
     // Создаём сегменты шкалы
     for (let i = 0; i < 15; i++) {
@@ -223,71 +294,91 @@
         segments.push(seg);
     }
 
-    function getSegmentColor(index) {
-        if (index < 5)  return '#00ff00';
-        if (index < 10) return '#ffff00';
+    function segColor(i) {
+        if (i < 5)  return '#00ff00';
+        if (i < 10) return '#ffff00';
         return '#ff0000';
     }
 
-    // Переводим «сырой» средний байт (0–255) → дБ по логарифмической шкале
-    // Минимальный порог исключает фоновый шум
+    // Сырой байт (0–255) → дБ, логарифмически
     function rawToDb(avg) {
-        const noise_floor = 3;   // значения ниже — считаем тишиной
-        const val = Math.max(0, avg - noise_floor);
+        const val = Math.max(0, avg - 4); // убираем фоновый шум АЦП
         if (val <= 0) return DB_MIN;
-        // логарифмическая шкала: 0 → DB_MIN, 200 → DB_MAX (примерно)
-        const db = DB_MIN + (DB_MAX - DB_MIN) * (Math.log1p(val) / Math.log1p(200));
-        return Math.min(DB_MAX, db);
+        return Math.min(DB_MAX, DB_MIN + (DB_MAX - DB_MIN) * (Math.log1p(val) / Math.log1p(180)));
     }
 
-    function formatDb(db) {
-        const fixed = db.toFixed(1);
-        const parts = fixed.split('.');
-        return { int: parts[0], frac: parts[1] };
-    }
-
-    // Нормализуем дБ → 0..1 для шкал
     function dbToNorm(db) {
         return Math.max(0, Math.min(1, (db - DB_MIN) / (DB_MAX - DB_MIN)));
     }
 
+    // Плавный случайный сигнал (Perlin-like brownian jitter)
+    function stepJitter(dt) {
+        const dtFactor = dt / 16.67;
+        // Добавляем случайный импульс в "скорость" блуждания
+        jitterVel += (Math.random() - 0.5) * 0.8 * dtFactor;
+        // Возврат к нулю (упругость)
+        jitterVel -= jitter * 0.12 * dtFactor;
+        // Затухание скорости
+        jitterVel *= Math.pow(0.88, dtFactor);
+        // Обновляем позицию
+        jitter += jitterVel * JITTER_SPEED * dtFactor;
+        // Ограничиваем амплитуду
+        jitter = Math.max(-JITTER_AMP, Math.min(JITTER_AMP, jitter));
+        return jitter;
+    }
+
     async function startAudio() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const analyser = audioCtx.createAnalyser();
             const source   = audioCtx.createMediaStreamSource(stream);
 
-            analyser.fftSize = 256;
-            // Чуть меньше встроенного сглаживания — мы сами управляем спадом
-            analyser.smoothingTimeConstant = 0.75;
+            analyser.fftSize = 512;
+            // Небольшое встроенное сглаживание — убирает единичные всплески АЦП
+            analyser.smoothingTimeConstant = 0.6;
             source.connect(analyser);
 
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
             function update(ts) {
-                const dt = ts - lastTs;
+                const dt = Math.min(ts - lastTs, 100); // cap для случая вкладка в bg
                 lastTs = ts;
 
                 analyser.getByteFrequencyData(dataArray);
 
-                // Среднее по частотам
-                let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                const avg = sum / dataArray.length;
-
+                // Взвешенное среднее: чуть больше вес у низких и средних частот
+                // (человеческий голос и клапание — 200–3000 Гц)
+                const nyquist   = audioCtx.sampleRate / 2;
+                const binHz     = nyquist / dataArray.length;
+                let   sum = 0, weightSum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const hz     = i * binHz;
+                    // Вес: треугольник от 0 до 3000 Гц, потом спад
+                    const w      = hz < 3000 ? (hz / 3000) : Math.max(0.1, 1 - (hz - 3000) / 10000);
+                    sum         += dataArray[i] * w;
+                    weightSum   += w;
+                }
+                const avg      = sum / weightSum;
                 const targetDb = rawToDb(avg);
 
-                // ── Инерция нарастания / спада ──────────────────────────
+                // ── Асимметричная инерция ────────────────────────────
+                const dtF = dt / 16.67;
                 if (targetDb > displayDb) {
-                    // Быстро растём навстречу пику
-                    displayDb += (targetDb - displayDb) * RISE_SPEED;
+                    // Атака: быстро догоняем пик, экспоненциальное сближение
+                    displayDb += (targetDb - displayDb) * (1 - Math.pow(1 - RISE_ALPHA, dtF));
                 } else {
-                    // Медленно спадаем — эффект эха арены
-                    displayDb = Math.max(DB_MIN, displayDb - DECAY_SPEED * (dt / 16.67));
+                    // Спад: линейный с небольшой случайностью → звучит как затихание в зале
+                    const randomDecay = DECAY_RATE * (0.8 + Math.random() * 0.4);
+                    displayDb = Math.max(DB_MIN, displayDb - randomDecay * dtF);
                 }
 
-                // ── Пик ────────────────────────────────────────────────
+                // Добавляем живое микро-дрожание (только если не тишина)
+                const activity = dbToNorm(displayDb);
+                const jitterNow = stepJitter(dt) * activity; // тишина — нет дрожания
+                const visibleDb = Math.max(DB_MIN, Math.min(DB_MAX, displayDb + jitterNow));
+
+                // ── Пик ──────────────────────────────────────────────
                 if (displayDb >= peakDb) {
                     peakDb     = displayDb;
                     peakHoldMs = PEAK_HOLD_SEC * 1000;
@@ -295,43 +386,47 @@
                     peakHoldMs -= dt;
                     if (peakHoldMs <= 0) {
                         peakHoldMs = 0;
-                        peakDb = Math.max(displayDb, peakDb - PEAK_DECAY_DB * (dt / 16.67));
+                        // Пик тоже медленно «трясётся» при спаде
+                        const randomPeakDecay = PEAK_DECAY_DB * (0.7 + Math.random() * 0.6);
+                        peakDb = Math.max(displayDb, peakDb - randomPeakDecay * dtF);
                     }
                 }
 
-                // ── Обновляем UI ────────────────────────────────────────
-                const { int, frac } = formatDb(displayDb);
-                dbInt.textContent  = int;
-                dbFrac.textContent = frac;
+                // ── UI ───────────────────────────────────────────────
+                const fixed  = visibleDb.toFixed(1).split('.');
+                dbInt.textContent  = fixed[0];
+                dbFrac.textContent = fixed[1];
                 peakText.textContent = peakDb.toFixed(1);
 
-                // Прогресс-кольцо (текущее)
-                const norm     = dbToNorm(displayDb);
-                progress.style.strokeDashoffset = 880 - norm * 880;
-
-                // Пик-кольцо
+                const norm     = dbToNorm(visibleDb);
                 const peakNorm = dbToNorm(peakDb);
-                // Рисуем тонкую дугу только у точки пика (±1%)
-                const peakOff  = 880 - peakNorm * 880;
-                peakRing.style.strokeDasharray  = `4 ${880 - 4}`;
+
+                // Кольцо — напрямую через strokeDashoffset (без CSS transition)
+                progress.style.strokeDashoffset = (880 - norm * 880).toFixed(2);
+
+                // Цвет кольца: зелёный → жёлтый → красный
+                const hue = (1 - norm) * 120; // 120=зелёный, 0=красный
+                progress.style.stroke = `hsl(${hue}, 100%, 50%)`;
+
+                // Пик-маркер — тонкая дуга в точке пика
+                const peakOff = (880 - peakNorm * 880).toFixed(2);
+                peakRing.style.strokeDasharray  = `5 ${875}`;
                 peakRing.style.strokeDashoffset = peakOff;
 
-                // Сегменты
+                // Сегменты шкалы
                 const activeCount = Math.round(norm * 15);
-                // Сегмент пика
-                const peakSeg = Math.round(peakNorm * 15) - 1;
+                const peakSeg     = Math.min(14, Math.round(peakNorm * 15) - 1);
 
                 segments.forEach((s, i) => {
                     s.classList.remove('peak-marker');
                     if (i < activeCount) {
-                        const color = getSegmentColor(i);
-                        s.style.background = color;
-                        s.style.boxShadow  = `0 0 15px ${color}`;
+                        const col = segColor(i);
+                        s.style.background = col;
+                        s.style.boxShadow  = `0 0 12px ${col}`;
                     } else {
-                        s.style.background = 'rgba(255,255,255,0.2)';
+                        s.style.background = 'rgba(255,255,255,0.15)';
                         s.style.boxShadow  = 'none';
                     }
-                    // Белый маркер пика
                     if (i === peakSeg && peakSeg >= activeCount) {
                         s.classList.add('peak-marker');
                     }
@@ -350,9 +445,8 @@
     }
 
     window.addEventListener('click', startAudio, { once: true });
-    setTimeout(() => {
-        if (dbInt.textContent === "0") startAudio();
-    }, 1000);
+    // Авто-старт через секунду (OBS обычно разрешает без клика)
+    setTimeout(() => startAudio(), 800);
 </script>
 </body>
 </html>
