@@ -139,11 +139,54 @@
         .crop-container img { max-width: 100%; }
         
         .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .char-card { background: var(--gray); border-radius: 12px; overflow: hidden; border: 3px solid transparent; transition: 0.2s; }
+        .char-card { background: var(--gray); border-radius: 12px; overflow: hidden; border: 3px solid transparent; transition: 0.2s; cursor: grab; }
         .char-card.active-char { border-color: #9ef01a; background: #fff; box-shadow: 0 0 15px rgba(24, 164, 14, 0.4); }
+        .char-card.dragging { opacity: 0.4; transform: scale(0.97); }
+        .char-card.drag-over { border-color: var(--sibir-blue) !important; box-shadow: 0 0 0 3px rgba(5,202,255,0.3); }
         .char-img { width: 100%; aspect-ratio: 8/9; object-fit: cover; display: block; background: #000; }
         .char-info { padding: 10px; }
         .char-name { font-weight: 700; font-size: 1rem; margin-bottom: 10px; text-align: center; }
+        .drag-handle { text-align: center; padding: 4px 0 0; font-size: 0.75rem; color: #aaa; letter-spacing: 3px; user-select: none; }
+
+        /* ===== PLAYER LIST ===== */
+        .player-row {
+            background: var(--gray); border-radius: 12px; padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+        .player-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .player-name-label { font-weight: 700; font-size: 0.9rem; }
+        .keyword-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e8f4ff; color: var(--sibir-dark);
+            border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;
+            margin: 2px;
+        }
+        .keyword-tag span { cursor: pointer; color: #ee5253; font-size: 0.9rem; line-height: 1; }
+        .keyword-add-row { display: flex; gap: 6px; margin-top: 8px; }
+        .keyword-add-row input { height: 32px; font-size: 0.8rem; margin: 0; flex: 1; padding: 0 10px; }
+        .keyword-add-row button { height: 32px; padding: 0 12px; font-size: 0.8rem; border-radius: 10px; background: var(--sibir-blue); color: white; border: none; cursor: pointer; font-weight: 600; white-space: nowrap; }
+
+        /* ===== EMOJI PICKER ===== */
+        .emoji-btn {
+            width: 44px; height: 44px; border-radius: 50%; background: var(--gray);
+            border: none; cursor: pointer; font-size: 1.2rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .emoji-btn:hover { background: #ddd; }
+        .emoji-picker-popup {
+            position: absolute; bottom: 70px; left: 16px;
+            background: white; border-radius: 16px; padding: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            z-index: 1100; width: 300px; max-height: 300px;
+            display: none; flex-direction: column; gap: 8px;
+        }
+        .emoji-picker-popup.open { display: flex; }
+        .emoji-cats { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--gray); padding-bottom: 8px; }
+        .emoji-cat-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 6px; border-radius: 8px; transition: 0.15s; }
+        .emoji-cat-btn.active, .emoji-cat-btn:hover { background: var(--gray); }
+        .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; overflow-y: auto; }
+        .emoji-grid button { background: none; border: none; cursor: pointer; font-size: 1.3rem; padding: 4px; border-radius: 6px; transition: 0.15s; }
+        .emoji-grid button:hover { background: var(--gray); }
 
         .upload-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -198,7 +241,7 @@
 
         .chat-panel {
             position: fixed; top: 0; right: 0; bottom: 0;
-            width: 500px; background: var(--white);
+            width: 380px; background: var(--white);
             box-shadow: -8px 0 40px rgba(0,0,0,0.15);
             z-index: 1000; display: flex; flex-direction: column;
             transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
@@ -430,10 +473,17 @@
         <button class="close-btn" onclick="closeChat()">✕</button>
     </div>
     <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-panel-input">
-        <textarea id="chatReplyInput" placeholder="Ответить..." rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatReply();}"></textarea>
-        <button class="send-btn" onclick="sendChatReply()">➤</button>
+    <div style="position: relative;">
+        <div class="emoji-picker-popup" id="emojiPickerPopup">
+            <div class="emoji-cats" id="emojiCats"></div>
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="chat-panel-input">
+            <button class="emoji-btn" onclick="toggleEmojiPicker(event)" title="Смайлики">😊</button>
+            <textarea id="chatReplyInput" placeholder="Ответить..." rows="1"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatReply();}"></textarea>
+            <button class="send-btn" onclick="sendChatReply()">➤</button>
+        </div>
     </div>
 </div>
 
@@ -568,6 +618,7 @@
             set(ref(db, 'competition/lookslikeState'), scene);
         } else if (mode === 'mvp') {
             set(ref(db, 'competition/mvpState'), scene);
+            set(ref(db, 'competition/mvpStateTs'), Date.now());
         }
     };
 
@@ -622,6 +673,59 @@
             push(ref(db, `competition/sentReplies/${chatId}`), { text: msg, timestamp: Date.now() });
         }
     };
+
+    // ===== EMOJI PICKER =====
+    const EMOJI_CATS = [
+        { icon: '😀', label: 'Смайлы', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🫣','🤗','🫡','🤔','🫠','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕'] },
+        { icon: '👍', label: 'Жесты', emojis: ['👍','👎','👌','🤌','🤏','✌️','🤞','🫰','🤙','🤘','🤟','👈','👉','👆','🖕','👇','☝️','🫵','👋','🤚','🖐️','✋','🖖','🫱','🫲','💪','🦾','🙏','🤲','👏','🫶','🙌','🤝','💅','🤳'] },
+        { icon: '❤️', label: 'Сердца', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫀','💋'] },
+        { icon: '🏒', label: 'Спорт', emojis: ['🏒','🏑','🥅','🎯','⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','🏆','🥇','🥈','🥉','🏅','🎖️'] },
+        { icon: '🔥', label: 'Символы', emojis: ['🔥','⭐','🌟','💫','✨','💥','🎉','🎊','🎈','🎁','🎀','🎗️','🏳️','🚀','⚡','🌈','☀️','🌙','💯','✅','❌','‼️','❓','💬','📣','📢','👀','🆕','🆒','🆓','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪'] },
+    ];
+    let activeEmojiCat = 0;
+
+    function initEmojiPicker() {
+        const catsEl = document.getElementById('emojiCats');
+        catsEl.innerHTML = EMOJI_CATS.map((c, i) =>
+            `<button class="emoji-cat-btn ${i === 0 ? 'active' : ''}" onclick="setEmojiCat(${i})" title="${c.label}">${c.icon}</button>`
+        ).join('');
+        renderEmojiGrid(0);
+    }
+
+    window.setEmojiCat = (i) => {
+        activeEmojiCat = i;
+        document.querySelectorAll('.emoji-cat-btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
+        renderEmojiGrid(i);
+    };
+
+    function renderEmojiGrid(i) {
+        const grid = document.getElementById('emojiGrid');
+        grid.innerHTML = EMOJI_CATS[i].emojis.map(e =>
+            `<button onclick="insertEmoji('${e}')" title="${e}">${e}</button>`
+        ).join('');
+    }
+
+    window.insertEmoji = (emoji) => {
+        const ta = document.getElementById('chatReplyInput');
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        const val = ta.value;
+        ta.value = val.slice(0, start) + emoji + val.slice(end);
+        ta.selectionStart = ta.selectionEnd = start + emoji.length;
+        ta.focus();
+    };
+
+    window.toggleEmojiPicker = (e) => {
+        e.stopPropagation();
+        const picker = document.getElementById('emojiPickerPopup');
+        picker.classList.toggle('open');
+    };
+
+    document.addEventListener('click', (e) => {
+        const picker = document.getElementById('emojiPickerPopup');
+        if (picker && !picker.contains(e.target)) picker.classList.remove('open');
+    });
+
+    initEmojiPicker();
 
     // ===== CHAT PANEL =====
     let activeChatId = null;
@@ -863,25 +967,40 @@
         renderMessages();
         renderCharacters();
         renderMvpResults();
+        renderMvpPlayers();
         if (activeChatId) renderChatMessages(activeChatId);
     });
 
     let lastMsgsHtml = "";
     let lastVotesHtml = "";
 
+    let dragSrcId = null;
+
     function renderCharacters() {
         const container = document.getElementById('charactersList');
         const chars = currentData.lookslike?.characters || {};
         const pendingId = currentData.lookslike?.pendingCharacter;
         const activeId = currentData.lookslike?.activeCharacter;
+        const orderArr = currentData.lookslike?.characterOrder || Object.keys(chars);
+        // Строим упорядоченный массив, включая ключи которых нет в order
+        const knownIds = new Set(orderArr);
+        const allIds = [...orderArr.filter(id => chars[id]), ...Object.keys(chars).filter(id => !knownIds.has(id))];
+
         let html = '';
-        for (let id in chars) {
+        allIds.forEach(id => {
             const char = chars[id];
+            if (!char) return;
             const isPending = (id === pendingId);
             const isActiveInAir = (id === activeId);
             const isEditing = (id === editingCharId);
             html += `
-            <div class="char-card ${isActiveInAir ? 'active-char' : ''}">
+            <div class="char-card ${isActiveInAir ? 'active-char' : ''}" 
+                 draggable="true" data-id="${id}"
+                 ondragstart="onCharDragStart(event,'${id}')"
+                 ondragover="onCharDragOver(event)"
+                 ondrop="onCharDrop(event,'${id}')"
+                 ondragend="onCharDragEnd(event)">
+                <div class="drag-handle">⠿⠿⠿</div>
                 <img src="${char.image}" class="char-img">
                 <div class="char-info">
                     ${isEditing ? 
@@ -903,9 +1022,39 @@
                     <button class="btn" style="width:100%; background:#fab1a0; color:#c0392b; font-size: 0.8rem; margin-top:5px" onclick="deleteCharacter('${id}')">Удалить</button>
                 </div>
             </div>`;
-        }
+        });
         container.innerHTML = html;
     }
+
+    window.onCharDragStart = (e, id) => {
+        dragSrcId = id;
+        e.currentTarget.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    };
+    window.onCharDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('.char-card').forEach(c => c.classList.remove('drag-over'));
+        e.currentTarget.classList.add('drag-over');
+    };
+    window.onCharDragEnd = (e) => {
+        document.querySelectorAll('.char-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+    };
+    window.onCharDrop = (e, targetId) => {
+        e.preventDefault();
+        if (dragSrcId === targetId) return;
+        const chars = currentData.lookslike?.characters || {};
+        const orderArr = currentData.lookslike?.characterOrder || Object.keys(chars);
+        const knownIds = new Set(orderArr);
+        let allIds = [...orderArr.filter(id => chars[id]), ...Object.keys(chars).filter(id => !knownIds.has(id))];
+
+        const fromIdx = allIds.indexOf(dragSrcId);
+        const toIdx   = allIds.indexOf(targetId);
+        if (fromIdx < 0 || toIdx < 0) return;
+        allIds.splice(fromIdx, 1);
+        allIds.splice(toIdx, 0, dragSrcId);
+        set(ref(db, 'competition/lookslike/characterOrder'), allIds);
+    };
 
     function renderMessages() {
         const container = document.getElementById('messagesList');
@@ -986,25 +1135,36 @@
         const players = currentData.players || {};
         const votes = currentData.mvpVotes || {};
         const voteCounts = {};
-        Object.values(votes).forEach(vote => {
+        const adminVoteCounts = {};
+        Object.entries(votes).forEach(([key, vote]) => {
             voteCounts[vote.votedFor] = (voteCounts[vote.votedFor] || 0) + 1;
+            if (vote.isAdmin) adminVoteCounts[vote.votedFor] = (adminVoteCounts[vote.votedFor] || 0) + 1;
         });
         let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">';
         for (let id in players) {
             const player = players[id];
             const voteCount = voteCounts[player.name] || 0;
+            const adminCount = adminVoteCounts[player.name] || 0;
             const hasPhoto = player.photo && player.photo.startsWith('http');
             html += `
                 <div style="background: var(--white); border-radius: 12px; padding: 15px; border: 2px solid ${hasPhoto ? '#10ac84' : '#ddd'};">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                         <div style="font-weight: 700; font-size: 1rem;">${player.name}</div>
-                        <div style="background: var(--sibir-blue); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">${voteCount}</div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${adminCount > 0 ? `<div style="background:#f39c12; color:white; padding:3px 8px; border-radius:20px; font-size:0.75rem; font-weight:700;" title="Из них ${adminCount} от админа">+${adminCount} 🛡️</div>` : ''}
+                            <div style="background: var(--sibir-blue); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">${voteCount}</div>
+                        </div>
                     </div>
                     <div style="width: 100%; aspect-ratio: 8/9; background: #f0f0f0; border-radius: 8px; overflow: hidden; margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
                         ${hasPhoto ? 
                             `<img src="${player.photo}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">` : 
                             `<span style="color: #999; font-size: 3rem;">👤</span>`
                         }
+                    </div>
+                    <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+                        <button class="btn" style="flex:1; font-size:0.8rem; padding:8px; background:#9ef01a; color:#1a5c00; font-weight:700;"
+                                onclick="addAdminVote('${player.name}')">➕ Добавить голос</button>
+                        ${adminCount > 0 ? `<button class="btn" style="padding:8px; background:#ffeaa7; color:#856404; font-size:0.75rem;" onclick="removeAdminVote('${player.name}')" title="Убрать последний голос админа">↩</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 5px;">
                         <button class="btn" style="flex: 1; font-size: 0.75rem; padding: 8px; background: ${hasPhoto ? '#ff9f43' : '#10ac84'}; color: white;" 
@@ -1018,6 +1178,27 @@
         html += '</div>';
         container.innerHTML = html;
     }
+
+    window.addAdminVote = (playerName) => {
+        const voteId = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        set(ref(db, `competition/mvpVotes/${voteId}`), {
+            votedFor: playerName,
+            name: '🛡️ Админ',
+            handle: 'admin',
+            isAdmin: true,
+            timestamp: Date.now()
+        });
+    };
+
+    window.removeAdminVote = (playerName) => {
+        const votes = currentData.mvpVotes || {};
+        const adminVotes = Object.entries(votes)
+            .filter(([, v]) => v.votedFor === playerName && v.isAdmin)
+            .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+        if (adminVotes.length > 0) {
+            remove(ref(db, `competition/mvpVotes/${adminVotes[0][0]}`));
+        }
+    };
 
     window.showVotersPopup = (player) => {
         const voters = window.mvpVotersData[player] || [];
@@ -1061,6 +1242,26 @@
         if (lastVotesHtml !== newHtml) { container.innerHTML = newHtml; lastVotesHtml = newHtml; }
     }
 
+    window.addKeyword = (id, inputId) => {
+        const input = document.getElementById(inputId);
+        const word = input.value.trim();
+        if (!word) return;
+        const player = (currentData.players || {})[id];
+        if (!player) return;
+        const existing = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (!existing.includes(word)) existing.push(word);
+        update(ref(db, `competition/players/${id}`), { keywords: existing.join(', ') });
+        input.value = '';
+    };
+
+    window.removeKeyword = (id, word) => {
+        const player = (currentData.players || {})[id];
+        if (!player) return;
+        const existing = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const updated = existing.filter(k => k !== word);
+        update(ref(db, `competition/players/${id}`), { keywords: updated.join(', ') });
+    };
+
     function renderPlayers() {
         const pList = document.getElementById('playersList');
         const pSelect = document.getElementById('goalScorer');
@@ -1068,12 +1269,25 @@
         const scrollPos = pList.scrollTop;
         pList.innerHTML = '';
         let optionsHtml = '<option value="">-- КТО ЗАБИЛ? --</option>';
-        for(let id in players) {
+        for (let id in players) {
             const player = players[id];
+            const keywords = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const kwHtml = keywords.map(kw => 
+                `<span class="keyword-tag">${kw}<span onclick="removeKeyword('${id}','${kw.replace(/'/g,"\\'")}')">×</span></span>`
+            ).join('');
+            const inputId = `kw-input-${id}`;
             pList.innerHTML += `
-                <div class="player-tag" style="display: inline-flex; align-items: center; gap: 5px;">
-                    ${player.name}
-                    <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; margin-left:3px">×</span>
+                <div class="player-row">
+                    <div class="player-row-top">
+                        <span class="player-name-label">👤 ${player.name}</span>
+                        <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; font-size:1.1rem; line-height:1;">×</span>
+                    </div>
+                    <div>${kwHtml || '<span style="color:#aaa;font-size:0.78rem;">нет ключевых слов</span>'}</div>
+                    <div class="keyword-add-row">
+                        <input type="text" id="${inputId}" placeholder="Добавить слово..."
+                            onkeydown="if(event.key==='Enter'){addKeyword('${id}','${inputId}');}">
+                        <button onclick="addKeyword('${id}','${inputId}')">+ Добавить</button>
+                    </div>
                 </div>`;
             optionsHtml += `<option value="${player.name}" ${currentData.scorer === player.name ? 'selected' : ''}>${player.name}</option>`;
         }
