@@ -14,8 +14,22 @@
             background-color: transparent;
         }
         @font-face {
-            font-family: 'MyCustomFont';
-            src: url('fonts/PFDinTextCondPro-Bold.ttf') format('truetype');
+            font-family: 'PFDinComp';
+            font-weight: 400;
+            font-style: normal;
+            src: url('fonts/PFDinTextCompPro-Regular.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'PFDinComp';
+            font-weight: 700;
+            font-style: normal;
+            src: url('fonts/PFDinTextCompPro-Bold.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'PFDinComp';
+            font-weight: 700;
+            font-style: italic;
+            src: url('fonts/PFDinTextCompPro-BoldItalic.ttf') format('truetype');
         }
 
         @keyframes pulse-glow {
@@ -28,7 +42,34 @@
             100% { background-position: 200% center; }
         }
 
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: url('media/BG.png') center/cover no-repeat; font-family: 'MyCustomFont', sans-serif; color: white; }
+        /* --- Анимации победителя --- */
+
+        /* Панели: раскрываются из центра в стороны */
+        @keyframes winExpandFromCenter {
+            from { clip-path: inset(0 50% 0 50%); }
+            to   { clip-path: inset(0 0% 0 0%); }
+        }
+
+        /* Фото: выезжает с левого края */
+        @keyframes winPhotoSlideIn {
+            from { transform: translateX(-110%); }
+            to   { transform: translateX(0); }
+        }
+
+        /* Тексты: выезжают с правого края */
+        @keyframes winSlideFromRight {
+            from { transform: translate(calc(-50% + 110vw), -50%) skewX(-8deg); }
+            to   { transform: translate(-50%, -50%) skewX(-8deg); }
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: url('media/BG.png') center/cover no-repeat;
+            font-family: 'PFDinComp', sans-serif;
+            color: white;
+        }
         
         .scene {
             position: absolute; 
@@ -70,21 +111,18 @@
 
         /* --- СЦЕНА ПОБЕДИТЕЛЯ --- */
         #winner {
-            flex-direction: row;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 0;
             padding: 0;
+            overflow: hidden;
         }
 
         .winner-photo-container {
+            position: absolute;
+            left: 0; bottom: 0;
             height: 100%;
             width: 50%;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            flex-shrink: 0;
-            align-self: flex-end;
         }
 
         .winner-photo {
@@ -94,11 +132,10 @@
             object-fit: contain;
             object-position: bottom center;
             transition: opacity 0.5s ease;
+            display: block;
         }
 
-        .winner-photo.loading {
-            opacity: 0;
-        }
+        .winner-photo.loading { opacity: 0; }
 
         .photo-placeholder {
             width: 60%;
@@ -115,51 +152,97 @@
             align-self: center;
         }
 
-        .winner-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            padding: 0 50px;
-            align-self: center;
-        }
+        /* --- Абсолютно позиционированные элементы победителя --- */
 
-        .winner-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .winner-player-name {
-            font-size: 90px;
-            font-weight: bold;
-            text-shadow: 0 0 30px rgba(5, 202, 255, 0.9);
+        /* Панель номера игрока */
+        .winner-panel-number {
+            position: absolute;
+            left: 1244.8159px;
+            top: 262.4047px;
+            background: #1761FF;
+            font-family: 'PFDinComp', sans-serif;
+            font-weight: 700;
+            font-style: normal;
+            font-size: 80px;
             line-height: 1;
-            text-align: center;
-            text-transform: uppercase; 
-            transform: skewX(-8deg);
+            transform: translate(-50%, -50%) skewX(-8deg);
             color: white;
+            white-space: nowrap;
+            padding: 10px 28px;
         }
 
-        .winner-made-difference {
-            font-size: 130px;
-            font-weight: bold;
+        /* Панель имени/фамилии */
+        .winner-panel-name {
+            position: absolute;
+            left: 1333.7986px;
+            top: 428.8628px;
+            background: #1761FF;
+            font-family: 'PFDinComp', sans-serif;
+            font-weight: 700;
+            font-style: normal;
+            font-size: 80px;
             line-height: 1;
-            text-align: center;
-            margin-top: 20px;
-            transform: skewX(-8deg);
-        }
-
-        .winner-made-difference .white {
+            text-transform: uppercase;
+            transform: translate(-50%, -50%) skewX(-8deg);
             color: white;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            padding: 10px 28px;
         }
 
-        .winner-made-difference .orange {
-            color: rgb(255, 106, 19);
-            text-shadow: 0 0 30px rgba(255, 107, 53, 0.8);
+        /* "СДЕЛАЛ" */
+        .winner-label-made {
+            position: absolute;
+            left: 1257.1521px;
+            top: 605.8955px;
+            font-family: 'PFDinComp', sans-serif;
+            font-weight: 700;
+            font-style: italic;
+            font-size: 215.2px;
+            line-height: 1;
+            text-transform: uppercase;
+            transform: translate(-50%, -50%) skewX(-8deg);
+            color: white;
+            white-space: nowrap;
+        }
+
+        /* "РАЗНИЦУ" */
+        .winner-label-diff {
+            position: absolute;
+            left: 1344.0158px;
+            top: 798.583px;
+            font-family: 'PFDinComp', sans-serif;
+            font-weight: 700;
+            font-style: italic;
+            font-size: 215.2px;
+            line-height: 1;
+            text-transform: uppercase;
+            transform: translate(-50%, -50%) skewX(-8deg);
+            color: #FF6A13;
+            white-space: nowrap;
+        }
+
+        /* --- Запуск анимаций при активации сцены победителя ---
+           Тайминг:
+             0.00s  номер раскрывается   (0.45s)
+             0.35s  имя раскрывается     (0.45s)  → конец: 0.80s
+             0.72s  фото выезжает слева  (0.70s)  → ≈ конец имени
+             0.85s  СДЕЛАЛ из правого    (0.80s)
+             1.41s  РАЗНИЦУ из правого   (0.80s)  → 0.85 + 0.80×0.70 = 1.41s
+        */
+        #winner.anim-active .winner-panel-number {
+            animation: winExpandFromCenter 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+        }
+        #winner.anim-active .winner-panel-name {
+            animation: winExpandFromCenter 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
+        }
+        #winner.anim-active .winner-photo-container {
+            animation: winPhotoSlideIn 0.70s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.72s both;
+        }
+        #winner.anim-active .winner-label-made {
+            animation: winSlideFromRight 0.80s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.85s both;
+        }
+        #winner.anim-active .winner-label-diff {
+            animation: winSlideFromRight 0.80s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s both;
         }
 
         #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: opacity 1s ease-in-out; }
@@ -195,10 +278,11 @@
 
     <!-- СЦЕНА: Победитель -->
     <div id="winner" class="scene">
-        <div id="winner-photo" class="winner-photo-container"></div>
-        <div class="winner-info">
-            <div id="winner-display" class="winner-content"></div>
-        </div>
+        <div id="winner-photo"  class="winner-photo-container"></div>
+        <div id="winner-number" class="winner-panel-number"></div>
+        <div id="winner-name"   class="winner-panel-name"></div>
+        <div class="winner-label-made">СДЕЛАЛ</div>
+        <div class="winner-label-diff">РАЗНИЦУ</div>
     </div>
 
     <div id="bg-video">
@@ -226,10 +310,9 @@
         const bgVideo = document.getElementById('bg-video');
         const imageCache = new Set();
 
-        // Видео-элементы для управления воспроизведением
         const videoScenes = {
             winline_logo: document.getElementById('video-winline-logo'),
-            announcement: document.getElementById('video-announcement'),
+            announcement:  document.getElementById('video-announcement'),
         };
 
         function preloadImage(src) {
@@ -244,16 +327,8 @@
         }
 
         function preloadAllAssets(data) {
-            const urls = [
-                'media/telegramqr.png',
-                'media/max.jpg',
-                data.background,
-            ];
-            if (data.players) {
-                Object.values(data.players).forEach(p => {
-                    if (p.photo) urls.push(p.photo);
-                });
-            }
+            const urls = ['media/telegramqr.png', 'media/max.jpg', data.background];
+            if (data.players) Object.values(data.players).forEach(p => { if (p.photo) urls.push(p.photo); });
             urls.forEach(url => preloadImage(url));
         }
 
@@ -267,7 +342,6 @@
 
             const currentScene = data.mvpState || 'winline_logo';
 
-            // Управление фоном
             if (data.background && data.background.trim() !== "") {
                 bgLayer.style.backgroundImage = `url('${data.background}')`;
                 bgLayer.style.opacity = "1";
@@ -278,20 +352,22 @@
             }
 
             if (currentScene !== lastScene) {
-                // Подготовка контента до показа
+                // Сбрасываем анимации победителя если уходим с этой сцены
+                if (lastScene === 'winner') {
+                    document.getElementById('winner').classList.remove('anim-active');
+                }
+
                 if (currentScene === 'winner') {
                     displayWinner(data.mvpVotes, data.players);
                 }
 
-                // Пауза всех видео, затем запуск нужного
                 Object.entries(videoScenes).forEach(([key, videoEl]) => {
-                    if (videoEl) {
-                        if (key === currentScene) {
-                            videoEl.currentTime = 0;
-                            videoEl.play().catch(() => {});
-                        } else {
-                            videoEl.pause();
-                        }
+                    if (!videoEl) return;
+                    if (key === currentScene) {
+                        videoEl.currentTime = 0;
+                        videoEl.play().catch(() => {});
+                    } else {
+                        videoEl.pause();
                     }
                 });
 
@@ -299,24 +375,33 @@
                 const target = document.getElementById(currentScene);
                 if (target) target.classList.add('active');
 
+                // Запускаем анимации победителя через 2 кадра
+                // (чтобы fill-mode: both успел применить from-состояния до появления сцены)
+                if (currentScene === 'winner') {
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        document.getElementById('winner').classList.add('anim-active');
+                    }));
+                }
+
                 lastScene = currentScene;
             }
         });
 
         function displayWinner(votes, players) {
             const photoContainer = document.getElementById('winner-photo');
-            const infoContainer  = document.getElementById('winner-display');
+            const namePanel      = document.getElementById('winner-name');
+            const numberPanel    = document.getElementById('winner-number');
 
             if (!votes) {
-                infoContainer.innerHTML = '<p style="font-size: 48px;">Нет голосов</p>';
+                namePanel.textContent    = '';
+                numberPanel.textContent  = '';
                 photoContainer.innerHTML = '';
                 return;
             }
 
             const voteCounts = {};
             Object.values(votes).forEach(vote => {
-                const player = vote.votedFor;
-                voteCounts[player] = (voteCounts[player] || 0) + 1;
+                voteCounts[vote.votedFor] = (voteCounts[vote.votedFor] || 0) + 1;
             });
 
             const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
@@ -324,23 +409,25 @@
 
             const [winnerName] = sorted[0];
 
-            infoContainer.innerHTML = `
-                <div class="winner-player-name">${winnerName}</div>
-                <div class="winner-made-difference">
-                    <div class="white">СДЕЛАЛ</div>
-                    <div class="orange">РАЗНИЦУ</div>
-                </div>
-            `;
-
+            // Ищем данные игрока в базе
             let winnerPhotoSrc = null;
+            let winnerKeywords = '';
             if (players) {
                 for (let id in players) {
-                    if (players[id].name === winnerName && players[id].photo) {
-                        winnerPhotoSrc = players[id].photo;
+                    if (players[id].name === winnerName) {
+                        winnerPhotoSrc = players[id].photo || null;
+                        winnerKeywords = players[id].keywords || '';
                         break;
                     }
                 }
             }
+
+            // keywords = "42, Фамилия" — первый элемент номер, второй фамилия
+            const parts  = winnerKeywords.split(',').map(s => s.trim());
+            const number = parts[0] || '';
+
+            namePanel.textContent   = winnerName;
+            numberPanel.textContent = number ? `#${number}` : '';
 
             if (!winnerPhotoSrc) {
                 photoContainer.innerHTML = '';
@@ -351,7 +438,6 @@
                 photoContainer.innerHTML = `<img src="${winnerPhotoSrc}" class="winner-photo">`;
             } else {
                 photoContainer.innerHTML = `<div class="photo-placeholder"></div>`;
-
                 preloadImage(winnerPhotoSrc).then(() => {
                     if (lastScene !== 'winner') return;
                     const img = document.createElement('img');
@@ -359,9 +445,7 @@
                     img.className = 'winner-photo loading';
                     photoContainer.innerHTML = '';
                     photoContainer.appendChild(img);
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => img.classList.remove('loading'));
-                    });
+                    requestAnimationFrame(() => requestAnimationFrame(() => img.classList.remove('loading')));
                 });
             }
         }
