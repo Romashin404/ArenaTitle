@@ -117,13 +117,15 @@
             background-repeat: no-repeat; background-position: right 15px center; background-size: 15px;
         }
 
-        .votes-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .votes-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: start; }
         .vote-card { 
             background: var(--gray); padding: 15px; border-radius: 16px; text-align: center; 
             border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            min-width: 0; word-break: break-word; overflow-wrap: break-word;
         }
         .vote-card.correct {background: #b8ffbe; border-color: #10ac84;}
-        .vote-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-body); background: #fff; }
+        .vote-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--sibir-blue); background: #fff; }
         
         .player-tag { 
             background: #edf2f7; padding: 5px 12px; margin: 3px; display: inline-block; 
@@ -154,6 +156,116 @@
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== TOGGLE SWITCH ===== */
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            border-radius: 14px; padding: 12px 16px;
+            margin-top: 12px; margin-bottom: 4px;
+            transition: background 0.3s ease;
+        }
+        .toggle-row.off { background: #fde8e8; }
+        .toggle-row.on  { background: #d4f7dc; }
+        .toggle-label {
+            font-weight: 700; font-size: 0.85rem; color: var(--text-main);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toggle-switch {
+            position: relative; width: 52px; height: 28px; flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0; border-radius: 28px;
+            background: #f5a5a5; cursor: pointer; transition: background 0.25s ease;
+        }
+        .toggle-track::after {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; border-radius: 50%; background: white;
+            top: 3px; left: 3px;
+            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .toggle-track { background: #4cd964; }
+        .toggle-switch input:checked + .toggle-track::after { transform: translateX(24px); }
+
+        /* ===== CHAT PANEL ===== */
+        .chat-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.35); z-index: 999;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .chat-overlay.open { opacity: 1; pointer-events: all; }
+
+        .chat-panel {
+            position: fixed; top: 0; right: 0; bottom: 0;
+            width: 500px; background: var(--white);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+            z-index: 1000; display: flex; flex-direction: column;
+            transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+        .chat-panel.open { transform: translateX(0); }
+
+        .chat-panel-header {
+            padding: 20px; border-bottom: 1px solid var(--gray);
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .chat-panel-header img {
+            width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--sibir-blue); flex-shrink: 0;
+        }
+        .chat-panel-header .close-btn {
+            margin-left: auto; background: var(--gray); border: none;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            font-size: 1rem; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0;
+        }
+        .chat-panel-header .close-btn:hover { background: #ee5253; color: white; }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .chat-bubble {
+            max-width: 82%; padding: 10px 14px; border-radius: 18px;
+            font-size: 0.88rem; line-height: 1.45; word-break: break-word;
+        }
+        .chat-bubble.received {
+            background: var(--gray); border-bottom-left-radius: 4px; align-self: flex-start;
+        }
+        .chat-bubble.sent {
+            background: var(--sibir-blue); color: white;
+            border-bottom-right-radius: 4px; align-self: flex-end;
+        }
+        .chat-bubble .bubble-time {
+            font-size: 0.7rem; opacity: 0.55; margin-top: 4px; display: block; text-align: right;
+        }
+        .chat-bubble.received .bubble-time { text-align: left; }
+        .chat-bubble img.bubble-photo {
+            max-width: 100%; border-radius: 10px; display: block; margin-top: 6px; cursor: pointer;
+        }
+        .chat-date-sep {
+            text-align: center; font-size: 0.72rem; color: var(--text-muted);
+            background: var(--gray); padding: 3px 12px; border-radius: 20px;
+            align-self: center; margin: 4px 0;
+        }
+        .chat-panel-input {
+            padding: 14px 16px; border-top: 1px solid var(--gray);
+            display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0;
+        }
+        .chat-panel-input textarea {
+            flex: 1; border: 1.5px solid var(--sibir-blue); border-radius: 14px;
+            padding: 10px 14px; font-family: inherit; font-size: 0.88rem;
+            resize: none; outline: none; height: 44px; max-height: 120px;
+            box-sizing: border-box; line-height: 1.4; display: block; margin: 0;
+        }
+        .chat-panel-input .send-btn {
+            width: 44px; height: 44px; border-radius: 50%; background: var(--sibir-blue);
+            color: white; border: none; cursor: pointer; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0;
+        }
+        .chat-panel-input .send-btn:hover { background: var(--sibir-dark); }
+        .chat-empty { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: auto; padding: 40px 0; }
     </style>
 </head>
 <body>
@@ -180,15 +292,13 @@
             <button id="scene-winner" class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
         </div>
         <button class="btn" style="width:100%; margin-top:10px; border: 1px solid var(--border-color); background:#05caff" onclick="pickWinnerManual()">🎲 Перевыбрать победителя</button>
-    </div>
-
-    <div id="voting-mode-switch" style="display: none; margin-top: 20px;">
-        <h2>Прием голосов</h2>
-        <div style="display: flex; gap: 10px;">
-            <button id="vote-first-goal" class="btn btn-scene" style="width: 50%;" onclick="setVotingMode('first_goal')">🏒 Первая шайба</button>
-            <button id="vote-mvp" class="btn btn-scene" style="width: 50%;" onclick="setVotingMode('match_mvp')">🏆 Игрок матча</button>
+        <div class="toggle-row off" id="toggle-row-fg">
+            <div class="toggle-label">🏒 Приём голосов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-first-goal" onchange="onVoteToggle('first_goal', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
         </div>
-        <button id="stopVotingBtn" class="btn btn-stop" style="margin-top: 10px;" onclick="toggleVoting()">🛑 СТОП ПРИЕМ</button>
     </div>
 
     <div id="controls-slideshow" style="display: none;">
@@ -211,7 +321,6 @@
         </p>
     </div>
 
-    <!-- ✅ ОБНОВЛЕНО: Сцены MVP — убраны Результаты, добавлены Winline и Анонс -->
     <div id="controls-mvp" style="display: none;"> 
         <h2>Сцены: Игрок матча</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
@@ -219,6 +328,13 @@
             <button id="scene-mvp-announcement" class="btn btn-scene" onclick="setScene('announcement')">📢 Анонс</button>
             <button id="scene-mvp-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
             <button id="scene-mvp-winner" class="btn btn-scene" onclick="setScene('winner')">🏆 Победитель</button>
+        </div>
+        <div class="toggle-row off" id="toggle-row-mvp">
+            <div class="toggle-label">🏆 Приём голосов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-mvp" onchange="onVoteToggle('match_mvp', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
         </div>
     </div>
 
@@ -303,6 +419,24 @@
     </div>
 </div>
 
+<div class="chat-overlay" id="chatOverlay" onclick="closeChat()"></div>
+<div class="chat-panel" id="chatPanel">
+    <div class="chat-panel-header" id="chatHeader">
+        <img id="chatAvatar" src="" onerror="this.src='media/tg_logo.png'">
+        <div>
+            <div id="chatName" style="font-weight:700; font-size:1rem;"></div>
+            <div id="chatHandle" style="color:var(--text-muted); font-size:0.8rem;"></div>
+        </div>
+        <button class="close-btn" onclick="closeChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-panel-input">
+        <textarea id="chatReplyInput" placeholder="Ответить..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatReply();}"></textarea>
+        <button class="send-btn" onclick="sendChatReply()">➤</button>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script type="module">
@@ -360,15 +494,22 @@
         setTimeout(() => el.remove(), 1000);
     }
 
-    window.toggleVoting = () => {
-        const votingMode = currentData.votingMode || 'first_goal';
-        const isAccepting = votingMode === 'first_goal' ? currentData.acceptingVotes : currentData.acceptingMvpVotes;
-        if (votingMode === 'first_goal') {
-            set(ref(db, 'competition/acceptingVotes'), !isAccepting);
+    window.onVoteToggle = (mode, checked) => {
+        if (checked) {
+            // Включаем этот режим, выключаем другой
+            set(ref(db, 'competition/acceptingVotes'),    mode === 'first_goal');
+            set(ref(db, 'competition/acceptingMvpVotes'), mode === 'match_mvp');
+            set(ref(db, 'competition/votingMode'), mode);
         } else {
-            set(ref(db, 'competition/acceptingMvpVotes'), !isAccepting);
+            // Выключаем вовсе
+            set(ref(db, 'competition/acceptingVotes'),    false);
+            set(ref(db, 'competition/acceptingMvpVotes'), false);
         }
     };
+
+    // оставляем для обратной совместимости
+    window.toggleVoting = () => {};
+    window.setVotingMode = (mode) => { onVoteToggle(mode, true); };
     
     window.switchTab = (tab) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -476,7 +617,93 @@
     window.sendReply = (chatId, name) => {
         if (!chatId) { alert("Нет Chat ID. Не могу ответить."); return; }
         const msg = prompt(`Ответ для ${name}:`);
-        if (msg) push(ref(db, 'competition/replies'), { chatId, text: msg });
+        if (msg) {
+            push(ref(db, 'competition/replies'), { chatId, text: msg });
+            push(ref(db, `competition/sentReplies/${chatId}`), { text: msg, timestamp: Date.now() });
+        }
+    };
+
+    // ===== CHAT PANEL =====
+    let activeChatId = null;
+    let activeChatUnsub = null;
+
+    window.openChat = (chatId, name, avatar, handle) => {
+        if (!chatId) { alert("Нет Chat ID для этого пользователя"); return; }
+        activeChatId = chatId;
+
+        document.getElementById('chatName').textContent = name || 'Неизвестный';
+        document.getElementById('chatHandle').textContent = handle ? `@${handle}` : '';
+        const avatarEl = document.getElementById('chatAvatar');
+        avatarEl.src = (avatar && avatar.length > 10) ? avatar : tgLogo;
+
+        document.getElementById('chatPanel').classList.add('open');
+        document.getElementById('chatOverlay').classList.add('open');
+        document.getElementById('chatReplyInput').value = '';
+        document.getElementById('chatReplyInput').focus();
+
+        renderChatMessages(chatId);
+    };
+
+    window.closeChat = () => {
+        activeChatId = null;
+        document.getElementById('chatPanel').classList.remove('open');
+        document.getElementById('chatOverlay').classList.remove('open');
+    };
+
+    function renderChatMessages(chatId) {
+        const container = document.getElementById('chatMessages');
+        if (!chatId) return;
+
+        // Собираем полученные сообщения от этого пользователя
+        const allMsgs = currentData.allMessages || {};
+        const received = Object.values(allMsgs)
+            .filter(m => String(m.chatId) === String(chatId))
+            .map(m => ({ type: 'received', text: m.text || '', photo: m.isImage ? m.photo : null, ts: m.timestamp || 0 }));
+
+        // Собираем отправленные ответы
+        const sentData = currentData.sentReplies?.[chatId] || {};
+        const sent = Object.values(sentData)
+            .map(r => ({ type: 'sent', text: r.text || '', ts: r.timestamp || 0 }));
+
+        const all = [...received, ...sent].sort((a, b) => a.ts - b.ts);
+
+        if (all.length === 0) {
+            container.innerHTML = '<div class="chat-empty">Нет сообщений</div>';
+            return;
+        }
+
+        let html = '';
+        let lastDateStr = '';
+        all.forEach(msg => {
+            const date = new Date(msg.ts);
+            const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
+
+            if (dateStr !== lastDateStr) {
+                html += `<div class="chat-date-sep">${dateStr}</div>`;
+                lastDateStr = dateStr;
+            }
+
+            html += `<div class="chat-bubble ${msg.type}">`;
+            if (msg.text) html += `<span>${msg.text}</span>`;
+            if (msg.photo) html += `<img class="bubble-photo" src="${msg.photo}" onclick="window.open('${msg.photo}')">`;
+            html += `<span class="bubble-time">${timeStr}</span></div>`;
+        });
+
+        container.innerHTML = html;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    window.sendChatReply = async () => {
+        const input = document.getElementById('chatReplyInput');
+        const text = input.value.trim();
+        if (!text || !activeChatId) return;
+
+        input.value = '';
+        const ts = Date.now();
+        await push(ref(db, 'competition/replies'), { chatId: activeChatId, text });
+        await push(ref(db, `competition/sentReplies/${activeChatId}`), { text, timestamp: ts });
+        // renderChatMessages вызовется автоматически через onValue
     };
 
     window.addPlayer = () => {
@@ -566,9 +793,6 @@
         if(confirm("Удалить персонажа?")) remove(ref(db, `competition/lookslike/characters/${id}`));
     };
 
-    // =============================================
-    // ✅ ОБНОВЛЕНО: карта сцен MVP
-    // =============================================
     function updateActiveSceneButtons() {
         const mode = currentData.activeMode || 'voting';
         document.querySelectorAll('[id^="scene-"]').forEach(btn => btn.classList.remove('active'));
@@ -584,7 +808,6 @@
             const btn = document.getElementById(map[currentData.lookslikeState]);
             if (btn) btn.classList.add('active');
         } else if (mode === 'mvp') {
-            // winline_logo и announcement — новые сцены; qr и winner — старые
             const map = {
                 winline_logo: 'scene-mvp-winline_logo',
                 announcement: 'scene-mvp-announcement',
@@ -608,12 +831,10 @@
         
         ['controls-voting','controls-slideshow','controls-lookslike','controls-mvp','players-controls']
             .forEach(id => document.getElementById(id).style.display = 'none');
-        document.getElementById('voting-mode-switch').style.display = 'none';
 
         if (mode === 'voting') {
             document.getElementById('controls-voting').style.display = 'block';
             document.getElementById('players-controls').style.display = 'block';
-            document.getElementById('voting-mode-switch').style.display = 'block';
         } else if (mode === 'slideshow') {
             document.getElementById('controls-slideshow').style.display = 'block';
         } else if (mode === 'lookslike') {
@@ -621,25 +842,28 @@
         } else if (mode === 'mvp') {
             document.getElementById('controls-mvp').style.display = 'block';
             document.getElementById('players-controls').style.display = 'block';
-            document.getElementById('voting-mode-switch').style.display = 'block';
         }
 
-        const votingMode = currentData.votingMode || 'first_goal';
-        const isAccepting = votingMode === 'first_goal' ? currentData.acceptingVotes : currentData.acceptingMvpVotes;
-        document.getElementById('vote-first-goal')?.classList.toggle('active', votingMode === 'first_goal');
-        document.getElementById('vote-mvp')?.classList.toggle('active', votingMode === 'match_mvp');
+        // Синхронизируем тумблеры
+        const fgOn  = !!currentData.acceptingVotes;
+        const mvpOn = !!currentData.acceptingMvpVotes;
 
-        const stopBtn = document.getElementById('stopVotingBtn');
-        if (stopBtn) {
-            stopBtn.textContent = isAccepting ? "🛑 СТОП ПРИЕМ" : "▶️ ЗАПУСТИТЬ ПРИЕМ";
-            stopBtn.classList.toggle('closed', !isAccepting);
-        }
+        const toggleFG  = document.getElementById('toggle-first-goal');
+        const toggleMVP = document.getElementById('toggle-mvp');
+        const rowFG     = document.getElementById('toggle-row-fg');
+        const rowMVP    = document.getElementById('toggle-row-mvp');
+
+        if (toggleFG)  toggleFG.checked  = fgOn;
+        if (toggleMVP) toggleMVP.checked = mvpOn;
+        if (rowFG)  rowFG.className  = 'toggle-row ' + (fgOn  ? 'on' : 'off');
+        if (rowMVP) rowMVP.className = 'toggle-row ' + (mvpOn ? 'on' : 'off');
 
         renderPlayers(); 
         renderVotes(); 
         renderMessages();
         renderCharacters();
         renderMvpResults();
+        if (activeChatId) renderChatMessages(activeChatId);
     });
 
     let lastMsgsHtml = "";
@@ -693,11 +917,13 @@
             const userAvatar = (m.userPhoto && m.userPhoto.length > 10) ? m.userPhoto : tgLogo;
             const date = m.timestamp ? new Date(m.timestamp) : new Date();
             const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
+            const safeName = (m.name||'').replace(/'/g,"\\'");
+            const safeHandle = (m.handle||'').replace(/'/g,"\\'");
             newHtml += `    
-                <div class="message-item" style="border-left: 5px solid ${m.approved ? '#10ac84' : '#d1d8e0'}">
+                <div class="message-item" style="border-left: 5px solid ${m.approved ? '#10ac84' : '#d1d8e0'}; cursor:pointer;" onclick="openChat('${m.chatId}','${safeName}','${userAvatar}','${safeHandle}')">
                     <div class="message-left">
                         <button class="btn" style="width:100%; background:${m.approved ? '#10ac84' : '#f1f2f6'}; color:${m.approved ? 'white' : 'black'}" 
-                                onclick="togglePhotoSelection('${m.id}', ${m.approved})">
+                                onclick="event.stopPropagation(); togglePhotoSelection('${m.id}', ${m.approved})">
                             ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
                         </button>
                         <span style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;">${timeStr}</span>
@@ -710,10 +936,10 @@
                             <div><b>${m.name}</b> <span style="color:#7f8c8d; font-size:0.9em">@${m.handle || ''}</span></div>
                         </div>
                         <div>${m.text || ''}</div>
-                        ${m.isImage ? `<div class="photo-container"><img src="${m.photo}" onclick="window.open('${m.photo}')" style="cursor:pointer"></div>` : ''}
+                        ${m.isImage ? `<div class="photo-container"><img src="${m.photo}" onclick="event.stopPropagation(); window.open('${m.photo}')" style="cursor:pointer"></div>` : ''}
                         <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button class="btn" style="font-size:11px; padding:5px 10px;" onclick="sendReply('${m.chatId}', '${m.name}')">↩ Ответить</button>
-                            <button class="btn" style="font-size:11px; padding:5px 10px; color:#ee5253" onclick="removeMessage('${m.id}')">🗑 Удалить</button>
+                            <button class="btn" style="font-size:11px; padding:5px 10px;" onclick="event.stopPropagation(); openChat('${m.chatId}','${safeName}','${userAvatar}','${safeHandle}')">💬 Открыть чат</button>
+                            <button class="btn" style="font-size:11px; padding:5px 10px; color:#ee5253" onclick="event.stopPropagation(); removeMessage('${m.id}')">🗑 Удалить</button>
                         </div>
                     </div>
                 </div>`;
@@ -819,15 +1045,17 @@
         list.reverse().forEach(v => {
             const isCorrect = v.votedFor === currentData.scorer;
             const voteAvatar = (v.photo && v.photo.length > 10) ? v.photo : tgLogo;
+            const safeName = (v.name||'').replace(/'/g,"\\'");
+            const safeHandle = (v.handle||'').replace(/'/g,"\\'");
             newHtml += `
-                <div class="vote-card ${isCorrect ? 'correct' : ''}">
-                    <span style="position:absolute; top:5px; right:10px; cursor:pointer; color:#ccc" onclick="removeVote('${v.id}')">×</span>
-                    <div style="width:60px; height:60px; margin: 0 auto; background: #eee; border-radius: 50%; overflow: hidden;">
+                <div class="vote-card ${isCorrect ? 'correct' : ''}" style="cursor:pointer" onclick="openChat('${v.chatId}','${safeName}','${voteAvatar}','${safeHandle}')">
+                    <span style="position:absolute; top:5px; right:10px; cursor:pointer; color:#ee5253; z-index:2; font-size:1.1rem;" onclick="event.stopPropagation(); removeVote('${v.id}')">×</span>
+                    <div style="width:60px; height:60px; background: #eee; border-radius: 50%; overflow: hidden; flex-shrink: 0;">
                         <img src="${voteAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:60px; height:60px; object-fit: cover;">
                     </div>
-                    <div style="font-weight:700; font-size:0.9rem; margin-top:8px;">${v.name}</div>
-                    <div style="color:var(--sibir-blue); font-size:0.8rem; font-weight:600;">${v.votedFor}</div>
-                    <button class="btn" style="width:100%; margin-top:10px; font-size:10px; padding:5px;" onclick="sendReply('${v.chatId}', '${v.name}')">💬 Ответить</button>
+                    <div style="font-weight:700; font-size:0.9rem; margin-top:8px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${v.name}">${v.name}</div>
+                    <div style="color:var(--sibir-blue); font-size:0.8rem; font-weight:600; margin-top:6px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${v.votedFor}">${v.votedFor}</div>
+                    <button class="btn" style="width:100%; margin-top:8px; font-size:10px; padding:5px;" onclick="event.stopPropagation(); openChat('${v.chatId}','${safeName}','${voteAvatar}','${safeHandle}')">💬 Ответить</button>
                 </div>`;
         });
         if (lastVotesHtml !== newHtml) { container.innerHTML = newHtml; lastVotesHtml = newHtml; }
