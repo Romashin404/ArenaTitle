@@ -128,14 +128,12 @@
 <div class="noise-container">
 
     <div class="video-side">
+        <!-- Два видео, переключаются через Firebase -->
         <video id="video-38" class="player-video" autoplay muted loop playsinline>
             <source src="media/38.webm" type="video/webm">
         </video>
         <video id="video-11" class="player-video hidden" autoplay muted loop playsinline>
             <source src="media/11.webm" type="video/webm">
-        </video>
-        <video id="video-24" class="player-video" autoplay muted loop playsinline>
-            <source src="media/24.webm" type="video/webm">
         </video>
     </div>
 
@@ -182,6 +180,7 @@
     // ── Firebase: переключение видео ─────────────────────────────────
     const v38 = document.getElementById('video-38');
     const v11 = document.getElementById('video-11');
+    const v24 = document.getElementById('video-24');
 
     let currentPlayer = '38';
 
@@ -190,13 +189,13 @@
         if (player === currentPlayer) return;
         currentPlayer = player;
 
-        if (player === '11') {
-            v38.classList.add('hidden');
-            v11.classList.remove('hidden');
-        } else {
-            v11.classList.add('hidden');
-            v38.classList.remove('hidden');
-        }
+        v38.classList.add('hidden');
+        v11.classList.add('hidden');
+        v24.classList.add('hidden');
+
+        if (player === '11') v11.classList.remove('hidden');
+        else if (player === '24') v24.classList.remove('hidden');
+        else v38.classList.remove('hidden');
     });
 
     // ── Шумомер ──────────────────────────────────────────────────────
