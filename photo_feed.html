@@ -197,12 +197,12 @@
     </style>
 </head>
 <body>
-
+    
     <video autoplay muted loop playsinline id="bg-video">
         <source src="media/backgroundvideo.webm" type="video/webm">
     </video>
     <div class="video-overlay"></div>
-
+    <div id="bg-layer" style="position:fixed;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;z-index:-1;opacity:0;transition:opacity 1.5s ease-in-out;"></div>
     <div id="qr-screen" class="qr-scene">
         <div class="qr-row">
             <div class="qr-item"><img src="media/telegramqr.png"></div>
@@ -407,6 +407,19 @@
         
         let updateTimeout = null;
 
+        function applyBackground(url) {
+            const bgLayer = document.getElementById('bg-layer');
+            const bgVideo = document.getElementById('bg-video');
+            if (url && url.trim()) {
+                bgLayer.style.backgroundImage = `url('${url}')`;
+                bgLayer.style.opacity = '1';
+                if (bgVideo) bgVideo.style.opacity = '0';
+            } else {
+                bgLayer.style.opacity = '0';
+                if (bgVideo) bgVideo.style.opacity = '1';
+            }
+        }
+                
         onValue(ref(db, 'competition'), (snapshot) => {
             const data = snapshot.val() || {};
             
@@ -415,7 +428,7 @@
             updateTimeout = setTimeout(() => {
                 const messages = data.allMessages || {};
                 const newPhotos = Object.values(messages).filter(m => m.isImage && m.approved);
-                
+                applyBackground(data.backgrounds?.slideshow || '');
                 // Проверяем изменения
                 if (JSON.stringify(newPhotos) !== JSON.stringify(approvedPhotos)) {
                     approvedPhotos = newPhotos;
@@ -523,4 +536,5 @@
     </script>
 </body>
 </html>
+
 
