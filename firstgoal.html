@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        #bg-layer {
+        #bg-layer, #bg-layer-2 {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background-size: cover;
             background-position: center;
             z-index: -1; 
-            transition: opacity 1s ease-in-out;
+            transition: opacity 1.5s ease-in-out;
             background-color: transparent;
+            opacity: 0;
         }
+        #bg-layer-2 { z-index: -1; }
+
         @font-face {
             font-family: 'MyCustomFont';
             src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
@@ -23,7 +26,6 @@
             to { transform: translateX(-50%); } 
         }
 
-        /* Анимация для слова УГАДАЙ */
         @keyframes fadeInOutCustom {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
             20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -31,7 +33,6 @@
             100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
         }
 
-        /* Анимация пульсации финального текста */
         @keyframes pulse-glow {
             0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); }
             50% { transform: scale(1.03); text-shadow: 0 0 50px rgba(0, 242, 255, 0.9); }
@@ -68,9 +69,10 @@
             z-index: 5;
         }
 
-        #bg-video, #bg-layer {
+        #bg-video {
             transition: opacity 1.5s ease-in-out;
         }
+
         h1 { font-size: 80px; text-transform: uppercase; text-shadow: 4px 4px 15px rgba(0,0,0,0.8); margin: 20px; }
         h2 { font-size: 80px; text-shadow: 4px 4px 15px rgba(0,0,0,0.8); }
 
@@ -80,15 +82,10 @@
         }
         #tape { display: flex; position: absolute; left: 0; }
         .user-card { min-width: 300px; display: flex; flex-direction: column; align-items: center; }
-        .user-card img { width: 270px; height: 270px; border-radius: 50%; border: 5px solid white; }
+        .user-card img { width: 270px; height: 270px; border-radius: 50%; border: 5px solid white; object-fit: cover; }
         .user-card span { margin-top: 15px; font-size: 24px; font-weight: bold; }
 
-        /* --- СЦЕНА ПОБЕДИТЕЛЯ --- */
-        #winner {
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+        #winner { flex-direction: column; align-items: center; justify-content: center; }
 
         .winner-title {
             font-size: 140px;
@@ -96,15 +93,10 @@
             margin: 0 0 40px 0;
         }
 
-        .winner-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .winner-content { display: flex; flex-direction: column; align-items: center; }
 
         .winner-avatar {
-            width: 380px;
-            height: 380px;
+            width: 380px; height: 380px;
             border-radius: 50%;
             border: 10px solid rgb(42, 138, 255);
             box-shadow: 0 0 60px rgb(42, 138, 255);
@@ -112,16 +104,11 @@
             margin-bottom: 30px;
         }
 
-        /* --- ЛОГИКА АНОНСА (ПЕРЕЗАПУСК ПРИ .active) --- */
         .fade-out-text { 
-            font-size: 250px; 
-            font-weight: bold; 
-            color: white; 
+            font-size: 250px; font-weight: bold; color: white; 
             text-shadow: 0 0 30px rgba(0, 242, 255, 0.9); 
-            position: absolute; 
-            width: 100%; left: 50%; top: 50%; 
-            transform: translate(-50%, -50%); 
-            opacity: 0;
+            position: absolute; width: 100%; left: 50%; top: 50%; 
+            transform: translate(-50%, -50%); opacity: 0;
         }
 
         .scene.active .fade-out-text {
@@ -135,9 +122,7 @@
         }
 
         .line1, .line2, .line3 { 
-            opacity: 0; 
-            text-transform: uppercase; 
-            transform: translateY(100px); 
+            opacity: 0; text-transform: uppercase; transform: translateY(100px); 
         }
 
         .scene.active .line1 { font-size: 220px; font-weight: bold; animation: slideUpFade 0.8s forwards 3.3s; text-shadow: 0 0 30px rgba(0, 242, 255, 0.9);}
@@ -149,18 +134,18 @@
         @keyframes fadeInMain { to { opacity: 1; } }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
-        /* --- ПРОЧЕЕ --- */
         .qr-row { display: flex; gap: 100px; justify-content: center; align-items: flex-start; }
         .qr-item { display: flex; flex-direction: column; align-items: center; }
         .qr-item img { width: 700px; border: 10px solid white; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         .top-logo { position: absolute; top: 0px; left: 50%; transform: translateX(-50%); width: 350px; z-index: 10; outline: none; }
         
-        #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: opacity 1s ease-in-out; }
+        #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: opacity 1.5s ease-in-out; }
         .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: transparent; }
     </style>
 </head>
 <body>
     <div id="bg-layer"></div>
+    <div id="bg-layer-2"></div>
 
     <div id="announcement" class="scene">
         <video muted playsinline id="logo-video" class="top-logo">
@@ -178,8 +163,8 @@
     
     <div id="qr" class="scene">
         <div class="qr-row">
-            <div class="qr-item"><img src="media/telegramqr.png"></div>
-            <div class="qr-item"><img src="media/vkqr.png"></div>
+            <div class="qr-item"><img src="media/telegramqr.png" loading="lazy"></div>
+            <div class="qr-item"><img src="media/vkqr.png" loading="lazy"></div>
         </div>
         <h1 style="text-shadow: 0 0 20px rgba(0, 242, 255, 0.6); font-size: 160px; animation: pulse-glow 2s ease-in-out infinite;">Переходи и голосуй!</h1>
     </div>
@@ -203,10 +188,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        let selectedWinner = null;
-        let winnerImagePreloaded = false;
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
@@ -221,103 +203,112 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const tape = document.getElementById('tape');
-        const bgLayer = document.getElementById('bg-layer');
-        const bgVideo = document.getElementById('bg-video');
+        const tape        = document.getElementById('tape');
+        const bgLayer     = document.getElementById('bg-layer');
+        const bgLayer2    = document.getElementById('bg-layer-2');
+        const bgVideo     = document.getElementById('bg-video');
+        const logoVid     = document.getElementById('logo-video');
 
-        let allWinners = [];
-        let lastScene = "";
-        let rouletteHandled = false;
-        const preloadedImages = new Map(); // Здесь будем хранить уже загруженные картинки
         const defaultPhoto = 'media/tg_logo.png';
+        const preloadedImages = new Map();
 
+        let lastScene   = '';
+        let lastBgUrl   = '';
+        let allWinners  = [];
+        let currentVotes  = {};
+        let currentScorer = '';
+
+        // ── Фон с crossfade — грузим в скрытый слой, показываем только после загрузки ──
         function applyBackground(url) {
-            if (url.trim()) {
-                bgLayer.style.backgroundImage = `url('${url}')`;
-                bgLayer.style.opacity = "1";
-                bgVideo.style.opacity = "0";
-            } else {
-                bgLayer.style.opacity = "0";
-                bgVideo.style.opacity = "1";
+            if (url === lastBgUrl) return;
+            lastBgUrl = url;
+
+            if (!url || !url.trim()) {
+                bgLayer.style.opacity  = '0';
+                bgLayer2.style.opacity = '0';
+                bgVideo.style.opacity  = '1';
+                return;
             }
+
+            // Грузим в скрытый слой
+            const img = new Image();
+            img.onload = () => {
+                bgLayer2.style.backgroundImage = `url('${url}')`;
+                bgLayer2.style.opacity = '1';
+                bgVideo.style.opacity  = '0';
+                // После перехода копируем в основной и скрываем второй
+                setTimeout(() => {
+                    bgLayer.style.backgroundImage = `url('${url}')`;
+                    bgLayer.style.opacity  = '1';
+                    bgLayer2.style.opacity = '0';
+                }, 1600);
+            };
+            img.onerror = () => {
+                // Если не загрузилось — оставляем видео
+                bgVideo.style.opacity = '1';
+            };
+            img.src = url;
         }
 
-        onValue(ref(db, 'competition'), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+        // ── Предзагрузка фото болельщиков ──
+        function smartPreload(url) {
+            if (!url || url === defaultPhoto || preloadedImages.has(url)) return;
+            preloadedImages.set(url, false);
+            const img = new Image();
+            img.onload  = () => preloadedImages.set(url, true);
+            img.onerror = () => preloadedImages.delete(url);
+            img.src = url;
+        }
 
-            if (data.votes) {
-                Object.values(data.votes).forEach(vote => {
-                    if (vote.photo) smartPreload(vote.photo);
-                });
+        // ── Переключение сцен ──
+        function switchScene(sceneId) {
+            if (sceneId === lastScene) return;
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(sceneId);
+            if (target) target.classList.add('active');
+
+            if (sceneId === 'announcement') {
+                logoVid.currentTime = 0;
+                logoVid.play().catch(() => {});
+            } else {
+                logoVid.pause();
             }
 
-            if (data.winner && data.winner.photo) {
-                smartPreload(data.winner.photo);
-            }
-
-            const currentScene = data.votingState || 'announcement';
-
-            // 1. Управление фоном
-            applyBackground(data.backgrounds?.voting || '');
-
-            // 2. Переключение сцен
-            if (currentScene !== lastScene) {
-                document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-                const target = document.getElementById(currentScene);
-                if (target) target.classList.add('active');
-
-                // Если зашли в рулетку — запускаем ленту (данные уже должны быть в data.winner)
-                if (currentScene === 'roulette') {
-                    const scorer = data.scorer;
-                    const votes = data.votes || {};
-                    // Формируем список участников для анимации ленты
-                    allWinners = Object.values(votes).filter(v => v.votedFor === scorer);
-                    startRoulette();
-                }
-            }
-
-            // 3. Обновление данных победителя (когда админка его записала)
-            if (data.winner) {
-                displayWinner(data.winner);
-            }
-
-            // Очистка при уходе со сцен
-            if (currentScene !== 'roulette' && currentScene !== 'winner') {
+            if (sceneId === 'roulette') {
+                allWinners = Object.values(currentVotes).filter(v => v.votedFor === currentScorer);
+                startRoulette();
+            } else {
                 stopRoulette();
             }
 
-            lastScene = currentScene;
+            lastScene = sceneId;
+        }
 
-            const logoVid = document.getElementById('logo-video');
-            if (currentScene === 'announcement') logoVid.play().catch(()=>{});
-            else logoVid.pause();
-        });
-
+        // ── Рулетка ──
         function startRoulette() {
             tape.innerHTML = '';
             tape.classList.add('rolling');
             if (allWinners.length === 0) return;
-            const minCards = 40; 
-            const repeatCount = Math.ceil(minCards / (allWinners.length || 1));
+
+            const repeatCount = Math.ceil(40 / allWinners.length);
             let displayList = [...allWinners].sort(() => Math.random() - 0.5);
             let fullSet = [];
             for (let i = 0; i < repeatCount; i++) fullSet = fullSet.concat(displayList);
-            const finalDisplayList = [...fullSet, ...fullSet];
+            const finalList = [...fullSet, ...fullSet];
 
-            finalDisplayList.forEach(user => {
-                    // Если фотки нет в базе — ставим заглушку
-                    const userPhoto = (user.photo && user.photo.trim() !== "") ? user.photo : defaultPhoto;
-                    
-                    tape.innerHTML += `
-                        <div class="user-card">
-                            <img src="${userPhoto}" onerror="this.src='${defaultPhoto}'">
-                            <span>@${user.handle || user.name || 'Anonymous'}</span>
-                        </div>`;
-                });
-                
-            const scrollSpeed = Math.max(10, allWinners.length * 0.8);
-            tape.style.animationDuration = `${scrollSpeed}s`;
+            // Строим через fragment — быстрее чем innerHTML +=
+            const frag = document.createDocumentFragment();
+            finalList.forEach(user => {
+                const photo = (user.photo && user.photo.trim()) ? user.photo : defaultPhoto;
+                const div = document.createElement('div');
+                div.className = 'user-card';
+                div.innerHTML = `<img src="${photo}" onerror="this.src='${defaultPhoto}'" loading="lazy">
+                                 <span>@${user.handle || user.name || 'Anonymous'}</span>`;
+                frag.appendChild(div);
+            });
+            tape.appendChild(frag);
+
+            tape.style.animationDuration = `${Math.max(10, allWinners.length * 0.8)}s`;
         }
 
         function stopRoulette() {
@@ -328,30 +319,49 @@
         function displayWinner(winner) {
             const container = document.getElementById('winner-display');
             if (!winner || !container) return;
-            const winnerPhoto = (winner.photo && winner.photo !== "") ? winner.photo : defaultPhoto;
+            const photo = (winner.photo && winner.photo.trim()) ? winner.photo : defaultPhoto;
             container.innerHTML = `
-                <img src="${winnerPhoto}" class="winner-avatar" onerror="this.src='${defaultPhoto}'">
-                <h1 style="font-size: 150px; margin: 10px 0;">${winner.name || "Без имени"}</h1>
-                <h2 style="font-size: 70px; margin: 0;">@${winner.handle || 'no_nickname'}</h2>
-            `;
+                <img src="${photo}" class="winner-avatar" onerror="this.src='${defaultPhoto}'">
+                <h1 style="font-size:150px;margin:10px 0;">${winner.name || 'Без имени'}</h1>
+                <h2 style="font-size:70px;margin:0;">@${winner.handle || 'no_nickname'}</h2>`;
         }
-        function preloadImage(src, callback) {
-            const img = new Image();
-            img.onload = callback;
-            img.onerror = callback;
-            img.src = src;
-        }
-        function smartPreload(url) {
-            if (!url || url === "" || url === defaultPhoto) return;
-            if (preloadedImages.has(url)) return; // Уже загружено
 
-            const img = new Image();
-            img.src = url;
-            img.onload = () => {
-                preloadedImages.set(url, true);
-                console.log("Предзагружено фото:", url);
-            };
-        }
+        // ════════════════════════════════════════════════════
+        // Разбитые Firebase listeners — каждый слушает только своё
+        // ════════════════════════════════════════════════════
+
+        // 1. Фон
+        onValue(ref(db, 'competition/backgrounds/voting'), snap => {
+            applyBackground(snap.val() || '');
+        });
+
+        // 2. Сцена
+        onValue(ref(db, 'competition/votingState'), snap => {
+            switchScene(snap.val() || 'announcement');
+        });
+
+        // 3. Счёт/автор гола — нужен для рулетки
+        onValue(ref(db, 'competition/scorer'), snap => {
+            currentScorer = snap.val() || '';
+        });
+
+        // 4. Голоса — предзагружаем фото, обновляем список для рулетки
+        onValue(ref(db, 'competition/votes'), snap => {
+            currentVotes = snap.val() || {};
+            Object.values(currentVotes).forEach(v => {
+                if (v.photo) smartPreload(v.photo);
+            });
+        });
+
+        // 5. Победитель
+        onValue(ref(db, 'competition/winner'), snap => {
+            const winner = snap.val();
+            if (winner) {
+                if (winner.photo) smartPreload(winner.photo);
+                displayWinner(winner);
+            }
+        });
+
     </script>
 </body>
 </html>
