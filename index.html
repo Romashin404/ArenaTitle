@@ -241,7 +241,7 @@
 
         .chat-panel {
             position: fixed; top: 0; right: 0; bottom: 0;
-            width: 500px; background: var(--white);
+            width: 380px; background: var(--white);
             box-shadow: -8px 0 40px rgba(0,0,0,0.15);
             z-index: 1000; display: flex; flex-direction: column;
             transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
@@ -309,6 +309,43 @@
         }
         .chat-panel-input .send-btn:hover { background: var(--sibir-dark); }
         .chat-empty { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: auto; padding: 40px 0; }
+
+        /* ===== QUIZ TAB ===== */
+        .quiz-q-card {
+            background: var(--gray); border-radius: 14px; padding: 16px;
+            margin-bottom: 14px; border: 2px solid transparent; transition: 0.2s;
+        }
+        .quiz-q-card.active-q { border-color: #9ef01a; background: #f4fff0; box-shadow: 0 0 10px rgba(158,240,26,0.2); }
+        .quiz-q-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .quiz-q-num { font-weight: 800; font-size: 0.85rem; color: var(--sibir-dark); }
+        .quiz-active-badge { background: #9ef01a; color: #1a5c00; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .quiz-q-text { font-size: 1rem; font-weight: 600; margin-bottom: 12px; line-height: 1.35; }
+        .quiz-answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .quiz-answer-block {
+            background: white; border-radius: 8px; padding: 10px 12px;
+            border-left: 4px solid #ddd; font-size: 0.8rem;
+        }
+        .quiz-answer-block.is-correct { border-left-color: #10ac84; background: #f0fff8; }
+        .quiz-answer-label { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+        .quiz-answer-text { color: var(--text-main); margin-bottom: 3px; font-size: 0.82rem; }
+        .quiz-answer-keys { color: var(--text-muted); font-size: 0.72rem; }
+        .quiz-response-badge {
+            background: var(--sibir-blue); color: white;
+            padding: 1px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+            margin-left: auto;
+        }
+        .quiz-mode-btn { 
+            flex: 1; padding: 10px; border-radius: 10px; border: 2px solid var(--border-color);
+            background: var(--gray); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+            transition: 0.2s; font-family: inherit; color: var(--text-main);
+        }
+        .quiz-mode-btn.selected { background: var(--sibir-dark); color: white; border-color: var(--sibir-dark); }
+        .quiz-add-ans { 
+            background: white; border-radius: 10px; padding: 10px;
+            border-left: 4px solid #ddd;
+        }
+        .quiz-add-ans input { height: 34px; font-size: 0.8rem; margin-bottom: 5px; }
+        .quiz-add-ans input:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -326,6 +363,7 @@
         </div>
         <div style="display: flex; gap: 10px;">
             <button id="mode-noise" class="btn btn-scene" style="width: 50%;" onclick="setActiveMode('noise')">🔊 Шумомер</button>
+            <button id="mode-quiz" class="btn btn-scene" style="width: 50%;" onclick="setActiveMode('quiz')">❓ Викторина</button>
         </div>
     </div>
 
@@ -372,7 +410,7 @@
         <div style="display: flex; gap: 10px;">
             <button id="noise-player-38" class="btn btn-scene" style="width: 33%;" onclick="setNoisePlayer('38')">🏒 38 Баклашев</button>
             <button id="noise-player-11" class="btn btn-scene" style="width: 33%;" onclick="setNoisePlayer('11')">🏒 11 Кошелев</button>
-            <button id="noise-player-24" class="btn btn-scene" style="width: 33%;" onclick="setNoisePlayer('24')">🏒 24 Сушко</button>
+            <button id="noise-player-24" class="btn btn-scene" style="width: 33%;" onclick="setNoisePlayer('24')">🏒 24 ...</button>
         </div>
         <p style="font-size: 0.8rem; color: #666; margin-top: 10px; line-height: 1.3;">
             Выбранный игрок будет показываться на шумомере в OBS.
@@ -396,12 +434,40 @@
         </div>
     </div>
 
+    <div id="controls-quiz" style="display: none;">
+        <h2>Сцены: Викторина</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+            <button id="scene-quiz-announcement" class="btn btn-scene" onclick="setScene('quiz_announcement')">📣 Анонс</button>
+            <button id="scene-quiz-qr" class="btn btn-scene" onclick="setScene('quiz_qr')">📱 QR-коды</button>
+            <button id="scene-quiz-question" class="btn btn-scene" onclick="setScene('quiz_question')">❓ Вопрос</button>
+            <button id="scene-quiz-results" class="btn btn-scene" onclick="setScene('quiz_results')">📊 Результаты</button>
+            <button id="scene-quiz-roulette" class="btn btn-scene" onclick="quizLaunchRoulette()">🎲 Рулетка</button>
+            <button id="scene-quiz-winner" class="btn btn-scene" onclick="quizPickWinner()">🏆 Победитель</button>
+        </div>
+        <button class="btn" style="width:100%; margin-bottom:8px; border: 1px solid var(--border-color); background:#05caff" onclick="quizPickWinner()">🎲 Перевыбрать победителя</button>
+        <div class="toggle-row off" id="toggle-row-quiz">
+            <div class="toggle-label">❓ Приём ответов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-quiz" onchange="onVoteToggle('quiz', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
+        </div>
+    </div>
+
     <h2>Фон оверлея</h2>
+    <select id="bgModeSelect" style="margin-bottom:10px;">
+        <option value="voting">🏒 Первая шайба</option>
+        <option value="mvp">🏆 Игрок матча</option>
+        <option value="quiz">❓ Викторина</option>
+        <option value="lookslike">👯 Looks Like</option>
+        <option value="slideshow">📸 Слайд-шоу</option>
+        <option value="noise">🔊 Шумомер</option>
+    </select>
     <input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <button class="btn btn-scene" style="width: 48%" onclick="updateBg()">Применить</button>
         <button class="btn btn-scene" style="width: 48%" onclick="removeBackground()">Удалить</button>
-    </div>   
+    </div>
     
     <div id="players-controls">
         <h2>Автор гола</h2>
@@ -420,6 +486,7 @@
         <button class="tab-btn" onclick="switchTab('chat')">Эфир (Чат)</button>
         <button class="tab-btn" onclick="switchTab('lookslike')">Персонажи (Looks Like)</button>
         <button class="tab-btn" onclick="switchTab('mvp')">Игрок матча</button>
+        <button class="tab-btn" onclick="switchTab('quiz')">❓ Викторина</button>
     </div>
 
     <div id="tab-votes" class="tab-content active">
@@ -474,6 +541,86 @@
             </div>
         </div>
         <div id="mvpResultsList"></div>
+    </div>
+
+    <div id="tab-quiz" class="tab-content">
+        <!-- Winner mode -->
+        <div style="background: #f1f2f6; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0;">Режим победителя</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="quiz-mode-all" class="quiz-mode-btn" onclick="setQuizWinnerMode('all_correct')">🎯 Все верные</button>
+                <button id="quiz-mode-any" class="quiz-mode-btn" onclick="setQuizWinnerMode('any_correct')">⚡ Хотя бы один верный</button>
+            </div>
+            <p style="font-size: 0.78rem; color: #666; margin: 0; line-height: 1.5;">
+                <b>Все верные:</b> в рулетку попадают только те, кто верно ответил на все запущенные вопросы.<br>
+                <b>Хотя бы один:</b> каждый верный ответ = +1 шанс. Ответил правильно на 3 — шанс ×3.
+            </p>
+        </div>
+
+        <!-- Add question -->
+        <div style="background: #f1f2f6; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0;">Добавить вопрос</h3>
+            <input type="text" id="quiz-q-text" placeholder="Текст вопроса" style="margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                <div class="quiz-add-ans" style="border-left-color: #05caff;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                        <span style="font-weight:800; color:#05caff; font-size:1rem;">A</span>
+                        <label style="display:flex; align-items:center; cursor:pointer; margin-left:auto;" title="Верный ответ">
+                            <input type="checkbox" id="quiz-a0-correct" style="width:18px;height:18px;cursor:pointer;">
+                        </label>
+                    </div>
+                    <input type="text" id="quiz-a0-text" placeholder="Вариант A">
+                    <input type="text" id="quiz-a0-keys" placeholder="Ключевые слова">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #ff9f43;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                        <span style="font-weight:800; color:#ff9f43; font-size:1rem;">B</span>
+                        <label style="display:flex; align-items:center; cursor:pointer; margin-left:auto;" title="Верный ответ">
+                            <input type="checkbox" id="quiz-a1-correct" style="width:18px;height:18px;cursor:pointer;">
+                        </label>
+                    </div>
+                    <input type="text" id="quiz-a1-text" placeholder="Вариант B">
+                    <input type="text" id="quiz-a1-keys" placeholder="Ключевые слова">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #9ef01a;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                        <span style="font-weight:800; color:#3d8b00; font-size:1rem;">C</span>
+                        <label style="display:flex; align-items:center; cursor:pointer; margin-left:auto;" title="Верный ответ">
+                            <input type="checkbox" id="quiz-a2-correct" style="width:18px;height:18px;cursor:pointer;">
+                        </label>
+                    </div>
+                    <input type="text" id="quiz-a2-text" placeholder="Вариант C">
+                    <input type="text" id="quiz-a2-keys" placeholder="Ключевые слова">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #ee5253;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                        <span style="font-weight:800; color:#ee5253; font-size:1rem;">D</span>
+                        <label style="display:flex; align-items:center; cursor:pointer; margin-left:auto;" title="Верный ответ">
+                            <input type="checkbox" id="quiz-a3-correct" style="width:18px;height:18px;cursor:pointer;">
+                        </label>
+                    </div>
+                    <input type="text" id="quiz-a3-text" placeholder="Вариант D">
+                    <input type="text" id="quiz-a3-keys" placeholder="Ключевые слова">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addQuizQuestion()">+ Добавить вопрос</button>
+        </div>
+
+        <!-- Questions list -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Вопросы</h3>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" style="background: #ff9f43; color: white; padding: 8px 12px; font-size: 0.8rem;" onclick="clearQuizResponses()">🧹 Очистить ответы</button>
+                <button class="btn" style="background: #ee5253; color: white; padding: 8px 12px; font-size: 0.8rem;" onclick="clearAllQuizQuestions()">🗑️ Удалить всё</button>
+            </div>
+        </div>
+        <div id="quizQuestionsList"></div>
+
+        <!-- Respondents -->
+        <div style="margin-top: 24px;">
+            <h3 style="margin: 0 0 12px 0;" id="quizRespondentsTitle">Участники</h3>
+            <div id="quizRespondentsList" class="votes-list"></div>
+        </div>
     </div>
 </div>
 
@@ -561,14 +708,14 @@
 
     window.onVoteToggle = (mode, checked) => {
         if (checked) {
-            // Включаем этот режим, выключаем другой
             set(ref(db, 'competition/acceptingVotes'),    mode === 'first_goal');
             set(ref(db, 'competition/acceptingMvpVotes'), mode === 'match_mvp');
+            set(ref(db, 'competition/acceptingQuizAnswers'), mode === 'quiz');
             set(ref(db, 'competition/votingMode'), mode);
         } else {
-            // Выключаем вовсе
             set(ref(db, 'competition/acceptingVotes'),    false);
             set(ref(db, 'competition/acceptingMvpVotes'), false);
+            set(ref(db, 'competition/acceptingQuizAnswers'), false);
         }
     };
 
@@ -586,7 +733,8 @@
 
     window.setActiveMode = (mode) => {
         set(ref(db, 'competition/activeMode'), mode);
-        if(mode === 'lookslike') window.switchTab('lookslike');
+        if (mode === 'lookslike') window.switchTab('lookslike');
+        if (mode === 'quiz') window.switchTab('quiz');
     };
 
     window.setVotingMode = (mode) => {
@@ -634,6 +782,25 @@
         } else if (mode === 'mvp') {
             set(ref(db, 'competition/mvpState'), scene);
             set(ref(db, 'competition/mvpStateTs'), Date.now());
+        } else if (mode === 'quiz') {
+            const prevScene = currentData.quizState;
+            // If leaving quiz_question → show correct answer first, then go to target
+            if (prevScene === 'quiz_question' && scene !== 'quiz_question') {
+                const activeId = currentData.quiz?.activeQuestionId;
+                if (activeId) {
+                    set(ref(db, 'competition/acceptingQuizAnswers'), false);
+                    set(ref(db, 'competition/quiz/revealQuestionId'), activeId);
+                    set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+                    set(ref(db, 'competition/quizStateTs'), Date.now());
+                    setTimeout(() => {
+                        set(ref(db, 'competition/quizState'), scene);
+                        set(ref(db, 'competition/quizStateTs'), Date.now());
+                    }, 4000);
+                    return;
+                }
+            }
+            set(ref(db, 'competition/quizState'), scene);
+            set(ref(db, 'competition/quizStateTs'), Date.now());
         }
     };
 
@@ -652,10 +819,16 @@
         }
     };
 
-    window.updateBg = () => { const url = document.getElementById('bgUrl').value; if(url) set(ref(db, 'competition/background'), url); };
+    window.updateBg = () => {
+        const url = document.getElementById('bgUrl').value;
+        const mode = document.getElementById('bgModeSelect').value;
+        if (url) set(ref(db, `competition/backgrounds/${mode}`), url);
+    };
+
     window.removeBackground = () => {
-        if(confirm("Очистить фон на оверлее?")) {
-            set(ref(db, 'competition/background'), null);
+        const mode = document.getElementById('bgModeSelect').value;
+        if (confirm(`Очистить фон для режима "${mode}"?`)) {
+            set(ref(db, `competition/backgrounds/${mode}`), null);
             document.getElementById('bgUrl').value = '';
         }
     };
@@ -935,6 +1108,18 @@
             };
             const btn = document.getElementById(map[currentData.mvpState]);
             if (btn) btn.classList.add('active');
+        } else if (mode === 'quiz') {
+            const map = {
+                quiz_announcement:  'scene-quiz-announcement',
+                quiz_qr:            'scene-quiz-qr',
+                quiz_question:      'scene-quiz-question',
+                quiz_answer_reveal: 'scene-quiz-question', // still highlight question btn
+                quiz_results:       'scene-quiz-results',
+                quiz_roulette:      'scene-quiz-roulette',
+                quiz_winner:        'scene-quiz-winner'
+            };
+            const btn = document.getElementById(map[currentData.quizState]);
+            if (btn) btn.classList.add('active');
         }
     }
 
@@ -943,13 +1128,23 @@
         updateActiveSceneButtons();
 
         const mode = currentData.activeMode || 'voting';
+
+        // Синхронизируем поле bgUrl с текущим режимом
+        const modeSelect = document.getElementById('bgModeSelect');
+        if (modeSelect) {
+            modeSelect.value = mode;
+            const currentBg = currentData.backgrounds?.[mode] || '';
+            document.getElementById('bgUrl').value = currentBg;
+        }
+        
         document.getElementById('mode-voting').classList.toggle('active', mode === 'voting');
         document.getElementById('mode-slideshow').classList.toggle('active', mode === 'slideshow');
         document.getElementById('mode-lookslike').classList.toggle('active', mode === 'lookslike');
         document.getElementById('mode-mvp').classList.toggle('active', mode === 'mvp');
         document.getElementById('mode-noise').classList.toggle('active', mode === 'noise');
+        document.getElementById('mode-quiz').classList.toggle('active', mode === 'quiz');
         
-        ['controls-voting','controls-slideshow','controls-lookslike','controls-mvp','controls-noise','players-controls']
+        ['controls-voting','controls-slideshow','controls-lookslike','controls-mvp','controls-noise','controls-quiz','players-controls']
             .forEach(id => document.getElementById(id).style.display = 'none');
 
         if (mode === 'voting') {
@@ -964,26 +1159,39 @@
             document.getElementById('players-controls').style.display = 'block';
         } else if (mode === 'noise') {
             document.getElementById('controls-noise').style.display = 'block';
-            // Синхронизируем активную кнопку игрока
             const np = currentData.noisePlayer || '38';
             document.getElementById('noise-player-38').classList.toggle('active', np === '38');
             document.getElementById('noise-player-11').classList.toggle('active', np === '11');
             document.getElementById('noise-player-24').classList.toggle('active', np === '24');
+        } else if (mode === 'quiz') {
+            document.getElementById('controls-quiz').style.display = 'block';
         }
 
         // Синхронизируем тумблеры
-        const fgOn  = !!currentData.acceptingVotes;
-        const mvpOn = !!currentData.acceptingMvpVotes;
+        const fgOn   = !!currentData.acceptingVotes;
+        const mvpOn  = !!currentData.acceptingMvpVotes;
+        const quizOn = !!currentData.acceptingQuizAnswers;
 
-        const toggleFG  = document.getElementById('toggle-first-goal');
-        const toggleMVP = document.getElementById('toggle-mvp');
-        const rowFG     = document.getElementById('toggle-row-fg');
-        const rowMVP    = document.getElementById('toggle-row-mvp');
+        const toggleFG   = document.getElementById('toggle-first-goal');
+        const toggleMVP  = document.getElementById('toggle-mvp');
+        const toggleQuiz = document.getElementById('toggle-quiz');
+        const rowFG      = document.getElementById('toggle-row-fg');
+        const rowMVP     = document.getElementById('toggle-row-mvp');
+        const rowQuiz    = document.getElementById('toggle-row-quiz');
 
-        if (toggleFG)  toggleFG.checked  = fgOn;
-        if (toggleMVP) toggleMVP.checked = mvpOn;
-        if (rowFG)  rowFG.className  = 'toggle-row ' + (fgOn  ? 'on' : 'off');
-        if (rowMVP) rowMVP.className = 'toggle-row ' + (mvpOn ? 'on' : 'off');
+        if (toggleFG)   toggleFG.checked   = fgOn;
+        if (toggleMVP)  toggleMVP.checked  = mvpOn;
+        if (toggleQuiz) toggleQuiz.checked = quizOn;
+        if (rowFG)   rowFG.className   = 'toggle-row ' + (fgOn   ? 'on' : 'off');
+        if (rowMVP)  rowMVP.className  = 'toggle-row ' + (mvpOn  ? 'on' : 'off');
+        if (rowQuiz) rowQuiz.className = 'toggle-row ' + (quizOn ? 'on' : 'off');
+
+        // Quiz winner mode buttons
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const qmAll = document.getElementById('quiz-mode-all');
+        const qmAny = document.getElementById('quiz-mode-any');
+        if (qmAll) qmAll.classList.toggle('selected', winnerMode === 'all_correct');
+        if (qmAny) qmAny.classList.toggle('selected', winnerMode === 'any_correct');
 
         renderPlayers(); 
         renderVotes(); 
@@ -991,6 +1199,7 @@
         renderCharacters();
         renderMvpResults();
         renderMvpPlayers();
+        renderQuiz();
         if (activeChatId) renderChatMessages(activeChatId);
     });
 
@@ -1206,8 +1415,7 @@
         set(ref(db, 'competition/noisePlayer'), number);
     };
 
-    window.addAdminVote = (playerName) => {
-        const voteId = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    window.addAdminVote = (playerName) => {        const voteId = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         set(ref(db, `competition/mvpVotes/${voteId}`), {
             votedFor: playerName,
             name: '🛡️ Админ',
@@ -1320,6 +1528,303 @@
         }
         if (pSelect.innerHTML !== optionsHtml) pSelect.innerHTML = optionsHtml;
         pList.scrollTop = scrollPos;
+    }
+
+    // ===== QUIZ FUNCTIONS =====
+    const ANSWER_COLORS = ['#05caff', '#ff9f43', '#3d8b00', '#ee5253'];
+    const ANSWER_LABELS = ['A', 'B', 'C', 'D'];
+
+    window.setQuizWinnerMode = (mode) => {
+        set(ref(db, 'competition/quiz/winnerMode'), mode);
+    };
+
+    window.addQuizQuestion = () => {
+        const text = document.getElementById('quiz-q-text').value.trim();
+        if (!text) { alert('Введите текст вопроса!'); return; }
+        const answers = [0,1,2,3].map(i => ({
+            text: document.getElementById(`quiz-a${i}-text`).value.trim(),
+            keywords: document.getElementById(`quiz-a${i}-keys`).value.trim(),
+            isCorrect: document.getElementById(`quiz-a${i}-correct`).checked
+        }));
+        if (answers.every(a => !a.text)) { alert('Добавьте хотя бы один вариант ответа!'); return; }
+        const questions = currentData.quiz?.questions || {};
+        const order = Object.keys(questions).length;
+        push(ref(db, 'competition/quiz/questions'), { text, answers, order, createdAt: Date.now() });
+        // clear form
+        document.getElementById('quiz-q-text').value = '';
+        [0,1,2,3].forEach(i => {
+            document.getElementById(`quiz-a${i}-text`).value = '';
+            document.getElementById(`quiz-a${i}-keys`).value = '';
+            document.getElementById(`quiz-a${i}-correct`).checked = false;
+        });
+    };
+
+    window.deleteQuizQuestion = (id) => {
+        if (confirm('Удалить вопрос?')) remove(ref(db, `competition/quiz/questions/${id}`));
+    };
+
+    window.clearAllQuizQuestions = () => {
+        if (confirm('Удалить все вопросы и ответы?')) {
+            remove(ref(db, 'competition/quiz/questions'));
+            remove(ref(db, 'competition/quiz/responses'));
+            set(ref(db, 'competition/quiz/activeQuestionId'), null);
+        }
+    };
+
+    window.clearQuizResponses = () => {
+        if (confirm('Очистить все ответы на все вопросы? Вопросы останутся.'))
+            remove(ref(db, 'competition/quiz/responses'));
+    };
+
+    window.setActiveQuizQuestion = (id) => {
+        const prevId = currentData.quiz?.activeQuestionId;
+        const prevScene = currentData.quizState;
+
+        if (prevId && prevId !== id && prevScene === 'quiz_question') {
+            // Show correct answer on current question for 4 seconds, then switch
+            set(ref(db, 'competition/acceptingQuizAnswers'), false);
+            set(ref(db, 'competition/quiz/revealQuestionId'), prevId);
+            set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+            set(ref(db, 'competition/quizStateTs'), Date.now());
+
+            setTimeout(() => {
+                set(ref(db, 'competition/quiz/activeQuestionId'), id);
+                set(ref(db, 'competition/quiz/revealQuestionId'), null);
+                set(ref(db, 'competition/quizState'), 'quiz_question');
+                set(ref(db, 'competition/quizStateTs'), Date.now());
+                set(ref(db, 'competition/acceptingQuizAnswers'), true);
+            }, 4000);
+        } else {
+            set(ref(db, 'competition/quiz/activeQuestionId'), id);
+            if ((currentData.activeMode || 'voting') === 'quiz') {
+                set(ref(db, 'competition/quizState'), 'quiz_question');
+                set(ref(db, 'competition/quizStateTs'), Date.now());
+            }
+        }
+    };
+
+    // Удалить участника из всех ответов (по userId)
+    window.removeQuizRespondent = (userId) => {
+        if (!confirm('Убрать этого участника из викторины?')) return;
+        const questions = currentData.quiz?.questions || {};
+        const updates = {};
+        Object.keys(questions).forEach(qId => {
+            updates[`competition/quiz/responses/${qId}/${userId}`] = null;
+        });
+        update(ref(db), updates);
+    };
+
+    // Compute roulette pool and launch roulette scene
+    window.quizLaunchRoulette = () => {
+        const questions = currentData.quiz?.questions || {};
+        const responses = currentData.quiz?.responses || {};
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const questionIds = Object.keys(questions);
+        const prevScene = currentData.quizState;
+
+        if (questionIds.length === 0) { alert('Нет вопросов!'); return; }
+
+        const correctMap = {};
+        questionIds.forEach(qId => {
+            const q = questions[qId];
+            correctMap[qId] = new Set();
+            (q.answers || []).forEach((a, i) => { if (a && a.isCorrect) correctMap[qId].add(i); });
+        });
+
+        const userStats = {};
+        questionIds.forEach(qId => {
+            const qResponses = responses[qId] || {};
+            Object.entries(qResponses).forEach(([userId, r]) => {
+                if (!userStats[userId]) {
+                    userStats[userId] = { name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId, correctCount: 0, answeredCount: 0 };
+                }
+                userStats[userId].answeredCount++;
+                if (correctMap[qId].has(r.answerIndex)) userStats[userId].correctCount++;
+            });
+        });
+
+        let pool = [];
+        if (winnerMode === 'all_correct') {
+            Object.values(userStats).forEach(u => { if (u.correctCount === questionIds.length) pool.push(u); });
+        } else {
+            Object.values(userStats).forEach(u => { for (let i = 0; i < u.correctCount; i++) pool.push(u); });
+        }
+
+        if (pool.length === 0) {
+            const msg = winnerMode === 'all_correct'
+                ? 'Никто не ответил правильно на все вопросы!'
+                : 'Никто не ответил правильно ни на один вопрос!';
+            if (!confirm(msg + '\n\nВсё равно запустить рулетку?')) return;
+        }
+
+        set(ref(db, 'competition/quiz/roulettePool'), pool);
+
+        // Если уходим с вопроса — показываем ответ 4 секунды, потом рулетка
+        if (prevScene === 'quiz_question') {
+            const activeId = currentData.quiz?.activeQuestionId;
+            if (activeId) {
+                set(ref(db, 'competition/acceptingQuizAnswers'), false);
+                set(ref(db, 'competition/quiz/revealQuestionId'), activeId);
+                set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+                set(ref(db, 'competition/quizStateTs'), Date.now());
+                setTimeout(() => {
+                    set(ref(db, 'competition/quizState'), 'quiz_roulette');
+                    set(ref(db, 'competition/quizStateTs'), Date.now());
+                }, 4000);
+                return;
+            }
+        }
+
+        set(ref(db, 'competition/quizState'), 'quiz_roulette');
+        set(ref(db, 'competition/quizStateTs'), Date.now());
+    };
+
+    window.quizPickWinner = () => {
+        const pool = currentData.quiz?.roulettePool;
+        if (!pool || !Array.isArray(pool) || pool.length === 0) {
+            alert('Сначала запустите рулетку!'); return;
+        }
+        const winner = pool[Math.floor(Math.random() * pool.length)];
+        set(ref(db, 'competition/quiz/winner'), { ...winner, selectionId: Date.now() });
+        set(ref(db, 'competition/quizState'), 'quiz_winner');
+        set(ref(db, 'competition/quizStateTs'), Date.now());
+        alert('Победитель викторины: ' + winner.name);
+    };
+
+    let lastQuizHtml = '';
+    let lastRespondentsHtml = '';
+
+    function renderQuiz() {
+        const container = document.getElementById('quizQuestionsList');
+        if (!container) return;
+        const questions = currentData.quiz?.questions || {};
+        const responses = currentData.quiz?.responses || {};
+        const activeQId = currentData.quiz?.activeQuestionId;
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const questionIds = Object.keys(questions);
+
+        const sorted = Object.entries(questions).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+        if (sorted.length === 0) {
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding: 30px;">Вопросов пока нет</div>';
+        } else {
+            let html = '';
+            sorted.forEach(([id, q], idx) => {
+                const isActive = id === activeQId;
+                const qResponses = responses[id] || {};
+                const totalResponses = Object.keys(qResponses).length;
+
+                const answerCounts = [0,0,0,0];
+                Object.values(qResponses).forEach(r => { if (r.answerIndex >= 0 && r.answerIndex < 4) answerCounts[r.answerIndex]++; });
+
+                const answersHtml = (q.answers || []).map((a, i) => {
+                    if (!a.text) return '';
+                    const pct = totalResponses > 0 ? Math.round(answerCounts[i] / totalResponses * 100) : 0;
+                    return `
+                    <div class="quiz-answer-block ${a.isCorrect ? 'is-correct' : ''}" style="border-left-color: ${ANSWER_COLORS[i]};">
+                        <div class="quiz-answer-label" style="color:${ANSWER_COLORS[i]}; display:flex; justify-content:space-between;">
+                            <span>${ANSWER_LABELS[i]}${a.isCorrect ? ' ✓' : ''}</span>
+                            <span style="font-size:0.75rem; color:#666;">${answerCounts[i]} (${pct}%)</span>
+                        </div>
+                        <div class="quiz-answer-text">${a.text}</div>
+                        ${a.keywords ? `<div class="quiz-answer-keys">🔑 ${a.keywords}</div>` : ''}
+                    </div>`;
+                }).join('');
+
+                html += `
+                <div class="quiz-q-card ${isActive ? 'active-q' : ''}">
+                    <div class="quiz-q-header">
+                        <span class="quiz-q-num">Вопрос ${idx + 1}</span>
+                        ${isActive ? '<span class="quiz-active-badge">● АКТИВНЫЙ</span>' : ''}
+                        <span class="quiz-response-badge">${totalResponses} ответов</span>
+                        <button class="btn" style="padding:4px 12px; font-size:0.75rem; background:${isActive ? '#9ef01a' : 'var(--gray)'}; color:${isActive ? '#1a5c00' : 'var(--text-main)'}; margin-left:auto;"
+                                onclick="setActiveQuizQuestion('${id}')">
+                            ${isActive ? '🎯 Активный' : '▶ Активировать'}
+                        </button>
+                        <button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#fab1a0; color:#c0392b;"
+                                onclick="deleteQuizQuestion('${id}')">🗑</button>
+                    </div>
+                    <div class="quiz-q-text">${q.text}</div>
+                    <div class="quiz-answers-grid">${answersHtml}</div>
+                </div>`;
+            });
+
+            if (lastQuizHtml !== html) { container.innerHTML = html; lastQuizHtml = html; }
+        }
+
+        // ===== RESPONDENTS =====
+        const respondentsContainer = document.getElementById('quizRespondentsList');
+        const titleEl = document.getElementById('quizRespondentsTitle');
+        if (!respondentsContainer || questionIds.length === 0) return;
+
+        // Build correct answer map: questionId -> Set of correct answerIndexes
+        const correctMap = {};
+        questionIds.forEach(qId => {
+            const q = questions[qId];
+            correctMap[qId] = new Set();
+            (q.answers || []).forEach((a, i) => { if (a && a.isCorrect) correctMap[qId].add(i); });
+        });
+
+        // Aggregate per user
+        const userStats = {}; // userId -> { info, correctCount, correctAnswers: [{qText, answerText}] }
+        questionIds.forEach(qId => {
+            const qResponses = responses[qId] || {};
+            const q = questions[qId];
+            Object.entries(qResponses).forEach(([userId, r]) => {
+                if (!userStats[userId]) {
+                    userStats[userId] = {
+                        name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId,
+                        correctCount: 0, totalCount: 0, correctAnswers: []
+                    };
+                }
+                userStats[userId].totalCount++;
+                if (correctMap[qId].has(r.answerIndex)) {
+                    userStats[userId].correctCount++;
+                    const ansText = (q.answers || [])[r.answerIndex]?.text || '';
+                    userStats[userId].correctAnswers.push(`${ANSWER_LABELS[r.answerIndex]}: ${ansText}`);
+                }
+            });
+        });
+
+        let eligible = [];
+        if (winnerMode === 'all_correct') {
+            eligible = Object.entries(userStats).filter(([,u]) => u.correctCount === questionIds.length);
+            if (titleEl) titleEl.textContent = `Правильно ответили на все (${eligible.length})`;
+        } else {
+            eligible = Object.entries(userStats).filter(([,u]) => u.correctCount > 0);
+            if (titleEl) titleEl.textContent = `Хотя бы один верный (${eligible.length})`;
+        }
+
+        eligible.sort((a,b) => b[1].correctCount - a[1].correctCount);
+
+        if (eligible.length === 0) {
+            respondentsContainer.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Пока нет участников</div>';
+            lastRespondentsHtml = '';
+            return;
+        }
+
+        let rHtml = '';
+        eligible.forEach(([userId, u]) => {
+            const avatar = (u.photo && u.photo.length > 10) ? u.photo : 'media/tg_logo.png';
+            const safeName = (u.name||'').replace(/'/g,"\\'");
+            const safeHandle = (u.handle||'').replace(/'/g,"\\'");
+            const correctBadge = `${u.correctCount}/${questionIds.length} ✓`;
+            const answersPreview = u.correctAnswers.join(' · ');
+            rHtml += `
+            <div class="vote-card correct" style="position:relative;">
+                <button onclick="removeQuizRespondent('${userId}')" title="Убрать участника"
+                    style="position:absolute;top:4px;right:4px;background:#ee5253;color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:10px;cursor:pointer;line-height:1;padding:0;">✕</button>
+                <div style="width:60px; height:60px; background:#eee; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:pointer;" onclick="openChat('${u.chatId}','${safeName}','${avatar}','${safeHandle}')">
+                    <img src="${avatar}" onerror="this.onerror=null;this.src='media/tg_logo.png'" style="width:60px;height:60px;object-fit:cover;">
+                </div>
+                <div style="font-weight:700; font-size:0.9rem; margin-top:6px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.name || 'Аноним'}</div>
+                <div style="color:#10ac84; font-size:0.85rem; font-weight:700; margin-top:4px;">${correctBadge}</div>
+                ${winnerMode === 'any_correct' && answersPreview ? `<div style="font-size:0.65rem; color:#666; margin-top:4px; line-height:1.3; width:100%;">${answersPreview}</div>` : ''}
+            </div>`;
+        });
+
+        // Always re-render (mode switch should always update)
+        respondentsContainer.innerHTML = rHtml;
+        lastRespondentsHtml = rHtml;
     }
 </script>
 </body>
