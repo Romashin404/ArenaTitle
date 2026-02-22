@@ -231,6 +231,17 @@
         const preloadedImages = new Map(); // Здесь будем хранить уже загруженные картинки
         const defaultPhoto = 'media/tg_logo.png';
 
+        function applyBackground(url) {
+            if (url.trim()) {
+                bgLayer.style.backgroundImage = `url('${url}')`;
+                bgLayer.style.opacity = "1";
+                bgVideo.style.opacity = "0";
+            } else {
+                bgLayer.style.opacity = "0";
+                bgVideo.style.opacity = "1";
+            }
+        }
+
         onValue(ref(db, 'competition'), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
@@ -248,14 +259,7 @@
             const currentScene = data.votingState || 'announcement';
 
             // 1. Управление фоном
-            if (data.background && data.background.trim() !== "") {
-                bgLayer.style.backgroundImage = `url('${data.background}')`;
-                bgLayer.style.opacity = "1";
-                bgVideo.style.opacity = "0";
-            } else {
-                bgLayer.style.opacity = "0";
-                bgVideo.style.opacity = "1";
-            }
+            applyBackground(data.backgrounds?.voting || '');
 
             // 2. Переключение сцен
             if (currentScene !== lastScene) {
