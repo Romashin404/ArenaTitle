@@ -124,7 +124,7 @@
     </style>
 </head>
 <body>
-
+<div id="bg-layer" style="position:fixed;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;z-index:0;opacity:0;transition:opacity 1.5s ease-in-out;"></div>
 <video autoplay muted loop playsinline id="bg-video">
     <source src="media/backgroundvideo.mp4" type="video/mp4">
     <source src="media/backgroundvideo.webm" type="video/webm">
@@ -203,6 +203,20 @@
         if (player === '11') v11.classList.remove('hidden');
         else if (player === '24') v24.classList.remove('hidden');
         else v38.classList.remove('hidden');
+    });
+
+    onValue(ref(db, 'competition/backgrounds/noise'), (snap) => {
+        const url = snap.val() || '';
+        const bgLayer = document.getElementById('bg-layer');
+        const bgVideo = document.getElementById('bg-video');
+        if (url.trim()) {
+            bgLayer.style.backgroundImage = `url('${url}')`;
+            bgLayer.style.opacity = '1';
+            bgVideo.style.opacity = '0';
+        } else {
+            bgLayer.style.opacity = '0';
+            bgVideo.style.opacity = '1';
+        }
     });
 
     // ── Шумомер ──────────────────────────────────────────────────────
