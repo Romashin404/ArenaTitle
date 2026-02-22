@@ -3,921 +3,1557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sibir Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <title>Sibir Control Panel — Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <style>
         :root {
-            --blue: #05caff;
-            --blue-dim: rgba(5,202,255,0.12);
-            --green: #9ef01a;
-            --green-dim: rgba(158,240,26,0.12);
-            --red: #ee5253;
-            --orange: #ff9f43;
-            --dark: #0a0e1a;
-            --card: #111827;
-            --card2: #1a2235;
-            --border: rgba(255,255,255,0.07);
-            --text: #f0f4ff;
-            --muted: rgba(240,244,255,0.4);
-            --safe-bottom: env(safe-area-inset-bottom, 16px);
+            --sibir-blue: #05caff;
+            --sibir-dark: #253566;
+            --bg-body: #f4f5f7;
+            --white: #ffffff;
+            --gray: #eef0f3;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color:#dcdde1;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        html, body {
-            margin: 0; padding: 0;
-            background: var(--dark);
-            color: var(--text);
-            font-family: 'Geologica', sans-serif;
-            height: 100%;
-            overscroll-behavior: none;
-        }
-
-        body {
-            display: flex;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
             flex-direction: column;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
+            gap: 15px; 
+            padding: 12px; 
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* ── TOP NAV ── */
-        .topbar {
+        /* Основные блоки теперь на 100% ширины */
+        .top-panel, .main-panel, .bottom-panel { 
+            background: var(--white); 
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h2 { 
+            color: var(--sibir-dark); 
+            font-size: 0.9rem; 
+            font-weight: 800;
+            margin: 0 0 15px 0; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 14px 16px 10px;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            flex-shrink: 0;
         }
-        .topbar-logo {
-            width: 32px; height: 32px;
-            background: var(--blue);
-            border-radius: 10px;
+        h2::before {
+            content: ""; display: inline-block; width: 4px; height: 16px; 
+            background: var(--sibir-blue); margin-right: 8px; border-radius: 2px;
+        }
+
+        .btn { 
+            padding: 14px 15px; border: none; border-radius: 12px; 
+            font-weight: 600; font-size: 0.9rem; cursor: pointer; 
+            transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+            gap: 8px; font-family: inherit; flex-shrink: 0;
+        }
+        .btn:active { transform: scale(0.96); }
+
+        .btn-scene { background: #f8f9fa; color: var(--text-main); border: 1px solid var(--border-color); flex: 1; min-width: calc(50% - 5px); }
+        .btn-scene.active { background: var(--sibir-blue) !important; color: white !important; border-color: var(--sibir-blue) !important; box-shadow: 0 4px 12px rgba(5, 202, 255, 0.3); }
+        
+        .btn-stop { width: 100%; background: #ff9f43; color: white; margin-bottom: 20px; font-size: 1rem; }
+        .btn-stop.closed { background: #ee5253; }
+        
+        .btn-primary { background: var(--sibir-blue); color: white; width: 100%; }
+
+        /* Мобильные табы со скроллом */
+        .tabs { 
+            display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { 
+            background: transparent; border: none; color: var(--text-muted); 
+            font-size: 0.95rem; cursor: pointer; font-weight: 700; padding: 5px 0; 
+            transition: 0.3s; white-space: nowrap; flex-shrink: 0;
+        }
+        .tab-btn.active { color: var(--sibir-blue); border-bottom: 3px solid var(--sibir-blue); }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+        .message-item {
+            display: flex; flex-direction: column; background: var(--gray); border-radius: 16px; margin-bottom: 15px; padding: 16px;
+            border: 1px solid var(--white); gap: 12px; transition: 0.3s;
+        }
+
+        .message-left { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .message-content { flex-grow: 1; width: 100%; }
+
+        .photo-container { 
+            margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); 
+            width: 100%;
+        }
+        .photo-container img { width: 100%; display: block; }
+
+        input, select { 
+            width: 100%; height: 48px; padding: 0 15px; background: #fff; 
+            border: 1.5px solid var(--border-color); color: var(--text-main); 
+            border-radius: 12px; margin-bottom: 15px; font-family: inherit;
+            font-size: 0.95rem; box-sizing: border-box; display: block; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--sibir-blue); }
+
+        select {
+            cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2305caff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 15px center; background-size: 15px;
+        }
+
+        .votes-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; align-items: start; }
+        .vote-card { 
+            background: var(--gray); padding: 15px; border-radius: 16px; text-align: center; 
+            border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.02); position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            min-width: 0; word-break: break-word; overflow-wrap: break-word;
+        }
+        .vote-card.correct {background: #e8f9ec; border-color: #10ac84;}
+        .vote-card img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--sibir-blue); background: #fff; }
+        
+        .crop-container {
+            width: 100%; height: 300px; background: #333;
+            margin-bottom: 15px; border-radius: 12px; overflow: hidden; display: none;
+        }
+        .crop-container img { max-width: 100%; }
+        
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .char-card { background: var(--gray); border-radius: 12px; overflow: hidden; border: 3px solid transparent; transition: 0.2s; cursor: grab; }
+        .char-card.active-char { border-color: #9ef01a; background: #fff; box-shadow: 0 0 15px rgba(24, 164, 14, 0.4); }
+        .char-card.dragging { opacity: 0.4; transform: scale(0.97); }
+        .char-card.drag-over { border-color: var(--sibir-blue) !important; box-shadow: 0 0 0 3px rgba(5,202,255,0.3); }
+        .char-img { width: 100%; aspect-ratio: 8/9; object-fit: cover; display: block; background: #000; }
+        .char-info { padding: 10px; }
+        .char-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; text-align: center; }
+        .drag-handle { text-align: center; padding: 4px 0 0; font-size: 0.75rem; color: #aaa; letter-spacing: 3px; user-select: none; }
+
+        /* ===== PLAYER LIST ===== */
+        .player-row {
+            background: var(--gray); border-radius: 12px; padding: 12px;
+            margin-bottom: 10px;
+        }
+        .player-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .player-name-label { font-weight: 700; font-size: 0.95rem; }
+        .keyword-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e8f4ff; color: var(--sibir-dark);
+            border-radius: 20px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600;
+            margin: 2px;
+        }
+        .keyword-tag span { cursor: pointer; color: #ee5253; font-size: 1rem; line-height: 1; }
+        .keyword-add-row { display: flex; gap: 6px; margin-top: 10px; }
+        .keyword-add-row input { height: 40px; font-size: 0.85rem; margin: 0; flex: 1; padding: 0 10px; }
+        .keyword-add-row button { height: 40px; padding: 0 15px; font-size: 0.85rem; border-radius: 10px; background: var(--sibir-blue); color: white; border: none; cursor: pointer; font-weight: 600; white-space: nowrap; }
+
+        /* ===== EMOJI PICKER ===== */
+        .emoji-btn {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--gray);
+            border: none; cursor: pointer; font-size: 1.3rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .emoji-btn:hover { background: #ddd; }
+        .emoji-picker-popup {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: white; border-radius: 16px; padding: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            z-index: 1100; width: calc(100% - 32px); max-width: 320px; max-height: 300px;
+            display: none; flex-direction: column; gap: 8px;
+        }
+        .emoji-picker-popup.open { display: flex; }
+        .emoji-cats { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; border-bottom: 1px solid var(--gray); padding-bottom: 8px; scrollbar-width: none;}
+        .emoji-cats::-webkit-scrollbar { display: none; }
+        .emoji-cat-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 6px 8px; border-radius: 8px; transition: 0.15s; flex-shrink: 0;}
+        .emoji-cat-btn.active, .emoji-cat-btn:hover { background: var(--gray); }
+        .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; overflow-y: auto; }
+        .emoji-grid button { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 6px 0; border-radius: 6px; transition: 0.15s; text-align: center;}
+        .emoji-grid button:hover { background: var(--gray); }
+
+        .upload-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 9999;
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px; flex-shrink: 0;
+            padding: 20px;
         }
-        .topbar-title { font-weight: 900; font-size: 1rem; color: var(--text); flex: 1; }
-        .topbar-status {
-            font-size: 0.72rem; font-weight: 700;
-            padding: 4px 10px; border-radius: 20px;
-            background: var(--blue-dim); color: var(--blue);
-            border: 1px solid rgba(5,202,255,0.2);
-        }
-        .topbar-status.live { background: rgba(158,240,26,0.15); color: var(--green); border-color: rgba(158,240,26,0.25); }
-
-        /* ── SCROLL AREA ── */
-        .scroll-area {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 14px 14px calc(var(--safe-bottom) + 14px);
+        .upload-box {
+            background: white; border-radius: 20px; padding: 30px;
+            text-align: center; width: 100%; max-width: 300px;
         }
 
-        /* ── SECTION ── */
-        .section { margin-bottom: 20px; }
-        .section-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 8px;
-            padding-left: 2px;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ── CARDS ── */
-        .card {
-            background: var(--card);
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        /* ── MODE GRID ── */
-        .mode-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .mode-btn {
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: all 0.18s;
-            font-family: inherit;
-            color: var(--muted);
-            font-weight: 700;
-            font-size: 0.72rem;
-            text-align: center;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .mode-btn .mode-icon { font-size: 22px; }
-        .mode-btn.active {
-            background: var(--blue-dim);
-            border-color: var(--blue);
-            color: var(--blue);
-        }
-        .mode-btn:active { transform: scale(0.94); }
-
-        /* ── SCENE PILLS ── */
-        .scene-wrap {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .scene-btn {
-            background: var(--card2);
-            border: 1.5px solid var(--border);
-            border-radius: 10px;
-            padding: 9px 14px;
-            font-family: inherit;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--muted);
-            cursor: pointer;
-            transition: all 0.18s;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .scene-btn.active {
-            background: rgba(5,202,255,0.15);
-            border-color: var(--blue);
-            color: var(--blue);
-        }
-        .scene-btn:active { transform: scale(0.93); }
-
-        /* ── TOGGLE ROWS ── */
+        /* ===== TOGGLE SWITCH ===== */
         .toggle-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            border-radius: 14px;
-            transition: background 0.3s;
+            display: flex; align-items: center; justify-content: space-between;
+            border-radius: 14px; padding: 14px 16px;
+            margin-top: 15px; margin-bottom: 5px;
+            transition: background 0.3s ease;
         }
-        .toggle-row.off { background: rgba(238,82,83,0.1); }
-        .toggle-row.on  { background: rgba(158,240,26,0.1); }
+        .toggle-row.off { background: #fde8e8; }
+        .toggle-row.on  { background: #d4f7dc; }
         .toggle-label {
-            font-size: 0.88rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-weight: 700; font-size: 0.95rem; color: var(--text-main);
+            display: flex; align-items: center; gap: 8px;
         }
-        .toggle-label .tl-sub {
-            font-size: 0.7rem;
-            font-weight: 400;
-            color: var(--muted);
-            margin-left: 4px;
+        .toggle-switch {
+            position: relative; width: 56px; height: 32px; flex-shrink: 0;
         }
-
-        .switch {
-            position: relative; width: 52px; height: 28px; flex-shrink: 0;
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0; border-radius: 32px;
+            background: #f5a5a5; cursor: pointer; transition: background 0.25s ease;
         }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch-track {
-            position: absolute; inset: 0; border-radius: 28px;
-            background: rgba(255,255,255,0.12); cursor: pointer;
-            transition: background 0.25s ease;
-        }
-        .switch-track::after {
-            content: '';
-            position: absolute;
-            width: 22px; height: 22px; border-radius: 50%; background: white;
+        .toggle-track::after {
+            content: ''; position: absolute;
+            width: 26px; height: 26px; border-radius: 50%; background: white;
             top: 3px; left: 3px;
             transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
-        .switch input:checked + .switch-track { background: var(--green); }
-        .switch input:checked + .switch-track::after { transform: translateX(24px); }
+        .toggle-switch input:checked + .toggle-track { background: #4cd964; }
+        .toggle-switch input:checked + .toggle-track::after { transform: translateX(24px); }
 
-        /* ── BIG ACTION BUTTONS ── */
-        .action-btn {
-            width: 100%;
-            padding: 14px 18px;
-            border-radius: 14px;
-            border: none;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.18s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            -webkit-user-select: none;
-            user-select: none;
+        /* ===== CHAT PANEL (Mobile Bottom-Up) ===== */
+        .chat-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 999;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
-        .action-btn:active { transform: scale(0.97); }
-        .action-btn.blue  { background: var(--blue); color: #000; }
-        .action-btn.dark  { background: var(--card2); color: var(--text); border: 1.5px solid var(--border); }
-        .action-btn.red   { background: rgba(238,82,83,0.15); color: var(--red); border: 1.5px solid rgba(238,82,83,0.3); }
-        .action-btn.green { background: rgba(158,240,26,0.15); color: var(--green); border: 1.5px solid rgba(158,240,26,0.3); }
-        .action-btn.orange { background: rgba(255,159,67,0.15); color: var(--orange); border: 1.5px solid rgba(255,159,67,0.3); }
+        .chat-overlay.open { opacity: 1; pointer-events: all; }
 
-        /* ── DIVIDER ── */
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 0;
-        }
-
-        /* ── INPUT ── */
-        .input-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .field {
-            flex: 1;
-            background: var(--card2);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 11px 14px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.85rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .field:focus { border-color: var(--blue); }
-        .field::placeholder { color: var(--muted); }
-
-        select.field {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2305caff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 14px;
-            padding-right: 36px;
-        }
-
-        /* ── TAB BAR ── */
-        .tab-bar {
-            display: flex;
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            padding: 8px 8px calc(var(--safe-bottom));
-            gap: 4px;
-            flex-shrink: 0;
-        }
-        .tab-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            padding: 6px 4px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.18s;
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            color: var(--muted);
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .tab-item .ti-icon { font-size: 20px; }
-        .tab-item .ti-label { font-size: 0.6rem; font-weight: 700; }
-        .tab-item.active {
-            background: var(--blue-dim);
-            color: var(--blue);
-        }
-        .tab-item:active { transform: scale(0.9); }
-
-        /* ── PAGE VIEWS ── */
-        .page { display: none; }
-        .page.active { display: block; }
-
-        /* ── QUIZ QUESTION CARDS ── */
-        .q-card {
-            background: var(--card2);
-            border-radius: 14px;
-            padding: 14px;
-            border: 1.5px solid var(--border);
-            margin-bottom: 10px;
-            transition: border-color 0.2s;
-        }
-        .q-card.active-q {
-            border-color: var(--green);
-            background: rgba(158,240,26,0.05);
-        }
-        .q-card-top {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .q-num {
-            font-size: 0.7rem;
-            font-weight: 900;
-            color: var(--blue);
-            background: var(--blue-dim);
-            border-radius: 6px;
-            padding: 3px 8px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .q-text { font-size: 0.9rem; font-weight: 700; flex: 1; line-height: 1.35; }
-        .q-badge {
-            background: rgba(158,240,26,0.15);
-            color: var(--green);
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 20px;
-            flex-shrink: 0;
-            border: 1px solid rgba(158,240,26,0.25);
-        }
-        .q-resp-count {
-            font-size: 0.72rem;
-            color: var(--muted);
-            margin-bottom: 10px;
-        }
-        .q-answers {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-        .q-answer {
-            border-radius: 8px;
-            padding: 7px 10px;
-            border-left: 3px solid;
-            background: rgba(255,255,255,0.03);
-        }
-        .q-answer.correct { background: rgba(158,240,26,0.08); border-left-color: var(--green); }
-        .q-answer-lbl { font-size: 0.65rem; font-weight: 900; margin-bottom: 2px; }
-        .q-answer-txt { font-size: 0.72rem; color: rgba(240,244,255,0.75); line-height: 1.25; }
-        .q-answer-pct { font-size: 0.62rem; color: var(--muted); margin-top: 2px; }
-        .q-actions { display: flex; gap: 7px; }
-
-        /* ── VOTES GRID ── */
-        .votes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
-        }
-        .vote-card {
-            background: var(--card2);
-            border-radius: 14px;
-            padding: 12px 8px;
-            text-align: center;
-            border: 1.5px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        .vote-card.correct { border-color: var(--green); background: rgba(158,240,26,0.06); }
-        .vote-card img {
-            width: 46px; height: 46px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--blue);
-            background: var(--card);
-        }
-        .vote-name {
-            font-size: 0.7rem; font-weight: 700;
-            color: var(--text);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            width: 100%;
-        }
-        .vote-pick { font-size: 0.62rem; color: var(--blue); font-weight: 600; }
-
-        /* ── STAT ROW ── */
-        .stat-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-        }
-        .stat-label { flex: 1; font-size: 0.82rem; font-weight: 600; }
-        .stat-bar-wrap { flex: 2; height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
-        .stat-bar-fill { height: 100%; border-radius: 3px; background: var(--blue); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-        .stat-bar-fill.correct { background: var(--green); }
-        .stat-pct { font-size: 0.78rem; font-weight: 700; color: var(--blue); width: 36px; text-align: right; }
-        .stat-pct.correct { color: var(--green); }
-
-        /* ── WINNER MODE BUTTONS ── */
-        .wmode-grid { display: flex; gap: 8px; }
-        .wmode-btn {
-            flex: 1; padding: 11px 10px;
-            border-radius: 12px;
-            border: 1.5px solid var(--border);
-            background: var(--card2);
-            color: var(--muted);
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.18s;
-            text-align: center;
-        }
-        .wmode-btn.selected {
-            background: rgba(5,202,255,0.15);
-            border-color: var(--blue);
-            color: var(--blue);
-        }
-        .wmode-btn:active { transform: scale(0.94); }
-
-        /* ── RESPONDENT CARDS ── */
-        .respondent-card {
-            background: var(--card2);
-            border-radius: 14px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-            border: 1.5px solid var(--border);
-        }
-        .respondent-card.winner-eligible { border-color: var(--green); background: rgba(158,240,26,0.05); }
-        .respondent-card img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--blue); }
-        .respondent-info { flex: 1; min-width: 0; }
-        .respondent-name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .respondent-score { font-size: 0.72rem; color: var(--green); font-weight: 700; margin-top: 2px; }
-
-        /* ── NOTICE ── */
-        .notice {
-            background: var(--blue-dim);
-            border: 1px solid rgba(5,202,255,0.18);
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 0.78rem;
-            color: rgba(240,244,255,0.75);
-            line-height: 1.5;
-        }
-        .notice b { color: var(--blue); }
-
-        /* ── PLAYER SELECT ROW ── */
-        .player-add-form { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-
-        /* ── EMPTY STATE ── */
-        .empty {
-            text-align: center;
-            padding: 32px 20px;
-            color: var(--muted);
-            font-size: 0.85rem;
-        }
-        .empty .empty-icon { font-size: 2.5rem; margin-bottom: 8px; }
-
-        /* ── TOAST ── */
-        .toast {
-            position: fixed;
-            bottom: calc(var(--safe-bottom) + 80px);
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 10px 18px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text);
-            pointer-events: none;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-            z-index: 9999;
-            white-space: nowrap;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* ── MODAL ── */
-        .modal-overlay {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 500;
-            display: none;
-            align-items: flex-end;
-        }
-        .modal-overlay.open { display: flex; }
-        .modal-sheet {
-            width: 100%;
-            background: var(--card);
+        .chat-panel {
+            position: fixed; left: 0; right: 0; bottom: 0; height: 85vh;
+            width: 100%; background: var(--white);
             border-radius: 24px 24px 0 0;
-            padding: 20px 16px calc(var(--safe-bottom) + 16px);
-            border-top: 1px solid var(--border);
-            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+            z-index: 1000; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
         }
-        .modal-handle {
-            width: 40px; height: 4px;
-            background: var(--border);
-            border-radius: 2px;
-            margin: 0 auto 20px;
-        }
-        .modal-title { font-size: 1rem; font-weight: 900; margin-bottom: 14px; }
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to   { transform: translateY(0); }
-        }
+        .chat-panel.open { transform: translateY(0); }
 
-        /* ── ADD QUESTION FORM ── */
-        .add-q-form { display: flex; flex-direction: column; gap: 10px; }
-        .answer-input-block {
-            border-radius: 12px;
-            border: 1.5px solid var(--border);
-            padding: 10px 12px;
-            background: var(--card2);
+        .chat-panel-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--gray);
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
         }
-        .answer-input-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 8px;
+        .chat-panel-header img {
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--sibir-blue); flex-shrink: 0;
         }
-        .answer-ltr { font-weight: 900; font-size: 0.9rem; }
-        .correct-toggle {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 0.72rem; color: var(--muted); font-weight: 600; cursor: pointer;
+        .chat-panel-header .close-btn {
+            margin-left: auto; background: var(--gray); border: none;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0;
         }
-        .correct-toggle input { cursor: pointer; width: 16px; height: 16px; accent-color: var(--green); }
-        .mini-field {
-            width: 100%;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.8rem;
-            padding: 6px 0;
-            outline: none;
-            margin-bottom: 4px;
-        }
-        .mini-field:last-child { margin-bottom: 0; border-bottom: none; }
-        .mini-field::placeholder { color: var(--muted); }
+        .chat-panel-header .close-btn:hover { background: #ee5253; color: white; }
 
-        .gap8 { display: flex; flex-direction: column; gap: 8px; }
-        .gap10 { display: flex; flex-direction: column; gap: 10px; }
-        .gap12 { display: flex; flex-direction: column; gap: 12px; }
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .chat-bubble {
+            max-width: 85%; padding: 12px 16px; border-radius: 20px;
+            font-size: 0.95rem; line-height: 1.45; word-break: break-word;
+        }
+        .chat-bubble.received {
+            background: var(--gray); border-bottom-left-radius: 4px; align-self: flex-start;
+        }
+        .chat-bubble.sent {
+            background: var(--sibir-blue); color: white;
+            border-bottom-right-radius: 4px; align-self: flex-end;
+        }
+        .chat-bubble .bubble-time {
+            font-size: 0.75rem; opacity: 0.6; margin-top: 6px; display: block; text-align: right;
+        }
+        .chat-bubble.received .bubble-time { text-align: left; }
+        .chat-bubble img.bubble-photo {
+            max-width: 100%; border-radius: 12px; display: block; margin-top: 8px; cursor: pointer;
+        }
+        .chat-date-sep {
+            text-align: center; font-size: 0.8rem; color: var(--text-muted);
+            background: var(--gray); padding: 4px 14px; border-radius: 20px;
+            align-self: center; margin: 8px 0; font-weight: 600;
+        }
+        .chat-panel-input {
+            padding: 12px 16px 24px 16px; border-top: 1px solid var(--gray);
+            display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; background: #fff;
+        }
+        .chat-panel-input textarea {
+            flex: 1; border: 1.5px solid var(--border-color); border-radius: 20px;
+            padding: 12px 16px; font-family: inherit; font-size: 0.95rem;
+            resize: none; outline: none; height: 48px; max-height: 120px;
+            box-sizing: border-box; line-height: 1.4; display: block; margin: 0;
+        }
+        .chat-panel-input textarea:focus { border-color: var(--sibir-blue); }
+        .chat-panel-input .send-btn {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--sibir-blue);
+            color: white; border: none; cursor: pointer; font-size: 1.3rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0; padding-left: 4px; /* визуальная компенсация иконки */
+        }
+        .chat-panel-input .send-btn:hover { background: var(--sibir-dark); }
+        .chat-empty { text-align: center; color: var(--text-muted); font-size: 0.95rem; margin: auto; padding: 40px 0; }
+
+        /* ===== QUIZ TAB ===== */
+        .quiz-q-card {
+            background: var(--gray); border-radius: 16px; padding: 16px;
+            margin-bottom: 16px; border: 2px solid transparent; transition: 0.2s;
+        }
+        .quiz-q-card.active-q { border-color: #9ef01a; background: #f4fff0; box-shadow: 0 0 10px rgba(158,240,26,0.2); }
+        .quiz-q-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .quiz-q-num { font-weight: 800; font-size: 0.9rem; color: var(--sibir-dark); }
+        .quiz-active-badge { background: #9ef01a; color: #1a5c00; padding: 3px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        .quiz-q-text { font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; line-height: 1.4; }
+        
+        /* Изменено для мобильных: одна колонка ответов */
+        .quiz-answers-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        
+        .quiz-answer-block {
+            background: white; border-radius: 12px; padding: 12px 14px;
+            border-left: 5px solid #ddd; font-size: 0.9rem;
+        }
+        .quiz-answer-block.is-correct { border-left-color: #10ac84; background: #f0fff8; }
+        .quiz-answer-label { font-weight: 800; font-size: 1rem; margin-bottom: 4px; }
+        .quiz-answer-text { color: var(--text-main); margin-bottom: 4px; font-size: 0.9rem; line-height: 1.3;}
+        .quiz-answer-keys { color: var(--text-muted); font-size: 0.8rem; }
+        .quiz-response-badge {
+            background: var(--sibir-blue); color: white;
+            padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            margin-left: auto;
+        }
+        .quiz-mode-btn { 
+            flex: 1; padding: 12px; border-radius: 12px; border: 2px solid var(--border-color);
+            background: var(--gray); font-weight: 700; font-size: 0.85rem; cursor: pointer;
+            transition: 0.2s; font-family: inherit; color: var(--text-main); text-align: center;
+        }
+        .quiz-mode-btn.selected { background: var(--sibir-dark); color: white; border-color: var(--sibir-dark); }
+        
+        /* Мобильный грид для добавления вопросов */
+        .quiz-add-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+        
+        .quiz-add-ans { 
+            background: white; border-radius: 12px; padding: 12px;
+            border-left: 5px solid #ddd;
+        }
+        .quiz-add-ans input { height: 42px; font-size: 0.9rem; margin-bottom: 8px; }
+        .quiz-add-ans input:last-child { margin-bottom: 0; }
+
+        /* Вспомогательные классы */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-    <div class="topbar-logo">🏒</div>
-    <div class="topbar-title">Sibir Control</div>
-    <div class="topbar-status" id="topStatus">Оффлайн</div>
-</div>
+<div class="top-panel">
+    <h2>Активный режим</h2>
+    <div class="grid-2">
+        <button id="mode-voting" class="btn btn-scene" onclick="setActiveMode('voting')">🏒 Шайба</button>
+        <button id="mode-slideshow" class="btn btn-scene" onclick="setActiveMode('slideshow')">📸 Слайд</button>
+        <button id="mode-lookslike" class="btn btn-scene" onclick="setActiveMode('lookslike')">👯 Looks Like</button>
+        <button id="mode-mvp" class="btn btn-scene" onclick="setActiveMode('mvp')">🏆 Игрок</button>
+        <button id="mode-noise" class="btn btn-scene" onclick="setActiveMode('noise')">🔊 Шумомер</button>
+        <button id="mode-quiz" class="btn btn-scene" onclick="setActiveMode('quiz')">❓ Квиз</button>
+    </div>
 
-<!-- SCROLL AREA -->
-<div class="scroll-area" id="scrollArea">
-
-    <!-- ══ PAGE: MAIN (режимы + сцены) ══ -->
-    <div class="page active" id="page-main">
-
-        <div class="section">
-            <div class="section-label">Режим</div>
-            <div class="mode-grid">
-                <button class="mode-btn" id="m-voting"    onclick="setActiveMode('voting')">
-                    <span class="mode-icon">🏒</span>Шайба
-                </button>
-                <button class="mode-btn" id="m-mvp"       onclick="setActiveMode('mvp')">
-                    <span class="mode-icon">🏆</span>Игрок
-                </button>
-                <button class="mode-btn" id="m-quiz"      onclick="setActiveMode('quiz')">
-                    <span class="mode-icon">❓</span>Викторина
-                </button>
-                <button class="mode-btn" id="m-lookslike" onclick="setActiveMode('lookslike')">
-                    <span class="mode-icon">👯</span>Looks Like
-                </button>
-                <button class="mode-btn" id="m-slideshow" onclick="setActiveMode('slideshow')">
-                    <span class="mode-icon">📸</span>Слайд
-                </button>
-                <button class="mode-btn" id="m-noise"     onclick="setActiveMode('noise')">
-                    <span class="mode-icon">🔊</span>Шумомер
-                </button>
-            </div>
+    <div id="controls-voting">
+        <h2 style="margin-top:20px;">Сцены: Первая шайба</h2>
+        <div class="grid-2">
+            <button id="scene-announcement" class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+            <button id="scene-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
+            <button id="scene-roulette" class="btn btn-scene" onclick="setScene('roulette')">Рулетка</button>
+            <button id="scene-winner" class="btn btn-scene" onclick="setScene('winner')">Победитель</button>
         </div>
-
-        <!-- СЦЕНЫ: Шайба -->
-        <div class="section" id="ctrl-voting">
-            <div class="section-label">Сцены</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="sc-announcement" onclick="setScene('announcement')">📣 Анонс</button>
-                <button class="scene-btn" id="sc-qr"           onclick="setScene('qr')">📱 QR-код</button>
-                <button class="scene-btn" id="sc-roulette"     onclick="setScene('roulette')">🎲 Рулетка</button>
-                <button class="scene-btn" id="sc-winner"       onclick="setScene('winner')">🏆 Победитель</button>
-            </div>
-            <div style="margin-top: 12px; margin-bottom: 10px;">
-                <select class="field" id="goalScorer" onchange="setScorer(this.value)">
-                    <option value="">-- Кто забил? --</option>
-                </select>
-            </div>
-            <div class="toggle-row off" id="toggle-row-fg">
-                <div class="toggle-label">🏒 Приём голосов</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-fg" onchange="onVoteToggle('first_goal', this.checked)">
-                    <div class="switch-track"></div>
-                </label>
-            </div>
-            <div style="margin-top: 8px;">
-                <button class="action-btn blue" onclick="pickWinnerManual()">🎲 Перевыбрать победителя</button>
-            </div>
-        </div>
-
-        <!-- СЦЕНЫ: Игрок матча -->
-        <div class="section" id="ctrl-mvp" style="display:none;">
-            <div class="section-label">Сцены</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="sc-mvp-winline_logo" onclick="setScene('winline_logo')">🟡 Winline</button>
-                <button class="scene-btn" id="sc-mvp-announcement" onclick="setScene('announcement')">📢 Анонс</button>
-                <button class="scene-btn" id="sc-mvp-qr"           onclick="setScene('qr')">📱 QR</button>
-                <button class="scene-btn" id="sc-mvp-winner"       onclick="setScene('winner')">🏆 Победитель</button>
-            </div>
-            <div class="toggle-row off" id="toggle-row-mvp" style="margin-top:12px;">
-                <div class="toggle-label">🏆 Приём голосов</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-mvp" onchange="onVoteToggle('match_mvp', this.checked)">
-                    <div class="switch-track"></div>
-                </label>
-            </div>
-        </div>
-
-        <!-- СЦЕНЫ: Викторина -->
-        <div class="section" id="ctrl-quiz" style="display:none;">
-            <div class="section-label">Сцены</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="sc-quiz-announcement" onclick="setScene('quiz_announcement')">📣 Анонс</button>
-                <button class="scene-btn" id="sc-quiz-qr"           onclick="setScene('quiz_qr')">📱 QR</button>
-                <button class="scene-btn" id="sc-quiz-question"     onclick="setScene('quiz_question')">❓ Вопрос</button>
-                <button class="scene-btn" id="sc-quiz-results"      onclick="setScene('quiz_results')">📊 Результаты</button>
-                <button class="scene-btn" id="sc-quiz-roulette"     onclick="quizLaunchRoulette()">🎲 Рулетка</button>
-                <button class="scene-btn" id="sc-quiz-winner"       onclick="quizPickWinner()">🏆 Победитель</button>
-            </div>
-            <div class="toggle-row off" id="toggle-row-quiz" style="margin-top:12px;">
-                <div class="toggle-label">❓ Приём ответов</div>
-                <label class="switch">
-                    <input type="checkbox" id="toggle-quiz" onchange="onVoteToggle('quiz', this.checked)">
-                    <div class="switch-track"></div>
-                </label>
-            </div>
-        </div>
-
-        <!-- СЦЕНЫ: Looks Like -->
-        <div class="section" id="ctrl-lookslike" style="display:none;">
-            <div class="section-label">Сцены</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="sc-ll-announcement" onclick="setScene('announcement')">📣 Анонс</button>
-                <button class="scene-btn" id="sc-ll-character"    onclick="setScene('character')">👤 Персонаж</button>
-                <button class="scene-btn" id="sc-ll-fan"          onclick="setScene('fan')">🙋 Болельщик</button>
-            </div>
-        </div>
-
-        <!-- СЦЕНЫ: Slideshow -->
-        <div class="section" id="ctrl-slideshow" style="display:none;">
-            <div class="section-label">Сцены</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="sc-ss-qr"    onclick="setScene('slideshow_qr')">📱 QR-коды</button>
-                <button class="scene-btn" id="sc-ss-photo" onclick="setScene('slideshow_photo')">📸 Слайд-шоу</button>
-            </div>
-        </div>
-
-        <!-- СЦЕНЫ: Шумомер -->
-        <div class="section" id="ctrl-noise" style="display:none;">
-            <div class="section-label">Игрок на шумомере</div>
-            <div class="scene-wrap">
-                <button class="scene-btn" id="np-38" onclick="setNoisePlayer('38')">38 Баклашев</button>
-                <button class="scene-btn" id="np-11" onclick="setNoisePlayer('11')">11 Кошелев</button>
-                <button class="scene-btn" id="np-24" onclick="setNoisePlayer('24')">24 ...</button>
-            </div>
-        </div>
-
-        <!-- Фон оверлея -->
-        <div class="section">
-            <div class="section-label">Фон оверлея</div>
-            <div class="input-row">
-                <input class="field" type="text" id="bgUrl" placeholder="Ссылка на .webm / .jpg">
-            </div>
-            <div style="display:flex; gap:8px; margin-top:8px;">
-                <button class="action-btn blue" style="flex:1; padding:11px;" onclick="updateBg()">Применить</button>
-                <button class="action-btn red" style="flex:1; padding:11px;" onclick="removeBackground()">Убрать</button>
-            </div>
+        <button class="btn" style="width:100%; border: 1px solid var(--border-color); background:#05caff" onclick="pickWinnerManual()">🎲 Перевыбрать победителя</button>
+        <div class="toggle-row off" id="toggle-row-fg">
+            <div class="toggle-label">🏒 Приём голосов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-first-goal" onchange="onVoteToggle('first_goal', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
         </div>
     </div>
 
-    <!-- ══ PAGE: QUIZ ══ -->
-    <div class="page" id="page-quiz">
-
-        <div class="section">
-            <div class="section-label">Режим победителя</div>
-            <div class="wmode-grid">
-                <button class="wmode-btn" id="wm-all" onclick="setQuizWinnerMode('all_correct')">
-                    🎯 Все верные
-                </button>
-                <button class="wmode-btn" id="wm-any" onclick="setQuizWinnerMode('any_correct')">
-                    ⚡ Хотя бы один
-                </button>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-label">Вопросы</div>
-            <div id="quizList" class="gap10"></div>
-            <button class="action-btn blue" style="margin-top:12px;" onclick="openAddQuestion()">+ Добавить вопрос</button>
-            <div style="display:flex; gap:8px; margin-top:8px;">
-                <button class="action-btn orange" style="flex:1; font-size:0.78rem;" onclick="clearQuizResponses()">🧹 Очистить ответы</button>
-                <button class="action-btn red" style="flex:1; font-size:0.78rem;" onclick="clearAllQuizQuestions()">🗑 Удалить всё</button>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-label" id="respondentsLabel">Участники</div>
-            <div id="respondentsList"></div>
+    <div id="controls-slideshow" style="display: none;">
+        <h2 style="margin-top:20px;">Сцены: Слайд-шоу</h2>
+        <div class="grid-2">
+            <button id="scene-slideshow-qr" class="btn btn-scene" onclick="setScene('slideshow_qr')">QR-коды</button>
+            <button id="scene-slideshow-photo_feed" class="btn btn-scene" onclick="setScene('slideshow_photo')">Слайд-шоу</button>
         </div>
     </div>
 
-    <!-- ══ PAGE: VOTES ══ -->
-    <div class="page" id="page-votes">
-        <div class="section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <div>
-                    <div style="font-weight:900; font-size:1.1rem;">Голоса</div>
-                    <div style="font-size:0.75rem; color:var(--muted);" id="vCount">0 голосов</div>
-                </div>
-                <button class="action-btn red" style="width:auto; padding:9px 14px; font-size:0.78rem;" onclick="resetVotes()">🧹 Очистить</button>
-            </div>
-            <div id="votesList" class="votes-grid"></div>
+    <div id="controls-lookslike" style="display: none;">
+        <h2 style="margin-top:20px;">Сцены: Looks Like</h2>
+        <div class="grid-3">
+            <button id="scene-ll-announcement" class="btn btn-scene" onclick="setScene('announcement')">Анонс</button>
+            <button id="scene-ll-character" class="btn btn-scene" onclick="setScene('character')">Персонаж</button>
+            <button id="scene-ll-fan" class="btn btn-scene" onclick="setScene('fan')">Болельщик</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 10px; line-height: 1.4;">
+            💡 Выбери персонажа кнопкой "В ЭФИР" в меню ниже, затем нажми сцену "Персонаж".
+        </p>
+    </div>
+
+    <div id="controls-noise" style="display: none;">
+        <h2 style="margin-top:20px;">Шумомер: игрок</h2>
+        <div class="grid-3">
+            <button id="noise-player-38" class="btn btn-scene" onclick="setNoisePlayer('38')">38</button>
+            <button id="noise-player-11" class="btn btn-scene" onclick="setNoisePlayer('11')">11</button>
+            <button id="noise-player-24" class="btn btn-scene" onclick="setNoisePlayer('24')">24</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 10px; line-height: 1.4;">
+            Выбранный игрок будет показываться на шумомере в OBS.
+        </p>
+    </div>
+
+    <div id="controls-mvp" style="display: none;"> 
+        <h2 style="margin-top:20px;">Сцены: Игрок матча</h2>
+        <div class="grid-2">
+            <button id="scene-mvp-winline_logo" class="btn btn-scene" onclick="setScene('winline_logo')">🟡 Winline</button>
+            <button id="scene-mvp-announcement" class="btn btn-scene" onclick="setScene('announcement')">📢 Анонс</button>
+            <button id="scene-mvp-qr" class="btn btn-scene" onclick="setScene('qr')">QR-код</button>
+            <button id="scene-mvp-winner" class="btn btn-scene" onclick="setScene('winner')">🏆 Победитель</button>
+        </div>
+        <div class="toggle-row off" id="toggle-row-mvp">
+            <div class="toggle-label">🏆 Приём голосов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-mvp" onchange="onVoteToggle('match_mvp', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
         </div>
     </div>
 
-    <!-- ══ PAGE: SETTINGS ══ -->
-    <div class="page" id="page-settings">
-        <div class="section">
-            <div class="section-label">База игроков</div>
-            <div id="playersList" class="gap8"></div>
-            <div class="card" style="margin-top:10px;">
-                <div class="player-add-form">
-                    <input class="field" type="text" id="pName" placeholder="Имя игрока">
-                    <input class="field" type="text" id="pKeys" placeholder="Ключевые слова (через запятую)">
-                    <button class="action-btn blue" onclick="addPlayer()">+ Добавить</button>
-                </div>
-            </div>
+    <div id="controls-quiz" style="display: none;">
+        <h2 style="margin-top:20px;">Сцены: Викторина</h2>
+        <div class="grid-2">
+            <button id="scene-quiz-announcement" class="btn btn-scene" onclick="setScene('quiz_announcement')">📣 Анонс</button>
+            <button id="scene-quiz-qr" class="btn btn-scene" onclick="setScene('quiz_qr')">📱 QR-коды</button>
+            <button id="scene-quiz-question" class="btn btn-scene" onclick="setScene('quiz_question')">❓ Вопрос</button>
+            <button id="scene-quiz-results" class="btn btn-scene" onclick="setScene('quiz_results')">📊 Итоги</button>
+            <button id="scene-quiz-roulette" class="btn btn-scene" onclick="quizLaunchRoulette()">🎲 Рулетка</button>
+            <button id="scene-quiz-winner" class="btn btn-scene" onclick="quizPickWinner()">🏆 Победитель</button>
         </div>
-    </div>
-
-</div><!-- /scroll-area -->
-
-<!-- TAB BAR -->
-<div class="tab-bar">
-    <button class="tab-item active" id="tab-main"     onclick="switchTab('main')">
-        <span class="ti-icon">🎛️</span>
-        <span class="ti-label">Управление</span>
-    </button>
-    <button class="tab-item" id="tab-quiz"     onclick="switchTab('quiz')">
-        <span class="ti-icon">❓</span>
-        <span class="ti-label">Викторина</span>
-    </button>
-    <button class="tab-item" id="tab-votes"    onclick="switchTab('votes')">
-        <span class="ti-icon">🗳️</span>
-        <span class="ti-label">Голоса</span>
-    </button>
-    <button class="tab-item" id="tab-settings" onclick="switchTab('settings')">
-        <span class="ti-icon">⚙️</span>
-        <span class="ti-label">Игроки</span>
-    </button>
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- ADD QUESTION MODAL -->
-<div class="modal-overlay" id="addQModal" onclick="closeAddQuestion(event)">
-    <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
-        <div class="modal-title">Новый вопрос</div>
-        <div class="add-q-form" id="addQForm">
-            <input class="field" type="text" id="new-q-text" placeholder="Текст вопроса">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                <div class="answer-input-block" id="aib-0" style="border-left:3px solid #05caff;">
-                    <div class="answer-input-header">
-                        <span class="answer-ltr" style="color:#05caff;">A</span>
-                        <label class="correct-toggle">✓ Верный <input type="checkbox" id="a0-ok"></label>
-                    </div>
-                    <input class="mini-field" type="text" id="a0-txt" placeholder="Вариант A">
-                    <input class="mini-field" type="text" id="a0-kw" placeholder="Ключевые слова">
-                </div>
-                <div class="answer-input-block" id="aib-1" style="border-left:3px solid #ff9f43;">
-                    <div class="answer-input-header">
-                        <span class="answer-ltr" style="color:#ff9f43;">B</span>
-                        <label class="correct-toggle">✓ Верный <input type="checkbox" id="a1-ok"></label>
-                    </div>
-                    <input class="mini-field" type="text" id="a1-txt" placeholder="Вариант B">
-                    <input class="mini-field" type="text" id="a1-kw" placeholder="Ключевые слова">
-                </div>
-                <div class="answer-input-block" id="aib-2" style="border-left:3px solid #9ef01a;">
-                    <div class="answer-input-header">
-                        <span class="answer-ltr" style="color:#3d8b00;">C</span>
-                        <label class="correct-toggle">✓ Верный <input type="checkbox" id="a2-ok"></label>
-                    </div>
-                    <input class="mini-field" type="text" id="a2-txt" placeholder="Вариант C">
-                    <input class="mini-field" type="text" id="a2-kw" placeholder="Ключевые слова">
-                </div>
-                <div class="answer-input-block" id="aib-3" style="border-left:3px solid #ee5253;">
-                    <div class="answer-input-header">
-                        <span class="answer-ltr" style="color:#ee5253;">D</span>
-                        <label class="correct-toggle">✓ Верный <input type="checkbox" id="a3-ok"></label>
-                    </div>
-                    <input class="mini-field" type="text" id="a3-txt" placeholder="Вариант D">
-                    <input class="mini-field" type="text" id="a3-kw" placeholder="Ключевые слова">
-                </div>
-            </div>
-            <button class="action-btn blue" onclick="addQuizQuestion()">Сохранить вопрос</button>
-            <button class="action-btn dark" onclick="closeAddQuestion()">Отмена</button>
+        <button class="btn" style="width:100%; border: 1px solid var(--border-color); background:#05caff" onclick="quizPickWinner()">🎲 Перевыбрать победителя</button>
+        <div class="toggle-row off" id="toggle-row-quiz">
+            <div class="toggle-label">❓ Приём ответов</div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-quiz" onchange="onVoteToggle('quiz', this.checked)">
+                <div class="toggle-track"></div>
+            </label>
         </div>
     </div>
 </div>
+
+<div class="main-panel">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('votes')">Голоса</button>
+        <button class="tab-btn" onclick="switchTab('chat')">Эфир (Чат)</button>
+        <button class="tab-btn" onclick="switchTab('lookslike')">Looks Like</button>
+        <button class="tab-btn" onclick="switchTab('mvp')">Игрок матча</button>
+        <button class="tab-btn" onclick="switchTab('quiz')">❓ Викторина</button>
+    </div>
+
+    <div id="tab-votes" class="tab-content active">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <select id="filterMode" onchange="renderVotes()" style="width: 100%; margin-bottom: 10px;">
+                <option value="all">Все голоса</option>
+                <option value="correct">Только правильные</option>
+            </select>
+            <div class="flex-between" style="width: 100%;">
+                <b id="vCount" style="color: var(--sibir-blue); font-size: 1.1rem;"></b>
+                <button class="btn" style="background: #ee5253; color: white; padding: 10px 15px;" onclick="resetVotes()">🧹 Очистить</button>
+            </div>
+        </div>
+        <div id="votesList" class="votes-list"></div>
+    </div>
+
+    <div id="tab-chat" class="tab-content">
+        <div class="grid-2" style="margin-bottom: 20px;">
+            <button class="btn" style="background: #ff9f43; color: white; padding: 12px 10px; font-size: 0.85rem;" onclick="clearApprovedPhotos()">🧹 Очистить эфир</button>
+            <button class="btn" style="background: #ee5253; color: white; padding: 12px 10px; font-size: 0.85rem;" onclick="clearChat()">🗑️ Удалить всё</button>
+        </div>
+        <div id="messagesList"></div>
+    </div>
+
+    <div id="tab-lookslike" class="tab-content">
+        <div style="background: var(--gray); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+            <h3 style="margin:0 0 15px 0">Добавить персонажа</h3>
+            <input type="text" id="charName" placeholder="Имя персонажа">
+            <input type="file" id="charFile" accept="image/*" style="padding: 12px 15px; background: white;">
+            <div id="cropWrapper" class="crop-container">
+                <img id="imageToCrop" src="">
+            </div>
+            <button id="btnSaveChar" class="btn btn-primary" onclick="saveCharacter()" style="display: none; margin-top: 15px;">💾 Сохранить</button>
+        </div>
+        <div class="flex-between" style="margin-bottom: 15px;">
+            <h3 style="margin: 0;">Персонажи</h3>
+            <button class="btn" style="background: #ee5253; color: white; padding: 10px 15px;" onclick="clearAllCharacters()">🗑️ Удалить всех</button>
+        </div>
+        <div id="charactersList" class="char-grid"></div>
+    </div>
+
+    <div id="tab-mvp" class="tab-content">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h3 style="margin: 0;">Голоса за MVP</h3>
+            <button class="btn" style="background: #ee5253; color: white; padding: 10px 15px;" onclick="resetMvpVotes()">🧹 Сброс</button>
+        </div>
+        <b id="mvpCount" style="color: var(--sibir-blue); display: block; margin-bottom: 15px; font-size: 1.1rem;"></b>
+        <div id="mvpResultsList"></div>
+        
+        <div style="background: var(--gray); padding: 20px; border-radius: 16px; margin-top: 30px;">
+            <h3 style="margin: 0 0 15px 0;">База игроков (фото)</h3>
+            <div id="mvpPlayersList"></div>
+        </div>
+    </div>
+
+    <div id="tab-quiz" class="tab-content">
+        <div style="background: var(--gray); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0;">Режим победителя</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <button id="quiz-mode-all" class="quiz-mode-btn" onclick="setQuizWinnerMode('all_correct')">🎯 Все верные</button>
+                <button id="quiz-mode-any" class="quiz-mode-btn" onclick="setQuizWinnerMode('any_correct')">⚡ Хотя бы один верный</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin: 0; line-height: 1.4;">
+                <b>Все верные:</b> в рулетку попадают только те, кто ответил на все вопросы.<br>
+                <b>Хотя бы один:</b> каждый верный ответ = +1 шанс. 
+            </p>
+        </div>
+
+        <div style="background: var(--gray); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0;">Добавить вопрос</h3>
+            <input type="text" id="quiz-q-text" placeholder="Текст вопроса" style="margin-bottom: 15px;">
+            <div class="quiz-add-grid">
+                <div class="quiz-add-ans" style="border-left-color: #05caff;">
+                    <div class="flex-between" style="margin-bottom:8px;">
+                        <span style="font-weight:800; color:#05caff; font-size:1.1rem;">A</span>
+                        <input type="checkbox" id="quiz-a0-correct" style="width:24px;height:24px; margin:0;">
+                    </div>
+                    <input type="text" id="quiz-a0-text" placeholder="Вариант A">
+                    <input type="text" id="quiz-a0-keys" placeholder="Ключевые слова" style="margin-bottom:0;">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #ff9f43;">
+                    <div class="flex-between" style="margin-bottom:8px;">
+                        <span style="font-weight:800; color:#ff9f43; font-size:1.1rem;">B</span>
+                        <input type="checkbox" id="quiz-a1-correct" style="width:24px;height:24px; margin:0;">
+                    </div>
+                    <input type="text" id="quiz-a1-text" placeholder="Вариант B">
+                    <input type="text" id="quiz-a1-keys" placeholder="Ключевые слова" style="margin-bottom:0;">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #9ef01a;">
+                    <div class="flex-between" style="margin-bottom:8px;">
+                        <span style="font-weight:800; color:#3d8b00; font-size:1.1rem;">C</span>
+                        <input type="checkbox" id="quiz-a2-correct" style="width:24px;height:24px; margin:0;">
+                    </div>
+                    <input type="text" id="quiz-a2-text" placeholder="Вариант C">
+                    <input type="text" id="quiz-a2-keys" placeholder="Ключевые слова" style="margin-bottom:0;">
+                </div>
+                <div class="quiz-add-ans" style="border-left-color: #ee5253;">
+                    <div class="flex-between" style="margin-bottom:8px;">
+                        <span style="font-weight:800; color:#ee5253; font-size:1.1rem;">D</span>
+                        <input type="checkbox" id="quiz-a3-correct" style="width:24px;height:24px; margin:0;">
+                    </div>
+                    <input type="text" id="quiz-a3-text" placeholder="Вариант D">
+                    <input type="text" id="quiz-a3-keys" placeholder="Ключевые слова" style="margin-bottom:0;">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addQuizQuestion()">+ Добавить вопрос</button>
+        </div>
+
+        <div class="flex-between" style="margin-bottom: 15px;">
+            <h3 style="margin: 0;">Вопросы</h3>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" style="background: #ff9f43; color: white; padding: 10px; font-size: 0.85rem;" onclick="clearQuizResponses()">🧹 Ответы</button>
+                <button class="btn" style="background: #ee5253; color: white; padding: 10px; font-size: 0.85rem;" onclick="clearAllQuizQuestions()">🗑️ Всё</button>
+            </div>
+        </div>
+        <div id="quizQuestionsList"></div>
+
+        <div style="margin-top: 30px;">
+            <h3 style="margin: 0 0 15px 0;" id="quizRespondentsTitle">Участники</h3>
+            <div id="quizRespondentsList" class="votes-list"></div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-panel">
+    <div id="players-controls" style="margin-bottom: 25px;">
+        <h2>Автор гола</h2>
+        <select id="goalScorer" onchange="setScorer(this.value)"></select>
+        
+        <h2 style="margin-top: 20px;">База игроков</h2>
+        <input type="text" id="pName" placeholder="Имя игрока">
+        <input type="text" id="pKeys" placeholder="Номер, фамилия (через запятую)">
+        <button class="btn btn-primary" style="background: var(--sibir-dark);" onclick="addPlayer()">Добавить игрока</button>
+        <div id="playersList" style="margin-top:20px;"></div>
+    </div>
+
+    <hr style="border:0; border-top: 1px solid var(--border-color); margin: 25px 0;">
+
+    <h2>Фон оверлея</h2>
+    <input type="text" id="bgUrl" placeholder="Ссылка на .webm или .jpg">
+    <div class="grid-2">
+        <button class="btn btn-scene" onclick="updateBg()">Применить</button>
+        <button class="btn btn-scene" style="color: #ee5253;" onclick="removeBackground()">Удалить</button>
+    </div>
+</div>
+
+<div class="chat-overlay" id="chatOverlay" onclick="closeChat()"></div>
+<div class="chat-panel" id="chatPanel">
+    <div class="chat-panel-header" id="chatHeader">
+        <img id="chatAvatar" src="" onerror="this.src='media/tg_logo.png'">
+        <div style="overflow: hidden;">
+            <div id="chatName" style="font-weight:700; font-size:1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+            <div id="chatHandle" style="color:var(--text-muted); font-size:0.9rem;"></div>
+        </div>
+        <button class="close-btn" onclick="closeChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div style="position: relative; background: #fff;">
+        <div class="emoji-picker-popup" id="emojiPickerPopup">
+            <div class="emoji-cats" id="emojiCats"></div>
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="chat-panel-input">
+            <button class="emoji-btn" onclick="toggleEmojiPicker(event)" title="Смайлики">😊</button>
+            <textarea id="chatReplyInput" placeholder="Сообщение..." rows="1"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatReply();}"></textarea>
+            <button class="send-btn" onclick="sendChatReply()">➤</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+        authDomain: "arenawork-94e68.firebaseapp.com",
+        databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+        projectId: "arenawork-94e68",
+        storageBucket: "arenawork-94e68.firebasestorage.app",   
+        messagingSenderId: "504372844993",
+        appId: "1:504372844993:web:1783bb75879ee074953740"
+    };
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
-    authDomain: "arenawork-94e68.firebaseapp.com",
-    databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
-    projectId: "arenawork-94e68",
-    storageBucket: "arenawork-94e68.firebasestorage.app",
-    messagingSenderId: "504372844993",
-    appId: "1:504372844993:web:1783bb75879ee074953740"
-};
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let currentData = {};
+    const tgLogo = "media/tg_logo.png";
+    let cropper;
+    let editingCharId = null;
 
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+    const UPLOAD_URL = 'http://localhost:3000/upload';
 
-let currentData = {};
-const tgLogo = "media/tg_logo.png";
-const ANSWER_LABELS = ['A','B','C','D'];
-const ANSWER_COLORS = ['#05caff','#ff9f43','#9ef01a','#ee5253'];
+    async function uploadViaBot(blob, folder) {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('folder', folder);
+        const res = await fetch(UPLOAD_URL, { method: 'POST', body: formData });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.url) throw new Error('Нет URL в ответе');
+        return data.url;
+    }
 
-// ── Toast ──────────────────────────────────────────────────────────────
-function toast(msg, dur = 2000) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), dur);
-}
+    function showUploadOverlay(text) {
+        const el = document.createElement('div');
+        el.className = 'upload-overlay';
+        el.id = 'upload-overlay';
+        el.innerHTML = `<div class="upload-box">
+            <div style="font-size:3rem;margin-bottom:15px">☁️</div>
+            <div style="font-weight:700;font-size:1.2rem">${text}</div>
+            <div style="color:#999;font-size:0.95rem;margin-top:10px">Загружаем на Yandex Cloud...</div>
+        </div>`;
+        document.body.appendChild(el);
+    }
 
-// ── Tabs ───────────────────────────────────────────────────────────────
-window.switchTab = (tab) => {
-    document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    document.getElementById(`page-${tab}`).classList.add('active');
-    document.getElementById('scrollArea').scrollTop = 0;
-};
+    function hideUploadOverlay(success = true) {
+        const el = document.getElementById('upload-overlay');
+        if (!el) return;
+        el.querySelector('.upload-box').innerHTML = `
+            <div style="font-size:3.5rem;margin-bottom:10px">${success ? '✅' : '❌'}</div>
+            <div style="font-weight:700;font-size:1.2rem">${success ? 'Готово!' : 'Ошибка загрузки'}</div>`;
+        setTimeout(() => el.remove(), 1200);
+    }
 
-// ── Mode ───────────────────────────────────────────────────────────────
-window.setActiveMode = (mode) => {
-    set(ref(db, 'competition/activeMode'), mode);
-    toast('Режим: ' + mode);
-};
-
-// ── Scene ──────────────────────────────────────────────────────────────
-window.setScene = (scene) => {
-    const mode = currentData.activeMode || 'voting';
-    if (mode === 'voting') {
-        if (scene === 'roulette') {
-            const votes = currentData.votes || {};
-            const scorer = currentData.scorer;
-            if (!scorer) { toast('⚠️ Сначала выбери автора гола!'); return; }
-            const lucky = Object.values(votes).filter(v => v.votedFor === scorer);
-            set(ref(db, 'competition/votingState'), scene);
-            if (lucky.length > 0) {
-                const w = lucky[Math.floor(Math.random() * lucky.length)];
-                setTimeout(() => set(ref(db, 'competition/winner'), { ...w, selectionId: Date.now() }), 600);
-            }
+    window.onVoteToggle = (mode, checked) => {
+        if (checked) {
+            set(ref(db, 'competition/acceptingVotes'),    mode === 'first_goal');
+            set(ref(db, 'competition/acceptingMvpVotes'), mode === 'match_mvp');
+            set(ref(db, 'competition/acceptingQuizAnswers'), mode === 'quiz');
+            set(ref(db, 'competition/votingMode'), mode);
         } else {
-            set(ref(db, 'competition/votingState'), scene);
+            set(ref(db, 'competition/acceptingVotes'),    false);
+            set(ref(db, 'competition/acceptingMvpVotes'), false);
+            set(ref(db, 'competition/acceptingQuizAnswers'), false);
         }
-    } else if (mode === 'slideshow') {
-        set(ref(db, 'competition/slideshowState'), scene);
-    } else if (mode === 'lookslike') {
-        if (scene === 'character') {
-            const pending = currentData.lookslike?.pendingCharacter;
-            if (pending) set(ref(db, 'competition/lookslike/activeCharacter'), pending);
+    };
+
+    window.toggleVoting = () => {};
+    window.setVotingMode = (mode) => { onVoteToggle(mode, true); };
+    
+    window.switchTab = (tab) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        if (tab === 'mvp') renderMvpPlayers();
+    };
+
+    window.setActiveMode = (mode) => {
+        set(ref(db, 'competition/activeMode'), mode);
+        if (mode === 'lookslike') window.switchTab('lookslike');
+        if (mode === 'quiz') window.switchTab('quiz');
+    };
+
+    window.resetMvpVotes = () => {
+        if(confirm("Полная очистка голосов за игрока матча?")) remove(ref(db, 'competition/mvpVotes'));
+    };
+    
+    window.setScene = (scene) => {
+        const mode = currentData.activeMode || 'voting';
+        if (mode === 'voting') {
+            if (scene === 'roulette') {
+                const votes = currentData.votes || {};
+                const scorer = currentData.scorer;
+                if (!scorer) { alert("Сначала выбери автора гола!"); return; }
+                const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
+                set(ref(db, 'competition/votingState'), scene);
+                if (luckyOnes.length > 0) {
+                    setTimeout(() => {
+                        const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
+                        winner.selectionId = Date.now();
+                        set(ref(db, 'competition/winner'), winner);
+                    }, 600);
+                }
+            } else {
+                set(ref(db, 'competition/votingState'), scene);
+            }
+        } else if (mode === 'slideshow') {
+            set(ref(db, 'competition/slideshowState'), scene);
+        } else if (mode === 'lookslike') {
+            if (scene === 'character') {
+                const pending = currentData.lookslike?.pendingCharacter;
+                if (pending) set(ref(db, 'competition/lookslike/activeCharacter'), pending);
+            }
+            set(ref(db, 'competition/lookslikeState'), scene);
+        } else if (mode === 'mvp') {
+            set(ref(db, 'competition/mvpState'), scene);
+            set(ref(db, 'competition/mvpStateTs'), Date.now());
+        } else if (mode === 'quiz') {
+            const prevScene = currentData.quizState;
+            if (prevScene === 'quiz_question' && scene !== 'quiz_question') {
+                const activeId = currentData.quiz?.activeQuestionId;
+                if (activeId) {
+                    set(ref(db, 'competition/acceptingQuizAnswers'), false);
+                    set(ref(db, 'competition/quiz/revealQuestionId'), activeId);
+                    set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+                    set(ref(db, 'competition/quizStateTs'), Date.now());
+                    setTimeout(() => {
+                        set(ref(db, 'competition/quizState'), scene);
+                        set(ref(db, 'competition/quizStateTs'), Date.now());
+                    }, 4000);
+                    return;
+                }
+            }
+            set(ref(db, 'competition/quizState'), scene);
+            set(ref(db, 'competition/quizStateTs'), Date.now());
         }
-        set(ref(db, 'competition/lookslikeState'), scene);
-    } else if (mode === 'mvp') {
-        set(ref(db, 'competition/mvpState'), scene);
-        set(ref(db, 'competition/mvpStateTs'), Date.now());
-    } else if (mode === 'quiz') {
+    };
+
+    window.pickWinnerManual = () => {
+        const votes = currentData.votes || {};
+        const scorer = currentData.scorer;
+        if (!scorer) { alert("Сначала выбери автора гола!"); return; }
+        const luckyOnes = Object.values(votes).filter(v => v.votedFor === scorer);
+        if (luckyOnes.length > 0) {
+            const winner = luckyOnes[Math.floor(Math.random() * luckyOnes.length)];
+            winner.selectionId = Date.now(); 
+            set(ref(db, 'competition/winner'), winner);
+            alert("Новый победитель: " + winner.name);
+        } else {
+            alert("Никто не угадал этого игрока!");
+        }
+    };
+
+    window.updateBg = () => { const url = document.getElementById('bgUrl').value; if(url) set(ref(db, 'competition/background'), url); };
+    window.removeBackground = () => {
+        if(confirm("Очистить фон на оверлее?")) {
+            set(ref(db, 'competition/background'), null);
+            document.getElementById('bgUrl').value = '';
+        }
+    };
+
+    window.togglePhotoSelection = (id, status) => set(ref(db, `competition/allMessages/${id}/approved`), !status);
+    window.removeMessage = (id) => confirm("Удалить сообщение?") && remove(ref(db, `competition/allMessages/${id}`));
+    window.clearChat = () => confirm("Полная очистка сообщений?") && remove(ref(db, 'competition/allMessages'));
+    window.resetVotes = () => confirm("Полная очистка базы голосов (Первая шайба)?") && remove(ref(db, 'competition/votes'));
+    
+    window.clearApprovedPhotos = () => {
+        if (confirm("Убрать все фото из эфира?")) {
+            const msgs = currentData.allMessages || {};
+            const updates = {};
+            for(let id in msgs) {
+                if(msgs[id].approved) updates[`competition/allMessages/${id}/approved`] = false;
+            }
+            if(Object.keys(updates).length) update(ref(db), updates);
+        }
+    };
+
+    window.clearAllCharacters = () => {
+        if(confirm("Удалить всех персонажей из базы?")) remove(ref(db, 'competition/lookslike/characters'));
+    };
+
+    window.sendReply = (chatId, name) => {
+        if (!chatId) { alert("Нет Chat ID. Не могу ответить."); return; }
+        const msg = prompt(`Ответ для ${name}:`);
+        if (msg) {
+            push(ref(db, 'competition/replies'), { chatId, text: msg });
+            push(ref(db, `competition/sentReplies/${chatId}`), { text: msg, timestamp: Date.now() });
+        }
+    };
+
+    // ===== EMOJI PICKER =====
+    const EMOJI_CATS = [
+        { icon: '😀', label: 'Смайлы', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🫣','🤗','🫡','🤔','🫠','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕'] },
+        { icon: '👍', label: 'Жесты', emojis: ['👍','👎','👌','🤌','🤏','✌️','🤞','🫰','🤙','🤘','🤟','👈','👉','👆','🖕','👇','☝️','🫵','👋','🤚','🖐️','✋','🖖','🫱','🫲','💪','🦾','🙏','🤲','👏','🫶','🙌','🤝','💅','🤳'] },
+        { icon: '❤️', label: 'Сердца', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫀','💋'] },
+        { icon: '🏒', label: 'Спорт', emojis: ['🏒','🏑','🥅','🎯','⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','🏆','🥇','🥈','🥉','🏅','🎖️'] },
+        { icon: '🔥', label: 'Символы', emojis: ['🔥','⭐','🌟','💫','✨','💥','🎉','🎊','🎈','🎁','🎀','🎗️','🏳️','🚀','⚡','🌈','☀️','🌙','💯','✅','❌','‼️','❓','💬','📣','📢','👀','🆕','🆒','🆓','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪'] },
+    ];
+    let activeEmojiCat = 0;
+
+    function initEmojiPicker() {
+        const catsEl = document.getElementById('emojiCats');
+        catsEl.innerHTML = EMOJI_CATS.map((c, i) =>
+            `<button class="emoji-cat-btn ${i === 0 ? 'active' : ''}" onclick="setEmojiCat(${i})" title="${c.label}">${c.icon}</button>`
+        ).join('');
+        renderEmojiGrid(0);
+    }
+
+    window.setEmojiCat = (i) => {
+        activeEmojiCat = i;
+        document.querySelectorAll('.emoji-cat-btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
+        renderEmojiGrid(i);
+    };
+
+    function renderEmojiGrid(i) {
+        const grid = document.getElementById('emojiGrid');
+        grid.innerHTML = EMOJI_CATS[i].emojis.map(e =>
+            `<button onclick="insertEmoji('${e}')" title="${e}">${e}</button>`
+        ).join('');
+    }
+
+    window.insertEmoji = (emoji) => {
+        const ta = document.getElementById('chatReplyInput');
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        const val = ta.value;
+        ta.value = val.slice(0, start) + emoji + val.slice(end);
+        ta.selectionStart = ta.selectionEnd = start + emoji.length;
+        ta.focus();
+    };
+
+    window.toggleEmojiPicker = (e) => {
+        e.stopPropagation();
+        const picker = document.getElementById('emojiPickerPopup');
+        picker.classList.toggle('open');
+    };
+
+    document.addEventListener('click', (e) => {
+        const picker = document.getElementById('emojiPickerPopup');
+        if (picker && !picker.contains(e.target)) picker.classList.remove('open');
+    });
+
+    initEmojiPicker();
+
+    // ===== CHAT PANEL =====
+    let activeChatId = null;
+    let activeChatUnsub = null;
+
+    window.openChat = (chatId, name, avatar, handle) => {
+        if (!chatId) { alert("Нет Chat ID для этого пользователя"); return; }
+        activeChatId = chatId;
+
+        document.getElementById('chatName').textContent = name || 'Неизвестный';
+        document.getElementById('chatHandle').textContent = handle ? `@${handle}` : '';
+        const avatarEl = document.getElementById('chatAvatar');
+        avatarEl.src = (avatar && avatar.length > 10) ? avatar : tgLogo;
+
+        document.getElementById('chatPanel').classList.add('open');
+        document.getElementById('chatOverlay').classList.add('open');
+        document.getElementById('chatReplyInput').value = '';
+        document.getElementById('chatReplyInput').focus();
+
+        renderChatMessages(chatId);
+    };
+
+    window.closeChat = () => {
+        activeChatId = null;
+        document.getElementById('chatPanel').classList.remove('open');
+        document.getElementById('chatOverlay').classList.remove('open');
+    };
+
+    function renderChatMessages(chatId) {
+        const container = document.getElementById('chatMessages');
+        if (!chatId) return;
+
+        const allMsgs = currentData.allMessages || {};
+        const received = Object.values(allMsgs)
+            .filter(m => String(m.chatId) === String(chatId))
+            .map(m => ({ type: 'received', text: m.text || '', photo: m.isImage ? m.photo : null, ts: m.timestamp || 0 }));
+
+        const sentData = currentData.sentReplies?.[chatId] || {};
+        const sent = Object.values(sentData)
+            .map(r => ({ type: 'sent', text: r.text || '', ts: r.timestamp || 0 }));
+
+        const all = [...received, ...sent].sort((a, b) => a.ts - b.ts);
+
+        if (all.length === 0) {
+            container.innerHTML = '<div class="chat-empty">Нет сообщений</div>';
+            return;
+        }
+
+        let html = '';
+        let lastDateStr = '';
+        all.forEach(msg => {
+            const date = new Date(msg.ts);
+            const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
+
+            if (dateStr !== lastDateStr) {
+                html += `<div class="chat-date-sep">${dateStr}</div>`;
+                lastDateStr = dateStr;
+            }
+
+            html += `<div class="chat-bubble ${msg.type}">`;
+            if (msg.text) html += `<span>${msg.text}</span>`;
+            if (msg.photo) html += `<img class="bubble-photo" src="${msg.photo}" onclick="window.open('${msg.photo}')">`;
+            html += `<span class="bubble-time">${timeStr}</span></div>`;
+        });
+
+        container.innerHTML = html;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    window.sendChatReply = async () => {
+        const input = document.getElementById('chatReplyInput');
+        const text = input.value.trim();
+        if (!text || !activeChatId) return;
+
+        input.value = '';
+        const ts = Date.now();
+        await push(ref(db, 'competition/replies'), { chatId: activeChatId, text });
+        await push(ref(db, `competition/sentReplies/${activeChatId}`), { text, timestamp: ts });
+    };
+
+    window.addPlayer = () => {
+        const name = document.getElementById('pName').value;
+        const keywords = document.getElementById('pKeys').value;
+        if(name && keywords) {
+            push(ref(db, 'competition/players'), { name, keywords });
+            document.getElementById('pName').value = '';
+            document.getElementById('pKeys').value = '';
+        }
+    };
+
+    window.removePlayer = (id) => remove(ref(db, `competition/players/${id}`));
+    window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
+    window.removeVote = (id) => remove(ref(db, `competition/votes/${id}`));
+
+    window.uploadPlayerPhoto = (playerId) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/png,image/jpeg,image/jpg';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            showUploadOverlay('📷 Загружаем фото...');
+            try {
+                const photoUrl = await uploadViaBot(file, 'players');
+                await update(ref(db, `competition/players/${playerId}`), { photo: photoUrl });
+                hideUploadOverlay(true);
+                renderMvpPlayers();
+            } catch (err) {
+                console.error('Ошибка:', err);
+                hideUploadOverlay(false);
+                alert('Ошибка загрузки: ' + err.message + '\nУбедитесь что бот запущен (порт 3000)');
+            }
+        };
+        input.click();
+    };
+
+    window.deletePlayerPhoto = (playerId) => {
+        if (confirm('Удалить фото игрока?')) {
+            update(ref(db, `competition/players/${playerId}`), { photo: null });
+        }
+    };
+
+    document.getElementById('charFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const image = document.getElementById('imageToCrop');
+                image.src = event.target.result;
+                document.getElementById('cropWrapper').style.display = 'block';
+                document.getElementById('btnSaveChar').style.display = 'block';
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(image, { aspectRatio: 8 / 9, viewMode: 1 });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    window.saveCharacter = async () => {
+        const name = document.getElementById('charName').value;
+        if (!name) { alert("Введите имя персонажа!"); return; }
+        if (!cropper) { alert("Выберите фото!"); return; }
+        showUploadOverlay('👯 Загружаем...');
+        try {
+            const canvas = cropper.getCroppedCanvas({ height: 800 });
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const imageUrl = await uploadViaBot(blob, 'characters');
+            await push(ref(db, 'competition/lookslike/characters'), { name, image: imageUrl });
+            hideUploadOverlay(true);
+            cropper.destroy(); cropper = null;
+            document.getElementById('charName').value = '';
+            document.getElementById('charFile').value = '';
+            document.getElementById('imageToCrop').src = '';
+            document.getElementById('cropWrapper').style.display = 'none';
+            document.getElementById('btnSaveChar').style.display = 'none';
+        } catch (err) {
+            console.error('Ошибка:', err);
+            hideUploadOverlay(false);
+            alert('Ошибка загрузки: ' + err.message);
+        }
+    };
+
+    window.setActiveCharacter = (id) => set(ref(db, 'competition/lookslike/pendingCharacter'), id);
+    window.deleteCharacter = (id) => {
+        if(confirm("Удалить персонажа?")) remove(ref(db, `competition/lookslike/characters/${id}`));
+    };
+
+    function updateActiveSceneButtons() {
+        const mode = currentData.activeMode || 'voting';
+        document.querySelectorAll('[id^="scene-"]').forEach(btn => btn.classList.remove('active'));
+        if (mode === 'voting') {
+            const btn = document.getElementById(`scene-${currentData.votingState || 'announcement'}`);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'slideshow') {
+            const map = { slideshow_qr: 'scene-slideshow-qr', slideshow_photo: 'scene-slideshow-photo_feed' };
+            const btn = document.getElementById(map[currentData.slideshowState]);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'lookslike') {
+            const map = { announcement: 'scene-ll-announcement', character: 'scene-ll-character', fan: 'scene-ll-fan' };
+            const btn = document.getElementById(map[currentData.lookslikeState]);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'mvp') {
+            const map = { winline_logo: 'scene-mvp-winline_logo', announcement: 'scene-mvp-announcement', qr: 'scene-mvp-qr', winner: 'scene-mvp-winner' };
+            const btn = document.getElementById(map[currentData.mvpState]);
+            if (btn) btn.classList.add('active');
+        } else if (mode === 'quiz') {
+            const map = { quiz_announcement: 'scene-quiz-announcement', quiz_qr: 'scene-quiz-qr', quiz_question: 'scene-quiz-question', quiz_answer_reveal: 'scene-quiz-question', quiz_results: 'scene-quiz-results', quiz_roulette: 'scene-quiz-roulette', quiz_winner: 'scene-quiz-winner' };
+            const btn = document.getElementById(map[currentData.quizState]);
+            if (btn) btn.classList.add('active');
+        }
+    }
+
+    onValue(ref(db, 'competition'), (snapshot) => {
+        currentData = snapshot.val() || {};
+        updateActiveSceneButtons();
+
+        const mode = currentData.activeMode || 'voting';
+        document.getElementById('mode-voting').classList.toggle('active', mode === 'voting');
+        document.getElementById('mode-slideshow').classList.toggle('active', mode === 'slideshow');
+        document.getElementById('mode-lookslike').classList.toggle('active', mode === 'lookslike');
+        document.getElementById('mode-mvp').classList.toggle('active', mode === 'mvp');
+        document.getElementById('mode-noise').classList.toggle('active', mode === 'noise');
+        document.getElementById('mode-quiz').classList.toggle('active', mode === 'quiz');
+        
+        ['controls-voting','controls-slideshow','controls-lookslike','controls-mvp','controls-noise','controls-quiz']
+            .forEach(id => document.getElementById(id).style.display = 'none');
+
+        // Для мобильной версии players-controls мы всегда оставляем видимыми в нижнем блоке
+        if (mode === 'voting') document.getElementById('controls-voting').style.display = 'block';
+        else if (mode === 'slideshow') document.getElementById('controls-slideshow').style.display = 'block';
+        else if (mode === 'lookslike') document.getElementById('controls-lookslike').style.display = 'block';
+        else if (mode === 'mvp') document.getElementById('controls-mvp').style.display = 'block';
+        else if (mode === 'noise') {
+            document.getElementById('controls-noise').style.display = 'block';
+            const np = currentData.noisePlayer || '38';
+            document.getElementById('noise-player-38').classList.toggle('active', np === '38');
+            document.getElementById('noise-player-11').classList.toggle('active', np === '11');
+            document.getElementById('noise-player-24').classList.toggle('active', np === '24');
+        } else if (mode === 'quiz') document.getElementById('controls-quiz').style.display = 'block';
+
+        const fgOn   = !!currentData.acceptingVotes;
+        const mvpOn  = !!currentData.acceptingMvpVotes;
+        const quizOn = !!currentData.acceptingQuizAnswers;
+
+        const toggleFG   = document.getElementById('toggle-first-goal');
+        const toggleMVP  = document.getElementById('toggle-mvp');
+        const toggleQuiz = document.getElementById('toggle-quiz');
+        const rowFG      = document.getElementById('toggle-row-fg');
+        const rowMVP     = document.getElementById('toggle-row-mvp');
+        const rowQuiz    = document.getElementById('toggle-row-quiz');
+
+        if (toggleFG)   toggleFG.checked   = fgOn;
+        if (toggleMVP)  toggleMVP.checked  = mvpOn;
+        if (toggleQuiz) toggleQuiz.checked = quizOn;
+        if (rowFG)   rowFG.className   = 'toggle-row ' + (fgOn   ? 'on' : 'off');
+        if (rowMVP)  rowMVP.className  = 'toggle-row ' + (mvpOn  ? 'on' : 'off');
+        if (rowQuiz) rowQuiz.className = 'toggle-row ' + (quizOn ? 'on' : 'off');
+
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const qmAll = document.getElementById('quiz-mode-all');
+        const qmAny = document.getElementById('quiz-mode-any');
+        if (qmAll) qmAll.classList.toggle('selected', winnerMode === 'all_correct');
+        if (qmAny) qmAny.classList.toggle('selected', winnerMode === 'any_correct');
+
+        renderPlayers(); 
+        renderVotes(); 
+        renderMessages();
+        renderCharacters();
+        renderMvpResults();
+        renderMvpPlayers();
+        renderQuiz();
+        if (activeChatId) renderChatMessages(activeChatId);
+    });
+
+    let lastMsgsHtml = "";
+    let lastVotesHtml = "";
+
+    let dragSrcId = null;
+
+    function renderCharacters() {
+        const container = document.getElementById('charactersList');
+        const chars = currentData.lookslike?.characters || {};
+        const pendingId = currentData.lookslike?.pendingCharacter;
+        const activeId = currentData.lookslike?.activeCharacter;
+        const orderArr = currentData.lookslike?.characterOrder || Object.keys(chars);
+        const knownIds = new Set(orderArr);
+        const allIds = [...orderArr.filter(id => chars[id]), ...Object.keys(chars).filter(id => !knownIds.has(id))];
+
+        let html = '';
+        allIds.forEach(id => {
+            const char = chars[id];
+            if (!char) return;
+            const isPending = (id === pendingId);
+            const isActiveInAir = (id === activeId);
+            const isEditing = (id === editingCharId);
+            html += `
+            <div class="char-card ${isActiveInAir ? 'active-char' : ''}" 
+                 draggable="true" data-id="${id}"
+                 ondragstart="onCharDragStart(event,'${id}')"
+                 ondragover="onCharDragOver(event)"
+                 ondrop="onCharDrop(event,'${id}')"
+                 ondragend="onCharDragEnd(event)">
+                <div class="drag-handle">⠿⠿⠿</div>
+                <img src="${char.image}" class="char-img">
+                <div class="char-info">
+                    ${isEditing ? 
+                        `<input type="text" id="edit-name-${id}" value="${char.name}" style="margin-bottom: 5px; height: 40px; font-size: 0.85rem;">
+                        <div style="display:flex; gap:5px; margin-bottom:10px;">
+                            <button class="btn btn-primary" style="flex:1; padding:8px; background:#10ac84" onclick="saveEditName('${id}')">💾</button>
+                            <button class="btn" style="flex:1; padding:8px; background:#ee5253; color:white" onclick="cancelEditName()">✖</button>
+                        </div>` 
+                        : 
+                        `<div class="char-name" style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                            <span>${char.name}</span>
+                            <span style="cursor:pointer; font-size:14px; opacity:0.5" onclick="startEditName('${id}')">✏️</span>
+                        </div>`
+                    }
+                    <button class="btn" style="width:100%; margin-bottom:8px; background: ${isPending ? '#9ef01a' : '#ecf0f1'}; color: ${isPending ? 'white' : 'black'}; font-size: 0.85rem;" onclick="setActiveCharacter('${id}')">
+                        ${isPending ? '📺 В ЭФИРЕ' : '📺 В ЭФИР'}
+                    </button>
+                    ${isActiveInAir ? '<div style="font-size:11px; color:green; text-align:center; font-weight:700;">● СЕЙЧАС В OBS</div>' : ''}
+                    <button class="btn" style="width:100%; background:#fab1a0; color:#c0392b; font-size: 0.8rem; margin-top:8px;" onclick="deleteCharacter('${id}')">Удалить</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    window.onCharDragStart = (e, id) => {
+        dragSrcId = id;
+        e.currentTarget.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    };
+    window.onCharDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('.char-card').forEach(c => c.classList.remove('drag-over'));
+        e.currentTarget.classList.add('drag-over');
+    };
+    window.onCharDragEnd = (e) => {
+        document.querySelectorAll('.char-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+    };
+    window.onCharDrop = (e, targetId) => {
+        e.preventDefault();
+        if (dragSrcId === targetId) return;
+        const chars = currentData.lookslike?.characters || {};
+        const orderArr = currentData.lookslike?.characterOrder || Object.keys(chars);
+        const knownIds = new Set(orderArr);
+        let allIds = [...orderArr.filter(id => chars[id]), ...Object.keys(chars).filter(id => !knownIds.has(id))];
+
+        const fromIdx = allIds.indexOf(dragSrcId);
+        const toIdx   = allIds.indexOf(targetId);
+        if (fromIdx < 0 || toIdx < 0) return;
+        allIds.splice(fromIdx, 1);
+        allIds.splice(toIdx, 0, dragSrcId);
+        set(ref(db, 'competition/lookslike/characterOrder'), allIds);
+    };
+
+    function renderMessages() {
+        const container = document.getElementById('messagesList');
+        const msgs = currentData.allMessages || {};
+        let list = Object.keys(msgs).map(id => ({id, ...msgs[id]}));
+        list.sort((a, b) => b.timestamp - a.timestamp);
+        let newHtml = '';
+        list.forEach(m => {
+            const userAvatar = (m.userPhoto && m.userPhoto.length > 10) ? m.userPhoto : tgLogo;
+            const date = m.timestamp ? new Date(m.timestamp) : new Date();
+            const timeStr = date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
+            const safeName = (m.name||'').replace(/'/g,"\\'");
+            const safeHandle = (m.handle||'').replace(/'/g,"\\'");
+            newHtml += `    
+                <div class="message-item" style="border-left: 6px solid ${m.approved ? '#10ac84' : '#d1d8e0'};" onclick="openChat('${m.chatId}','${safeName}','${userAvatar}','${safeHandle}')">
+                    <div class="message-content">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                            <img src="${userAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:44px; height:44px; border-radius:50%; object-fit: cover; background: #eee;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.name}</div>
+                                <div style="color:#7f8c8d; font-size:0.85rem;">@${m.handle || ''}</div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: #999;">${timeStr}</span>
+                        </div>
+                        <div style="font-size: 0.95rem; line-height: 1.4; margin-bottom: 10px;">${m.text || ''}</div>
+                        ${m.isImage ? `<div class="photo-container"><img src="${m.photo}" onclick="event.stopPropagation(); window.open('${m.photo}')"></div>` : ''}
+                    </div>
+                    <div class="message-left">
+                        <button class="btn" style="flex:1; background:${m.approved ? '#10ac84' : '#f1f2f6'}; color:${m.approved ? 'white' : 'black'}" 
+                                onclick="event.stopPropagation(); togglePhotoSelection('${m.id}', ${m.approved})">
+                            ${m.approved ? '✅ В ЭФИРЕ' : '📺 В ЭФИР'}
+                        </button>
+                        <button class="btn" style="padding:14px; background:var(--border-color);" onclick="event.stopPropagation(); openChat('${m.chatId}','${safeName}','${userAvatar}','${safeHandle}')">💬</button>
+                        <button class="btn" style="padding:14px; color:white; background:#ee5253;" onclick="event.stopPropagation(); removeMessage('${m.id}')">🗑</button>
+                    </div>
+                </div>`;
+        });
+        if (lastMsgsHtml !== newHtml) { container.innerHTML = newHtml; lastMsgsHtml = newHtml; }
+    }
+
+    function renderMvpResults() {
+        const container = document.getElementById('mvpResultsList');
+        const votes = currentData.mvpVotes || {};
+        const voteCounts = {};
+        const votersList = {};
+        Object.entries(votes).forEach(([userId, vote]) => {
+            const player = vote.votedFor;
+            voteCounts[player] = (voteCounts[player] || 0) + 1;
+            if (!votersList[player]) votersList[player] = [];
+            votersList[player].push(vote);
+        });
+        const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
+        document.getElementById('mvpCount').textContent = `Всего голосов: ${Object.keys(votes).length}`;
+        let html = '<div class="votes-list">';
+        sorted.forEach(([player, count], index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            const voters = votersList[player] || [];
+            const votersPreview = voters.slice(0, 3).map(v => v.name).join(', ');
+            const moreVoters = voters.length > 3 ? ` и ещё ${voters.length - 3}` : '';
+            html += `
+                <div class="vote-card ${index === 0 ? 'correct' : ''}" style="cursor: pointer" onclick="showVotersPopup('${player}')">
+                    <div style="font-size: 28px;">${medal}</div>
+                    <div style="font-weight:700; font-size:1.1rem; margin-top:5px;">${player}</div>
+                    <div style="color:var(--sibir-blue); font-size:1.8rem; font-weight:800; margin-top:5px;">${count}</div>
+                    <div style="color:#7f8c8d; font-size:0.8rem;">${count === 1 ? 'голос' : count < 5 ? 'голоса' : 'голосов'}</div>
+                    <div style="font-size:0.75rem; color:#999; margin-top:8px; line-height:1.2;">${votersPreview}${moreVoters}</div>
+                </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        window.mvpVotersData = votersList;
+    }
+
+    function renderMvpPlayers() {
+        const container = document.getElementById('mvpPlayersList');
+        if (!container) return;
+        const players = currentData.players || {};
+        const votes = currentData.mvpVotes || {};
+        const voteCounts = {};
+        const adminVoteCounts = {};
+        Object.entries(votes).forEach(([key, vote]) => {
+            voteCounts[vote.votedFor] = (voteCounts[vote.votedFor] || 0) + 1;
+            if (vote.isAdmin) adminVoteCounts[vote.votedFor] = (adminVoteCounts[vote.votedFor] || 0) + 1;
+        });
+        let html = '<div style="display: grid; grid-template-columns: 1fr; gap: 15px;">';
+        for (let id in players) {
+            const player = players[id];
+            const voteCount = voteCounts[player.name] || 0;
+            const adminCount = adminVoteCounts[player.name] || 0;
+            const hasPhoto = player.photo && player.photo.startsWith('http');
+            html += `
+                <div style="background: var(--white); border-radius: 16px; padding: 15px; border: 2px solid ${hasPhoto ? '#10ac84' : '#ddd'}; display:flex; flex-direction: column;">
+                    <div class="flex-between" style="margin-bottom: 12px;">
+                        <div style="font-weight: 700; font-size: 1.05rem;">${player.name}</div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${adminCount > 0 ? `<div style="background:#f39c12; color:white; padding:4px 10px; border-radius:20px; font-size:0.8rem; font-weight:700;">+${adminCount} 🛡️</div>` : ''}
+                            <div style="background: var(--sibir-blue); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;">${voteCount}</div>
+                        </div>
+                    </div>
+                    <div style="width: 100%; aspect-ratio: 16/9; background: #f0f0f0; border-radius: 12px; overflow: hidden; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;">
+                        ${hasPhoto ? `<img src="${player.photo}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span style="color: #999; font-size: 3rem;">👤</span>`}
+                    </div>
+                    <div class="grid-2" style="gap:8px;">
+                        <button class="btn" style="font-size:0.85rem; background:#9ef01a; color:#1a5c00;" onclick="addAdminVote('${player.name}')">➕ Голос</button>
+                        <button class="btn" style="font-size:0.85rem; background: ${hasPhoto ? '#ff9f43' : '#10ac84'}; color: white;" onclick="uploadPlayerPhoto('${id}')">${hasPhoto ? '🔄 Заменить' : '📷 Добавить'}</button>
+                        ${adminCount > 0 ? `<button class="btn" style="background:#ffeaa7; color:#856404; font-size:0.85rem;" onclick="removeAdminVote('${player.name}')">↩ Отмена голоса</button>` : ''}
+                        ${hasPhoto ? `<button class="btn" style="background: #ee5253; color: white; font-size: 0.85rem;" onclick="deletePlayerPhoto('${id}')">🗑️ Удалить фото</button>` : ''}
+                    </div>
+                </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.setNoisePlayer = (number) => { set(ref(db, 'competition/noisePlayer'), number); };
+
+    window.addAdminVote = (playerName) => {        
+        const voteId = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        set(ref(db, `competition/mvpVotes/${voteId}`), { votedFor: playerName, name: '🛡️ Админ', handle: 'admin', isAdmin: true, timestamp: Date.now() });
+    };
+
+    window.removeAdminVote = (playerName) => {
+        const votes = currentData.mvpVotes || {};
+        const adminVotes = Object.entries(votes)
+            .filter(([, v]) => v.votedFor === playerName && v.isAdmin)
+            .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+        if (adminVotes.length > 0) remove(ref(db, `competition/mvpVotes/${adminVotes[0][0]}`));
+    };
+
+    window.showVotersPopup = (player) => {
+        const voters = window.mvpVotersData[player] || [];
+        const list = voters.map(v => `${v.name} (@${v.handle || 'без ника'})`).join('\n');
+        alert(`Проголосовали за ${player}:\n\n${list}`);
+    };
+
+    window.startEditName = (id) => { editingCharId = id; renderCharacters(); };
+    window.cancelEditName = () => { editingCharId = null; renderCharacters(); };
+    window.saveEditName = (id) => {
+        const newName = document.getElementById(`edit-name-${id}`).value;
+        if (!newName) { alert("Имя не может быть пустым"); return; }
+        update(ref(db, `competition/lookslike/characters/${id}`), { name: newName }).then(() => { editingCharId = null; });
+    };
+
+    window.renderVotes = () => {
+        const container = document.getElementById('votesList');
+        const filter = document.getElementById('filterMode').value;
+        const votes = currentData.votes || {};
+        let list = Object.keys(votes).map(id => ({id, ...votes[id]}));
+        if(filter === 'correct') list = list.filter(v => v.votedFor === currentData.scorer);
+        document.getElementById('vCount').textContent = `Всего: ${list.length}`;
+        let newHtml = '';
+        list.reverse().forEach(v => {
+            const isCorrect = v.votedFor === currentData.scorer;
+            const voteAvatar = (v.photo && v.photo.length > 10) ? v.photo : tgLogo;
+            const safeName = (v.name||'').replace(/'/g,"\\'");
+            const safeHandle = (v.handle||'').replace(/'/g,"\\'");
+            newHtml += `
+                <div class="vote-card ${isCorrect ? 'correct' : ''}" style="cursor:pointer" onclick="openChat('${v.chatId}','${safeName}','${voteAvatar}','${safeHandle}')">
+                    <span style="position:absolute; top:8px; right:12px; cursor:pointer; color:#ee5253; z-index:2; font-size:1.3rem;" onclick="event.stopPropagation(); removeVote('${v.id}')">×</span>
+                    <div style="width:56px; height:56px; background: #eee; border-radius: 50%; overflow: hidden; flex-shrink: 0;">
+                        <img src="${voteAvatar}" onerror="this.onerror=null; this.src='${tgLogo}'" style="width:56px; height:56px; object-fit: cover;">
+                    </div>
+                    <div style="font-weight:700; font-size:0.95rem; margin-top:10px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${v.name}</div>
+                    <div style="color:var(--sibir-blue); font-size:0.85rem; font-weight:600; margin-top:4px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${v.votedFor}</div>
+                </div>`;
+        });
+        if (lastVotesHtml !== newHtml) { container.innerHTML = newHtml; lastVotesHtml = newHtml; }
+    }
+
+    window.addKeyword = (id, inputId) => {
+        const input = document.getElementById(inputId);
+        const word = input.value.trim();
+        if (!word) return;
+        const player = (currentData.players || {})[id];
+        if (!player) return;
+        const existing = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (!existing.includes(word)) existing.push(word);
+        update(ref(db, `competition/players/${id}`), { keywords: existing.join(', ') });
+        input.value = '';
+    };
+
+    window.removeKeyword = (id, word) => {
+        const player = (currentData.players || {})[id];
+        if (!player) return;
+        const existing = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const updated = existing.filter(k => k !== word);
+        update(ref(db, `competition/players/${id}`), { keywords: updated.join(', ') });
+    };
+
+    function renderPlayers() {
+        const pList = document.getElementById('playersList');
+        const pSelect = document.getElementById('goalScorer');
+        const players = currentData.players || {};
+        const scrollPos = pList.scrollTop;
+        pList.innerHTML = '';
+        let optionsHtml = '<option value="">-- КТО ЗАБИЛ? --</option>';
+        for (let id in players) {
+            const player = players[id];
+            const keywords = player.keywords ? player.keywords.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const kwHtml = keywords.map(kw => 
+                `<span class="keyword-tag">${kw}<span onclick="removeKeyword('${id}','${kw.replace(/'/g,"\\'")}')">×</span></span>`
+            ).join('');
+            const inputId = `kw-input-${id}`;
+            pList.innerHTML += `
+                <div class="player-row">
+                    <div class="player-row-top">
+                        <span class="player-name-label">👤 ${player.name}</span>
+                        <span onclick="removePlayer('${id}')" style="color:#ee5253; cursor:pointer; font-size:1.3rem; line-height:1; padding:0 5px;">×</span>
+                    </div>
+                    <div style="margin-bottom:8px;">${kwHtml || '<span style="color:#aaa;font-size:0.85rem;">нет ключевых слов</span>'}</div>
+                    <div class="keyword-add-row">
+                        <input type="text" id="${inputId}" placeholder="Добавить слово..." onkeydown="if(event.key==='Enter'){addKeyword('${id}','${inputId}');}">
+                        <button onclick="addKeyword('${id}','${inputId}')">Добавить</button>
+                    </div>
+                </div>`;
+            optionsHtml += `<option value="${player.name}" ${currentData.scorer === player.name ? 'selected' : ''}>${player.name}</option>`;
+        }
+        if (pSelect.innerHTML !== optionsHtml) pSelect.innerHTML = optionsHtml;
+        pList.scrollTop = scrollPos;
+    }
+
+    // ===== QUIZ FUNCTIONS =====
+    const ANSWER_COLORS = ['#05caff', '#ff9f43', '#3d8b00', '#ee5253'];
+    const ANSWER_LABELS = ['A', 'B', 'C', 'D'];
+
+    window.setQuizWinnerMode = (mode) => { set(ref(db, 'competition/quiz/winnerMode'), mode); };
+
+    window.addQuizQuestion = () => {
+        const text = document.getElementById('quiz-q-text').value.trim();
+        if (!text) { alert('Введите текст вопроса!'); return; }
+        const answers = [0,1,2,3].map(i => ({
+            text: document.getElementById(`quiz-a${i}-text`).value.trim(),
+            keywords: document.getElementById(`quiz-a${i}-keys`).value.trim(),
+            isCorrect: document.getElementById(`quiz-a${i}-correct`).checked
+        }));
+        if (answers.every(a => !a.text)) { alert('Добавьте хотя бы один вариант ответа!'); return; }
+        const questions = currentData.quiz?.questions || {};
+        const order = Object.keys(questions).length;
+        push(ref(db, 'competition/quiz/questions'), { text, answers, order, createdAt: Date.now() });
+        document.getElementById('quiz-q-text').value = '';
+        [0,1,2,3].forEach(i => {
+            document.getElementById(`quiz-a${i}-text`).value = '';
+            document.getElementById(`quiz-a${i}-keys`).value = '';
+            document.getElementById(`quiz-a${i}-correct`).checked = false;
+        });
+    };
+
+    window.deleteQuizQuestion = (id) => { if (confirm('Удалить вопрос?')) remove(ref(db, `competition/quiz/questions/${id}`)); };
+    window.clearAllQuizQuestions = () => {
+        if (confirm('Удалить все вопросы и ответы?')) {
+            remove(ref(db, 'competition/quiz/questions'));
+            remove(ref(db, 'competition/quiz/responses'));
+            set(ref(db, 'competition/quiz/activeQuestionId'), null);
+        }
+    };
+    window.clearQuizResponses = () => { if (confirm('Очистить ответы? Вопросы останутся.')) remove(ref(db, 'competition/quiz/responses')); };
+
+    window.setActiveQuizQuestion = (id) => {
+        const prevId = currentData.quiz?.activeQuestionId;
         const prevScene = currentData.quizState;
-        if (prevScene === 'quiz_question' && scene !== 'quiz_question') {
+
+        if (prevId && prevId !== id && prevScene === 'quiz_question') {
+            set(ref(db, 'competition/acceptingQuizAnswers'), false);
+            set(ref(db, 'competition/quiz/revealQuestionId'), prevId);
+            set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+            set(ref(db, 'competition/quizStateTs'), Date.now());
+
+            setTimeout(() => {
+                set(ref(db, 'competition/quiz/activeQuestionId'), id);
+                set(ref(db, 'competition/quiz/revealQuestionId'), null);
+                set(ref(db, 'competition/quizState'), 'quiz_question');
+                set(ref(db, 'competition/quizStateTs'), Date.now());
+                set(ref(db, 'competition/acceptingQuizAnswers'), true);
+            }, 4000);
+        } else {
+            set(ref(db, 'competition/quiz/activeQuestionId'), id);
+            if ((currentData.activeMode || 'voting') === 'quiz') {
+                set(ref(db, 'competition/quizState'), 'quiz_question');
+                set(ref(db, 'competition/quizStateTs'), Date.now());
+            }
+        }
+    };
+
+    window.removeQuizRespondent = (userId) => {
+        if (!confirm('Убрать участника из викторины?')) return;
+        const questions = currentData.quiz?.questions || {};
+        const updates = {};
+        Object.keys(questions).forEach(qId => { updates[`competition/quiz/responses/${qId}/${userId}`] = null; });
+        update(ref(db), updates);
+    };
+
+    window.quizLaunchRoulette = () => {
+        const questions = currentData.quiz?.questions || {};
+        const responses = currentData.quiz?.responses || {};
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const questionIds = Object.keys(questions);
+        const prevScene = currentData.quizState;
+
+        if (questionIds.length === 0) { alert('Нет вопросов!'); return; }
+
+        const correctMap = {};
+        questionIds.forEach(qId => {
+            const q = questions[qId];
+            correctMap[qId] = new Set();
+            (q.answers || []).forEach((a, i) => { if (a && a.isCorrect) correctMap[qId].add(i); });
+        });
+
+        const userStats = {};
+        questionIds.forEach(qId => {
+            const qResponses = responses[qId] || {};
+            Object.entries(qResponses).forEach(([userId, r]) => {
+                if (!userStats[userId]) userStats[userId] = { name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId, correctCount: 0, answeredCount: 0 };
+                userStats[userId].answeredCount++;
+                if (correctMap[qId].has(r.answerIndex)) userStats[userId].correctCount++;
+            });
+        });
+
+        let pool = [];
+        if (winnerMode === 'all_correct') {
+            Object.values(userStats).forEach(u => { if (u.correctCount === questionIds.length) pool.push(u); });
+        } else {
+            Object.values(userStats).forEach(u => { for (let i = 0; i < u.correctCount; i++) pool.push(u); });
+        }
+
+        if (pool.length === 0) {
+            const msg = winnerMode === 'all_correct' ? 'Никто не ответил правильно на все вопросы!' : 'Никто не ответил правильно ни на один вопрос!';
+            if (!confirm(msg + '\n\nВсё равно запустить рулетку?')) return;
+        }
+
+        set(ref(db, 'competition/quiz/roulettePool'), pool);
+
+        if (prevScene === 'quiz_question') {
             const activeId = currentData.quiz?.activeQuestionId;
             if (activeId) {
                 set(ref(db, 'competition/acceptingQuizAnswers'), false);
@@ -925,459 +1561,152 @@ window.setScene = (scene) => {
                 set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
                 set(ref(db, 'competition/quizStateTs'), Date.now());
                 setTimeout(() => {
-                    set(ref(db, 'competition/quizState'), scene);
+                    set(ref(db, 'competition/quizState'), 'quiz_roulette');
                     set(ref(db, 'competition/quizStateTs'), Date.now());
                 }, 4000);
-                toast('⏱ Показываем правильный ответ 4 сек...');
                 return;
             }
         }
-        set(ref(db, 'competition/quizState'), scene);
+
+        set(ref(db, 'competition/quizState'), 'quiz_roulette');
         set(ref(db, 'competition/quizStateTs'), Date.now());
-    }
-    toast('Сцена запущена');
-};
+    };
 
-// ── Toggles ────────────────────────────────────────────────────────────
-window.onVoteToggle = (mode, checked) => {
-    if (checked) {
-        set(ref(db, 'competition/acceptingVotes'),       mode === 'first_goal');
-        set(ref(db, 'competition/acceptingMvpVotes'),    mode === 'match_mvp');
-        set(ref(db, 'competition/acceptingQuizAnswers'), mode === 'quiz');
-        set(ref(db, 'competition/votingMode'), mode);
-        toast('✅ Приём включён');
-    } else {
-        set(ref(db, 'competition/acceptingVotes'),       false);
-        set(ref(db, 'competition/acceptingMvpVotes'),    false);
-        set(ref(db, 'competition/acceptingQuizAnswers'), false);
-        toast('🔴 Приём выключен');
-    }
-};
-
-// ── Background ─────────────────────────────────────────────────────────
-window.updateBg = () => {
-    const url = document.getElementById('bgUrl').value;
-    if (url) { set(ref(db, 'competition/background'), url); toast('Фон обновлён'); }
-};
-window.removeBackground = () => {
-    set(ref(db, 'competition/background'), null);
-    document.getElementById('bgUrl').value = '';
-    toast('Фон удалён');
-};
-
-// ── Players ────────────────────────────────────────────────────────────
-window.addPlayer = () => {
-    const name = document.getElementById('pName').value.trim();
-    const keywords = document.getElementById('pKeys').value.trim();
-    if (!name) { toast('⚠️ Введи имя!'); return; }
-    push(ref(db, 'competition/players'), { name, keywords });
-    document.getElementById('pName').value = '';
-    document.getElementById('pKeys').value = '';
-    toast('Игрок добавлен');
-};
-window.removePlayer = (id) => {
-    if (confirm('Удалить игрока?')) remove(ref(db, `competition/players/${id}`));
-};
-window.setScorer = (val) => set(ref(db, 'competition/scorer'), val);
-window.pickWinnerManual = () => {
-    const votes = currentData.votes || {};
-    const scorer = currentData.scorer;
-    if (!scorer) { toast('⚠️ Сначала выбери автора гола!'); return; }
-    const lucky = Object.values(votes).filter(v => v.votedFor === scorer);
-    if (lucky.length > 0) {
-        const w = lucky[Math.floor(Math.random() * lucky.length)];
-        set(ref(db, 'competition/winner'), { ...w, selectionId: Date.now() });
-        toast('🏆 Победитель: ' + w.name);
-    } else {
-        toast('⚠️ Никто не угадал!');
-    }
-};
-window.resetVotes = () => {
-    if (confirm('Очистить все голоса (Первая шайба)?')) { remove(ref(db, 'competition/votes')); toast('Голоса очищены'); }
-};
-
-// ── Noise player ───────────────────────────────────────────────────────
-window.setNoisePlayer = (n) => { set(ref(db, 'competition/noisePlayer'), n); toast('Игрок: ' + n); };
-
-// ── Quiz ───────────────────────────────────────────────────────────────
-window.setQuizWinnerMode = (mode) => {
-    set(ref(db, 'competition/quiz/winnerMode'), mode);
-    toast(mode === 'all_correct' ? '🎯 Режим: все верные' : '⚡ Режим: хотя бы один');
-};
-
-window.openAddQuestion = () => {
-    document.getElementById('addQModal').classList.add('open');
-    document.getElementById('new-q-text').focus();
-};
-window.closeAddQuestion = (e) => {
-    if (!e || e.target === document.getElementById('addQModal')) {
-        document.getElementById('addQModal').classList.remove('open');
-    }
-};
-
-window.addQuizQuestion = () => {
-    const text = document.getElementById('new-q-text').value.trim();
-    if (!text) { toast('⚠️ Введи текст вопроса!'); return; }
-    const answers = [0,1,2,3].map(i => ({
-        text: document.getElementById(`a${i}-txt`).value.trim(),
-        keywords: document.getElementById(`a${i}-kw`).value.trim(),
-        isCorrect: document.getElementById(`a${i}-ok`).checked
-    }));
-    if (answers.every(a => !a.text)) { toast('⚠️ Добавь хотя бы один вариант!'); return; }
-    const questions = currentData.quiz?.questions || {};
-    const order = Object.keys(questions).length;
-    push(ref(db, 'competition/quiz/questions'), { text, answers, order, createdAt: Date.now() });
-    document.getElementById('new-q-text').value = '';
-    [0,1,2,3].forEach(i => {
-        document.getElementById(`a${i}-txt`).value = '';
-        document.getElementById(`a${i}-kw`).value = '';
-        document.getElementById(`a${i}-ok`).checked = false;
-    });
-    document.getElementById('addQModal').classList.remove('open');
-    toast('✅ Вопрос добавлен');
-};
-
-window.setActiveQuizQuestion = (id) => {
-    const prevId = currentData.quiz?.activeQuestionId;
-    const prevScene = currentData.quizState;
-    if (prevId && prevId !== id && prevScene === 'quiz_question') {
-        set(ref(db, 'competition/acceptingQuizAnswers'), false);
-        set(ref(db, 'competition/quiz/revealQuestionId'), prevId);
-        set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
+    window.quizPickWinner = () => {
+        const pool = currentData.quiz?.roulettePool;
+        if (!pool || !Array.isArray(pool) || pool.length === 0) { alert('Сначала запустите рулетку!'); return; }
+        const winner = pool[Math.floor(Math.random() * pool.length)];
+        set(ref(db, 'competition/quiz/winner'), { ...winner, selectionId: Date.now() });
+        set(ref(db, 'competition/quizState'), 'quiz_winner');
         set(ref(db, 'competition/quizStateTs'), Date.now());
-        setTimeout(() => {
-            set(ref(db, 'competition/quiz/activeQuestionId'), id);
-            set(ref(db, 'competition/quiz/revealQuestionId'), null);
-            set(ref(db, 'competition/quizState'), 'quiz_question');
-            set(ref(db, 'competition/quizStateTs'), Date.now());
-            set(ref(db, 'competition/acceptingQuizAnswers'), true);
-        }, 4000);
-        toast('⏱ Переключаем через 4 сек...');
-    } else {
-        set(ref(db, 'competition/quiz/activeQuestionId'), id);
-        if ((currentData.activeMode || 'voting') === 'quiz') {
-            set(ref(db, 'competition/quizState'), 'quiz_question');
-            set(ref(db, 'competition/quizStateTs'), Date.now());
+        alert('Победитель викторины: ' + winner.name);
+    };
+
+    let lastQuizHtml = '';
+    let lastRespondentsHtml = '';
+
+    function renderQuiz() {
+        const container = document.getElementById('quizQuestionsList');
+        if (!container) return;
+        const questions = currentData.quiz?.questions || {};
+        const responses = currentData.quiz?.responses || {};
+        const activeQId = currentData.quiz?.activeQuestionId;
+        const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
+        const questionIds = Object.keys(questions);
+
+        const sorted = Object.entries(questions).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+        if (sorted.length === 0) {
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding: 30px;">Вопросов пока нет</div>';
+        } else {
+            let html = '';
+            sorted.forEach(([id, q], idx) => {
+                const isActive = id === activeQId;
+                const qResponses = responses[id] || {};
+                const totalResponses = Object.keys(qResponses).length;
+
+                const answerCounts = [0,0,0,0];
+                Object.values(qResponses).forEach(r => { if (r.answerIndex >= 0 && r.answerIndex < 4) answerCounts[r.answerIndex]++; });
+
+                const answersHtml = (q.answers || []).map((a, i) => {
+                    if (!a.text) return '';
+                    const pct = totalResponses > 0 ? Math.round(answerCounts[i] / totalResponses * 100) : 0;
+                    return `
+                    <div class="quiz-answer-block ${a.isCorrect ? 'is-correct' : ''}" style="border-left-color: ${ANSWER_COLORS[i]};">
+                        <div class="quiz-answer-label" style="color:${ANSWER_COLORS[i]}; display:flex; justify-content:space-between;">
+                            <span>${ANSWER_LABELS[i]}${a.isCorrect ? ' ✓' : ''}</span>
+                            <span style="font-size:0.85rem; color:#666;">${answerCounts[i]} (${pct}%)</span>
+                        </div>
+                        <div class="quiz-answer-text">${a.text}</div>
+                        ${a.keywords ? `<div class="quiz-answer-keys">🔑 ${a.keywords}</div>` : ''}
+                    </div>`;
+                }).join('');
+
+                html += `
+                <div class="quiz-q-card ${isActive ? 'active-q' : ''}">
+                    <div class="quiz-q-header">
+                        <span class="quiz-q-num">Вопрос ${idx + 1}</span>
+                        ${isActive ? '<span class="quiz-active-badge">● В ЭФИРЕ</span>' : ''}
+                        <span class="quiz-response-badge">${totalResponses} отв.</span>
+                    </div>
+                    <div class="quiz-q-text">${q.text}</div>
+                    <div class="quiz-answers-grid">${answersHtml}</div>
+                    <div class="grid-2" style="margin-top:15px; gap:8px;">
+                        <button class="btn" style="padding:10px; font-size:0.85rem; background:${isActive ? '#9ef01a' : 'var(--gray)'}; color:${isActive ? '#1a5c00' : 'var(--text-main)'};" onclick="setActiveQuizQuestion('${id}')">${isActive ? '🎯 Активный' : '▶ Активировать'}</button>
+                        <button class="btn" style="padding:10px; font-size:0.85rem; background:#fab1a0; color:#c0392b;" onclick="deleteQuizQuestion('${id}')">🗑 Удалить</button>
+                    </div>
+                </div>`;
+            });
+
+            if (lastQuizHtml !== html) { container.innerHTML = html; lastQuizHtml = html; }
         }
-        toast('❓ Вопрос активирован');
-    }
-};
 
-window.deleteQuizQuestion = (id) => {
-    if (confirm('Удалить вопрос?')) { remove(ref(db, `competition/quiz/questions/${id}`)); toast('Вопрос удалён'); }
-};
-window.clearAllQuizQuestions = () => {
-    if (confirm('Удалить ВСЕ вопросы и ответы?')) {
-        remove(ref(db, 'competition/quiz/questions'));
-        remove(ref(db, 'competition/quiz/responses'));
-        set(ref(db, 'competition/quiz/activeQuestionId'), null);
-        toast('Всё удалено');
-    }
-};
-window.clearQuizResponses = () => {
-    if (confirm('Очистить все ответы? Вопросы останутся.')) {
-        remove(ref(db, 'competition/quiz/responses'));
-        toast('Ответы очищены');
-    }
-};
+        const respondentsContainer = document.getElementById('quizRespondentsList');
+        const titleEl = document.getElementById('quizRespondentsTitle');
+        if (!respondentsContainer || questionIds.length === 0) return;
 
-window.quizLaunchRoulette = () => {
-    const questions = currentData.quiz?.questions || {};
-    const responses = currentData.quiz?.responses || {};
-    const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
-    const questionIds = Object.keys(questions);
-    if (questionIds.length === 0) { toast('⚠️ Нет вопросов!'); return; }
-
-    const correctMap = {};
-    questionIds.forEach(qId => {
-        correctMap[qId] = new Set();
-        (questions[qId].answers || []).forEach((a, i) => { if (a?.isCorrect) correctMap[qId].add(i); });
-    });
-
-    const userStats = {};
-    questionIds.forEach(qId => {
-        Object.entries(responses[qId] || {}).forEach(([uid, r]) => {
-            if (!userStats[uid]) userStats[uid] = { name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId, correctCount: 0 };
-            if (correctMap[qId].has(r.answerIndex)) userStats[uid].correctCount++;
+        const correctMap = {};
+        questionIds.forEach(qId => {
+            const q = questions[qId];
+            correctMap[qId] = new Set();
+            (q.answers || []).forEach((a, i) => { if (a && a.isCorrect) correctMap[qId].add(i); });
         });
-    });
 
-    let pool = [];
-    if (winnerMode === 'all_correct') {
-        Object.values(userStats).forEach(u => { if (u.correctCount === questionIds.length) pool.push(u); });
-    } else {
-        Object.values(userStats).forEach(u => { for (let i = 0; i < u.correctCount; i++) pool.push(u); });
-    }
+        const userStats = {};
+        questionIds.forEach(qId => {
+            const qResponses = responses[qId] || {};
+            const q = questions[qId];
+            Object.entries(qResponses).forEach(([userId, r]) => {
+                if (!userStats[userId]) {
+                    userStats[userId] = { name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId, correctCount: 0, totalCount: 0, correctAnswers: [] };
+                }
+                userStats[userId].totalCount++;
+                if (correctMap[qId].has(r.answerIndex)) {
+                    userStats[userId].correctCount++;
+                    const ansText = (q.answers || [])[r.answerIndex]?.text || '';
+                    userStats[userId].correctAnswers.push(`${ANSWER_LABELS[r.answerIndex]}: ${ansText}`);
+                }
+            });
+        });
 
-    if (pool.length === 0 && !confirm('Нет участников! Всё равно запустить?')) return;
+        let eligible = [];
+        if (winnerMode === 'all_correct') {
+            eligible = Object.entries(userStats).filter(([,u]) => u.correctCount === questionIds.length);
+            if (titleEl) titleEl.textContent = `Правильно ответили на все (${eligible.length})`;
+        } else {
+            eligible = Object.entries(userStats).filter(([,u]) => u.correctCount > 0);
+            if (titleEl) titleEl.textContent = `Хотя бы один верный (${eligible.length})`;
+        }
 
-    set(ref(db, 'competition/quiz/roulettePool'), pool);
+        eligible.sort((a,b) => b[1].correctCount - a[1].correctCount);
 
-    const prevScene = currentData.quizState;
-    if (prevScene === 'quiz_question') {
-        const activeId = currentData.quiz?.activeQuestionId;
-        if (activeId) {
-            set(ref(db, 'competition/acceptingQuizAnswers'), false);
-            set(ref(db, 'competition/quiz/revealQuestionId'), activeId);
-            set(ref(db, 'competition/quizState'), 'quiz_answer_reveal');
-            set(ref(db, 'competition/quizStateTs'), Date.now());
-            setTimeout(() => {
-                set(ref(db, 'competition/quizState'), 'quiz_roulette');
-                set(ref(db, 'competition/quizStateTs'), Date.now());
-            }, 4000);
-            toast(`🎲 Рулетка через 4 сек... (${pool.length} чел.)`);
+        if (eligible.length === 0) {
+            respondentsContainer.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Пока нет участников</div>';
+            lastRespondentsHtml = '';
             return;
         }
-    }
-    set(ref(db, 'competition/quizState'), 'quiz_roulette');
-    set(ref(db, 'competition/quizStateTs'), Date.now());
-    toast(`🎲 Рулетка запущена (${pool.length} чел.)`);
-};
 
-window.quizPickWinner = () => {
-    const pool = currentData.quiz?.roulettePool;
-    if (!pool || !pool.length) { toast('⚠️ Сначала запустите рулетку!'); return; }
-    const winner = pool[Math.floor(Math.random() * pool.length)];
-    set(ref(db, 'competition/quiz/winner'), { ...winner, selectionId: Date.now() });
-    set(ref(db, 'competition/quizState'), 'quiz_winner');
-    set(ref(db, 'competition/quizStateTs'), Date.now());
-    toast('🏆 Победитель: ' + winner.name);
-};
-
-window.removeQuizRespondent = (uid) => {
-    if (!confirm('Убрать участника?')) return;
-    const updates = {};
-    Object.keys(currentData.quiz?.questions || {}).forEach(qId => {
-        updates[`competition/quiz/responses/${qId}/${uid}`] = null;
-    });
-    update(ref(db), updates);
-};
-
-// ── Firebase listener ───────────────────────────────────────────────────
-onValue(ref(db, 'competition'), snap => {
-    currentData = snap.val() || {};
-    syncUI();
-    renderPlayers();
-    renderVotes();
-    renderQuiz();
-});
-
-function syncUI() {
-    const d = currentData;
-    const mode = d.activeMode || 'voting';
-
-    // Status bar
-    const statusEl = document.getElementById('topStatus');
-    const isLive = d.acceptingVotes || d.acceptingMvpVotes || d.acceptingQuizAnswers;
-    statusEl.textContent = isLive ? '● LIVE' : mode.toUpperCase();
-    statusEl.className = 'topbar-status' + (isLive ? ' live' : '');
-
-    // Mode buttons
-    ['voting','mvp','quiz','lookslike','slideshow','noise'].forEach(m => {
-        document.getElementById(`m-${m}`)?.classList.toggle('active', m === mode);
-    });
-
-    // Show/hide control sections
-    ['ctrl-voting','ctrl-mvp','ctrl-quiz','ctrl-lookslike','ctrl-slideshow','ctrl-noise'].forEach(id => {
-        document.getElementById(id).style.display = 'none';
-    });
-    const ctrlMap = { voting:'ctrl-voting', mvp:'ctrl-mvp', quiz:'ctrl-quiz', lookslike:'ctrl-lookslike', slideshow:'ctrl-slideshow', noise:'ctrl-noise' };
-    const ctrlId = ctrlMap[mode];
-    if (ctrlId) document.getElementById(ctrlId).style.display = 'block';
-
-    // Active scene buttons
-    document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
-    if (mode === 'voting') {
-        const m = { announcement:'sc-announcement', qr:'sc-qr', roulette:'sc-roulette', winner:'sc-winner' };
-        if (m[d.votingState]) document.getElementById(m[d.votingState])?.classList.add('active');
-    } else if (mode === 'mvp') {
-        const m = { winline_logo:'sc-mvp-winline_logo', announcement:'sc-mvp-announcement', qr:'sc-mvp-qr', winner:'sc-mvp-winner' };
-        if (m[d.mvpState]) document.getElementById(m[d.mvpState])?.classList.add('active');
-    } else if (mode === 'quiz') {
-        const m = {
-            quiz_announcement:'sc-quiz-announcement', quiz_qr:'sc-quiz-qr',
-            quiz_question:'sc-quiz-question', quiz_answer_reveal:'sc-quiz-question',
-            quiz_results:'sc-quiz-results', quiz_roulette:'sc-quiz-roulette', quiz_winner:'sc-quiz-winner'
-        };
-        if (m[d.quizState]) document.getElementById(m[d.quizState])?.classList.add('active');
-    } else if (mode === 'lookslike') {
-        const m = { announcement:'sc-ll-announcement', character:'sc-ll-character', fan:'sc-ll-fan' };
-        if (m[d.lookslikeState]) document.getElementById(m[d.lookslikeState])?.classList.add('active');
-    } else if (mode === 'slideshow') {
-        const m = { slideshow_qr:'sc-ss-qr', slideshow_photo:'sc-ss-photo' };
-        if (m[d.slideshowState]) document.getElementById(m[d.slideshowState])?.classList.add('active');
-    } else if (mode === 'noise') {
-        ['38','11','24'].forEach(n => document.getElementById(`np-${n}`)?.classList.toggle('active', d.noisePlayer === n));
-    }
-
-    // Toggles
-    const fg = !!d.acceptingVotes;
-    const mv = !!d.acceptingMvpVotes;
-    const qz = !!d.acceptingQuizAnswers;
-    setToggle('toggle-fg',   'toggle-row-fg',   fg);
-    setToggle('toggle-mvp',  'toggle-row-mvp',  mv);
-    setToggle('toggle-quiz', 'toggle-row-quiz',  qz);
-
-    // Winner mode
-    const wm = d.quiz?.winnerMode || 'all_correct';
-    document.getElementById('wm-all')?.classList.toggle('selected', wm === 'all_correct');
-    document.getElementById('wm-any')?.classList.toggle('selected', wm === 'any_correct');
-}
-
-function setToggle(inputId, rowId, checked) {
-    const inp = document.getElementById(inputId);
-    const row = document.getElementById(rowId);
-    if (inp) inp.checked = checked;
-    if (row) row.className = 'toggle-row ' + (checked ? 'on' : 'off');
-}
-
-// ── RENDER: Players ─────────────────────────────────────────────────────
-function renderPlayers() {
-    const players = currentData.players || {};
-    const scorer = currentData.scorer || '';
-
-    // Select
-    const sel = document.getElementById('goalScorer');
-    if (sel) {
-        let opts = '<option value="">-- Кто забил? --</option>';
-        for (let id in players) opts += `<option value="${players[id].name}" ${scorer === players[id].name ? 'selected' : ''}>${players[id].name}</option>`;
-        sel.innerHTML = opts;
-    }
-
-    // List
-    const list = document.getElementById('playersList');
-    if (!list) return;
-    if (!Object.keys(players).length) {
-        list.innerHTML = '<div class="empty"><div class="empty-icon">👤</div>Игроков нет</div>';
-        return;
-    }
-    list.innerHTML = Object.entries(players).map(([id, p]) => `
-        <div class="card" style="padding:12px 14px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                <div style="font-weight:700; font-size:0.9rem;">👤 ${p.name}</div>
-                <button onclick="removePlayer('${id}')" style="background:none;border:none;color:var(--red);font-size:1.2rem;cursor:pointer;padding:0 4px;">×</button>
-            </div>
-            <div style="font-size:0.72rem; color:var(--muted);">${p.keywords || 'нет ключевых слов'}</div>
-        </div>`).join('');
-}
-
-// ── RENDER: Votes ───────────────────────────────────────────────────────
-function renderVotes() {
-    const votes = currentData.votes || {};
-    const scorer = currentData.scorer;
-    const list = document.getElementById('votesList');
-    const cnt  = document.getElementById('vCount');
-    const entries = Object.entries(votes).reverse();
-    cnt.textContent = `${entries.length} голосов`;
-    if (!entries.length) {
-        list.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🗳️</div>Голосов нет</div>';
-        return;
-    }
-    list.innerHTML = entries.map(([id, v]) => {
-        const isCorrect = v.votedFor === scorer;
-        const photo = (v.photo && v.photo.length > 10) ? v.photo : tgLogo;
-        return `<div class="vote-card ${isCorrect ? 'correct' : ''}">
-            <img src="${photo}" onerror="this.src='${tgLogo}'" alt="">
-            <div class="vote-name">${v.name || 'Аноним'}</div>
-            <div class="vote-pick">${v.votedFor || '—'}</div>
-        </div>`;
-    }).join('');
-}
-
-// ── RENDER: Quiz ────────────────────────────────────────────────────────
-function renderQuiz() {
-    const questions = currentData.quiz?.questions || {};
-    const responses = currentData.quiz?.responses || {};
-    const activeQId = currentData.quiz?.activeQuestionId;
-    const winnerMode = currentData.quiz?.winnerMode || 'all_correct';
-    const sorted = Object.entries(questions).sort((a,b) => (a[1].order||0) - (b[1].order||0));
-    const questionIds = Object.keys(questions);
-
-    const container = document.getElementById('quizList');
-    if (!sorted.length) {
-        container.innerHTML = '<div class="empty"><div class="empty-icon">❓</div>Вопросов нет</div>';
-    } else {
-        container.innerHTML = sorted.map(([id, q], idx) => {
-            const isActive = id === activeQId;
-            const qResp = responses[id] || {};
-            const total = Object.keys(qResp).length;
-            const counts = [0,0,0,0];
-            Object.values(qResp).forEach(r => { if (r.answerIndex >= 0 && r.answerIndex < 4) counts[r.answerIndex]++; });
-
-            const answersHtml = (q.answers || []).map((a, i) => {
-                if (!a?.text) return '';
-                const pct = total > 0 ? Math.round(counts[i]/total*100) : 0;
-                return `<div class="q-answer ${a.isCorrect ? 'correct' : ''}" style="border-left-color:${ANSWER_COLORS[i]};">
-                    <div class="q-answer-lbl" style="color:${ANSWER_COLORS[i]}">${ANSWER_LABELS[i]}${a.isCorrect ? ' ✓' : ''}</div>
-                    <div class="q-answer-txt">${a.text}</div>
-                    <div class="q-answer-pct">${counts[i]} (${pct}%)</div>
-                </div>`;
-            }).join('');
-
-            return `<div class="q-card ${isActive ? 'active-q' : ''}">
-                <div class="q-card-top">
-                    <div class="q-num">В${idx+1}</div>
-                    <div class="q-text">${q.text}</div>
-                    ${isActive ? '<div class="q-badge">АКТИВНЫЙ</div>' : ''}
+        let rHtml = '';
+        eligible.forEach(([userId, u]) => {
+            const avatar = (u.photo && u.photo.length > 10) ? u.photo : 'media/tg_logo.png';
+            const safeName = (u.name||'').replace(/'/g,"\\'");
+            const safeHandle = (u.handle||'').replace(/'/g,"\\'");
+            const correctBadge = `${u.correctCount}/${questionIds.length} ✓`;
+            const answersPreview = u.correctAnswers.join(' · ');
+            rHtml += `
+            <div class="vote-card correct" style="position:relative;">
+                <button onclick="removeQuizRespondent('${userId}')" title="Убрать участника" style="position:absolute;top:8px;right:8px;background:#ee5253;color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;line-height:1;padding:0;">✕</button>
+                <div style="width:56px; height:56px; background:#eee; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:pointer;" onclick="openChat('${u.chatId}','${safeName}','${avatar}','${safeHandle}')">
+                    <img src="${avatar}" onerror="this.onerror=null;this.src='media/tg_logo.png'" style="width:56px;height:56px;object-fit:cover;">
                 </div>
-                <div class="q-resp-count">Ответов: ${total}</div>
-                <div class="q-answers">${answersHtml}</div>
-                <div class="q-actions">
-                    <button class="action-btn ${isActive ? 'green' : 'dark'}" style="flex:1; font-size:0.78rem; padding:9px;" onclick="setActiveQuizQuestion('${id}')">
-                        ${isActive ? '🎯 Активный' : '▶ Активировать'}
-                    </button>
-                    <button class="action-btn red" style="width:42px; padding:9px; flex-shrink:0;" onclick="deleteQuizQuestion('${id}')">🗑</button>
-                </div>
+                <div style="font-weight:700; font-size:0.95rem; margin-top:8px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${u.name || 'Аноним'}</div>
+                <div style="color:#10ac84; font-size:0.9rem; font-weight:700; margin-top:4px;">${correctBadge}</div>
+                ${winnerMode === 'any_correct' && answersPreview ? `<div style="font-size:0.75rem; color:#666; margin-top:6px; line-height:1.3; width:100%;">${answersPreview}</div>` : ''}
             </div>`;
-        }).join('');
-    }
-
-    // Respondents
-    const respondentsEl = document.getElementById('respondentsList');
-    const labelEl = document.getElementById('respondentsLabel');
-    if (!questionIds.length) { respondentsEl.innerHTML = ''; return; }
-
-    const correctMap = {};
-    questionIds.forEach(qId => {
-        correctMap[qId] = new Set();
-        (questions[qId].answers || []).forEach((a,i) => { if (a?.isCorrect) correctMap[qId].add(i); });
-    });
-
-    const userStats = {};
-    questionIds.forEach(qId => {
-        Object.entries(responses[qId] || {}).forEach(([uid, r]) => {
-            if (!userStats[uid]) userStats[uid] = { name: r.name, handle: r.handle, photo: r.photo, chatId: r.chatId, correctCount: 0, totalCount: 0 };
-            userStats[uid].totalCount++;
-            if (correctMap[qId].has(r.answerIndex)) userStats[uid].correctCount++;
         });
-    });
 
-    let eligible = winnerMode === 'all_correct'
-        ? Object.entries(userStats).filter(([,u]) => u.correctCount === questionIds.length)
-        : Object.entries(userStats).filter(([,u]) => u.correctCount > 0);
-
-    eligible.sort((a,b) => b[1].correctCount - a[1].correctCount);
-    labelEl.textContent = winnerMode === 'all_correct'
-        ? `Все верные (${eligible.length})`
-        : `Хотя бы один верный (${eligible.length})`;
-
-    if (!eligible.length) {
-        respondentsEl.innerHTML = '<div class="empty"><div class="empty-icon">🙋</div>Пока нет участников</div>';
-        return;
+        respondentsContainer.innerHTML = rHtml;
+        lastRespondentsHtml = rHtml;
     }
-
-    respondentsEl.innerHTML = eligible.map(([uid, u]) => {
-        const photo = (u.photo && u.photo.length > 10) ? u.photo : tgLogo;
-        return `<div class="respondent-card winner-eligible">
-            <img src="${photo}" onerror="this.src='${tgLogo}'" alt="">
-            <div class="respondent-info">
-                <div class="respondent-name">${u.name || 'Аноним'}</div>
-                <div class="respondent-score">${u.correctCount}/${questionIds.length} ✓</div>
-            </div>
-            <button onclick="removeQuizRespondent('${uid}')" style="background:rgba(238,82,83,0.15);border:1px solid rgba(238,82,83,0.3);color:var(--red);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit;font-weight:700;">✕</button>
-        </div>`;
-    }).join('');
-}
 </script>
 </body>
 </html>
