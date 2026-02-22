@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'MyCustomFont';
+            src: url('fonts/DrukCyr-HeavyItalic.ttf') format('truetype');
+        }
+
+        @keyframes fadeInOutCustom {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+            20%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1);    text-shadow: 0 0 20px rgba(0,242,255,0.6); }
+            50%       { transform: scale(1.03); text-shadow: 0 0 50px rgba(0,242,255,0.9); }
+        }
+        @keyframes fadeInMain  { to { opacity: 1; } }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+        @keyframes scrollTape  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes answerSlideIn {
+            from { opacity: 0; transform: translateX(-40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes barGrow     { from { width: 0; } }
+        @keyframes resultFadeIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes correctPop {
+            0%   { transform: scale(1); }
+            45%  { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: transparent;
+            font-family: 'MyCustomFont', sans-serif; color: white;
+        }
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            z-index: -1; opacity: 0; transition: opacity 1.5s ease-in-out;
+        }
+        #bg-video {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: -2; transition: opacity 1s ease-in-out;
+        }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: transparent; }
+
+        /* ── Переходы между сценами ── */
+        .scene {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+            opacity: 0; visibility: hidden;
+            transform: scale(1.04) translateY(14px);
+            transition:
+                opacity 0.75s cubic-bezier(0.4,0,0.2,1),
+                transform 0.75s cubic-bezier(0.16,1,0.3,1),
+                visibility 0.75s;
+            pointer-events: none;
+        }
+        .scene.active {
+            opacity: 1; visibility: visible;
+            transform: scale(1) translateY(0);
+            z-index: 5; pointer-events: all;
+        }
+        .scene.leaving {
+            opacity: 0;
+            transform: scale(0.97) translateY(-10px);
+            transition:
+                opacity 0.6s cubic-bezier(0.4,0,0.2,1),
+                transform 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── АНОНС ── */
+        .announcement-logo {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 350px; z-index: 10;
+        }
+        .fade-out-text {
+            font-size: 250px; font-weight: bold; color: white;
+            text-shadow: 0 0 30px rgba(0,242,255,0.9);
+            position: absolute; width: 100%; left: 50%; top: 30%;
+            transform: translate(-50%, -50%); opacity: 0;
+        }
+        .scene.active .fade-out-text { animation: fadeInOutCustom 3s forwards; }
+        .final-pulse-container { opacity: 0; }
+        .scene.active .final-pulse-container { animation: fadeInMain 0.5s forwards 3.1s, pulse-glow 3s ease-in-out infinite 5s; }
+        .line1, .line2, .line3 { opacity: 0; text-transform: uppercase; transform: translateY(100px); }
+        .scene.active .line1 { font-size: 220px; font-weight: bold; animation: slideUpFade 0.8s forwards 3.3s; text-shadow: 0 0 30px rgba(0,242,255,0.9); }
+        .scene.active .line2 { font-size: 220px; font-weight: bold; margin-top: -30px; animation: slideUpFade 0.8s forwards 3.8s; text-shadow: 0 0 30px rgba(0,242,255,0.9); }
+        .scene.active .line3 { font-size: 100px; margin-top: 30px; animation: slideUpFade 0.8s forwards 4.3s; }
+        .announcement-content { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 200px; text-shadow: 0 0 30px rgba(0,242,255,0.9); }
+
+        /* ── QR ── */
+        #quiz_qr { padding-top: 60px; }
+        .qr-row { display: flex; gap: 100px; justify-content: center; align-items: flex-start; }
+        .qr-item img { width: 700px; border: 10px solid white; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+
+        /* ── ВОПРОС + REVEAL (одна сцена) ── */
+        #quiz_question {
+            padding: 60px 80px 40px;
+            box-sizing: border-box;
+            justify-content: center;
+        }
+
+        .question-label {
+            font-size: 44px; color: rgba(255,255,255,0.5); text-transform: uppercase;
+            margin-bottom: 14px; letter-spacing: 4px; align-self: flex-start;
+            transition: color 0.7s ease;
+        }
+        #quiz_question.revealing .question-label {
+            color: rgba(158,240,26,0.75);
+        }
+
+        .question-text {
+            font-size: clamp(56px, 6.5vw, 108px); line-height: 1.1;
+            text-shadow: 0 0 30px rgba(0,242,255,0.35); margin-bottom: 36px;
+            text-transform: uppercase; word-break: break-word;
+            align-self: flex-start; text-align: left; width: 100%;
+        }
+        .answers-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: 100%;
+        }
+
+        /* Карточки — базовые стили + плавные цветовые переходы */
+        .answer-card {
+            border-radius: 18px; padding: 22px 28px;
+            display: flex; align-items: center; gap: 22px;
+            opacity: 0;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1);
+            transition:
+                background 0.85s cubic-bezier(0.4,0,0.2,1),
+                border-color 0.85s cubic-bezier(0.4,0,0.2,1),
+                box-shadow 0.85s cubic-bezier(0.4,0,0.2,1),
+                opacity 0.85s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* Slide-in только при входе на сцену вопроса, НЕ при reveal */
+        #quiz_question.active:not(.revealing) .answer-card:nth-child(1) { animation: answerSlideIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards 0.08s; }
+        #quiz_question.active:not(.revealing) .answer-card:nth-child(2) { animation: answerSlideIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards 0.22s; }
+        #quiz_question.active:not(.revealing) .answer-card:nth-child(3) { animation: answerSlideIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards 0.36s; }
+        #quiz_question.active:not(.revealing) .answer-card:nth-child(4) { animation: answerSlideIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards 0.50s; }
+
+        /* В режиме reveal — карточки стоят на месте, никакого движения */
+        #quiz_question.revealing .answer-card {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+
+        .answer-card.correct-reveal {
+            background: rgba(158,240,26,0.2);
+            border-color: rgba(158,240,26,0.7);
+            box-shadow: 0 0 55px rgba(158,240,26,0.35);
+            animation: correctPop 0.6s cubic-bezier(0.34,1.56,0.64,1) !important;
+        }
+        .answer-card.wrong-reveal {
+            opacity: 0.22 !important;
+        }
+
+        .answer-letter {
+            font-size: 70px; width: 80px; text-align: center; flex-shrink: 0;
+            color: rgba(255,255,255,0.65);
+            transition: color 0.85s cubic-bezier(0.4,0,0.2,1);
+        }
+        .answer-card.correct-reveal .answer-letter { color: #9ef01a; }
+        .answer-text {
+            font-size: clamp(38px, 3.8vw, 58px); text-align: left;
+            line-height: 1.15; text-transform: uppercase; word-break: break-word;
+        }
+
+        /* ── РЕЗУЛЬТАТЫ ── */
+        #quiz_results { padding: 70px 80px 30px; box-sizing: border-box; justify-content: flex-start; }
+        .results-title { font-size: 76px; margin-bottom: 36px; text-shadow: 0 0 20px rgba(0,242,255,0.6); text-transform: uppercase; align-self: flex-start; }
+        .results-grid { display: flex; flex-direction: column; gap: 18px; width: 100%; }
+        .result-row {
+            display: flex; align-items: center; gap: 24px; opacity: 0;
+            background: rgba(0,0,0,0.45); border-radius: 14px; padding: 14px 22px;
+            border: 2px solid rgba(255,255,255,0.07);
+            transition: background 0.6s, border-color 0.6s, box-shadow 0.6s;
+        }
+        .result-row.is-correct { background: rgba(158,240,26,0.15); border-color: rgba(158,240,26,0.45); box-shadow: 0 0 22px rgba(158,240,26,0.18); }
+        .scene.active .result-row:nth-child(1) { animation: resultFadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards 0.2s; }
+        .scene.active .result-row:nth-child(2) { animation: resultFadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards 0.38s; }
+        .scene.active .result-row:nth-child(3) { animation: resultFadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards 0.56s; }
+        .scene.active .result-row:nth-child(4) { animation: resultFadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards 0.74s; }
+        .result-letter { font-size: 58px; width: 68px; text-align: center; flex-shrink: 0; color: rgba(255,255,255,0.55); }
+        .result-row.is-correct .result-letter { color: #9ef01a; }
+        .result-text-col { flex: 1; text-align: left; }
+        .result-answer-text { font-size: 42px; text-transform: uppercase; margin-bottom: 6px; }
+        .result-bar-track { height: 22px; background: rgba(255,255,255,0.1); border-radius: 11px; overflow: hidden; }
+        .result-bar-fill { height: 100%; border-radius: 11px; animation: barGrow 1.2s cubic-bezier(0.4,0,0.2,1) forwards 0.9s; }
+        .result-count { font-size: 58px; width: 120px; text-align: right; flex-shrink: 0; color: rgba(255,255,255,0.75); }
+        .result-row.is-correct .result-count { color: #9ef01a; }
+
+        /* ── РУЛЕТКА ── */
+        #quiz_roulette h1 { font-size: 150px; text-shadow: 0 0 20px rgba(0,242,255,0.6); text-transform: uppercase; margin: 0 0 40px 0; }
+        .roulette-wrapper { width: 1920px; height: 400px; display: flex; align-items: center; overflow: hidden; position: relative; }
+        #tape { display: flex; position: absolute; left: 0; }
+        #tape.rolling { animation: scrollTape 20s linear infinite; }
+        .user-card { min-width: 300px; display: flex; flex-direction: column; align-items: center; }
+        .user-card img { width: 270px; height: 270px; border-radius: 50%; border: 5px solid white; object-fit: cover; }
+        .user-card span { margin-top: 15px; font-size: 24px; font-weight: bold; }
+
+        /* ── ПОБЕДИТЕЛЬ ── */
+        #quiz_winner { flex-direction: column; align-items: center; justify-content: center; }
+        .winner-title { font-size: 110px; text-shadow: 0 0 20px rgba(0,242,255,0.6); margin: 0 0 36px 0; text-transform: uppercase; }
+        .winner-content { display: flex; flex-direction: column; align-items: center; }
+        .winner-avatar { width: 360px; height: 360px; border-radius: 50%; border: 10px solid rgb(42,138,255); box-shadow: 0 0 60px rgb(42,138,255); object-fit: cover; margin-bottom: 28px; }
+    </style>
+</head>
+<body>
+    <div id="bg-layer"></div>
+
+    <!-- АНОНС -->
+    <div id="quiz_announcement" class="scene">
+        <video muted playsinline id="logo-video" class="announcement-logo">
+            <source src="media/logoVideo.webm" type="video/webm">
+        </video>
+        <div class="announcement-content">
+            <h1 class="fade-out-text">ВИКТОРИНА!</h1>
+            <div class="final-pulse-container">
+                <div class="line1">КТО ЗНАЕТ</div>
+                <div class="line2">БОЛЬШЕ ВСЕХ?</div>
+                <div class="line3">ОТВЕЧАЙ И ПОБЕЖДАЙ!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR -->
+    <div id="quiz_qr" class="scene">
+        <div class="qr-row">
+            <div class="qr-item"><img src="media/telegramqr.png"></div>
+            <div class="qr-item"><img src="media/vkqr.png"></div>
+        </div>
+        <h1 style="font-size:180px; text-transform:uppercase; margin-top:40px; animation: pulse-glow 2s ease-in-out infinite;">Отвечай и побеждай!</h1>
+    </div>
+
+    <!-- ВОПРОС (он же reveal через класс .revealing — смены сцены нет) -->
+    <div id="quiz_question" class="scene">
+        <div id="question-label" class="question-label">Вопрос 1</div>
+        <div id="question-text" class="question-text"></div>
+        <div id="answers-grid" class="answers-grid"></div>
+    </div>
+
+    <!-- РЕЗУЛЬТАТЫ -->
+    <div id="quiz_results" class="scene">
+        <div class="results-title">РЕЗУЛЬТАТЫ</div>
+        <div id="results-grid" class="results-grid"></div>
+    </div>
+
+    <!-- РУЛЕТКА -->
+    <div id="quiz_roulette" class="scene">
+        <h1>Выбираем победителя...</h1>
+        <div class="roulette-wrapper"><div id="tape"></div></div>
+    </div>
+
+    <!-- ПОБЕДИТЕЛЬ -->
+    <div id="quiz_winner" class="scene">
+        <h1 class="winner-title">ПОБЕДИТЕЛЬ ВИКТОРИНЫ:</h1>
+        <div id="winner-display" class="winner-content"></div>
+    </div>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="media/backgroundvideo.webm" type="video/webm">
+    </video>
+    <div class="video-overlay"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWMrknceb-9SolXGBv8NB3CoOEKkD4rk8",
+            authDomain: "arenawork-94e68.firebaseapp.com",
+            databaseURL: "https://arenawork-94e68-default-rtdb.firebaseio.com",
+            projectId: "arenawork-94e68",
+            storageBucket: "arenawork-94e68.firebasestorage.app",
+            messagingSenderId: "504372844993",
+            appId: "1:504372844993:web:1783bb75879ee074953740"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getDatabase(app);
+
+        const ANSWER_LABELS = ['A','B','C','D'];
+        const DEFAULT_PHOTO = 'media/tg_logo.png';
+
+        const bgLayer       = document.getElementById('bg-layer');
+        const bgVideo       = document.getElementById('bg-video');
+        const tape          = document.getElementById('tape');
+        const announceLogo  = document.getElementById('logo-video');
+        const qScene        = document.getElementById('quiz_question');
+
+        document.addEventListener('click', () => announceLogo.play().catch(() => {}), { once: true });
+
+        let lastScene            = null;
+        let lastTs               = null;
+        let prevActiveQuestionId = null;
+        let prevWinner           = null;
+        let prevResponsesHash    = null;
+
+        // ── Переключение сцены ──────────────────────────────────────────────
+        // quiz_answer_reveal — не отдельная сцена, обрабатываем как reveal на quiz_question
+        function switchScene(sceneId) {
+            const isReveal = sceneId === 'quiz_answer_reveal';
+            const realId   = isReveal ? 'quiz_question' : sceneId;
+
+            const currentActive = document.querySelector('.scene.active');
+            const alreadyHere   = currentActive && currentActive.id === realId;
+
+            if (!alreadyHere) {
+                // Плавно убираем текущую сцену
+                if (currentActive) {
+                    currentActive.classList.add('leaving');
+                    setTimeout(() => {
+                        currentActive.classList.remove('active', 'leaving', 'revealing');
+                    }, 650);
+                }
+                // Показываем новую
+                const el = document.getElementById(realId);
+                if (el) {
+                    requestAnimationFrame(() => {
+                        el.classList.remove('revealing'); // сначала без reveal
+                        el.classList.add('active');
+                        if (isReveal) {
+                            // Дать браузеру отрендерить сцену, потом добавить reveal
+                            setTimeout(() => doReveal(), 350);
+                        }
+                    });
+                }
+            } else if (isReveal && !qScene.classList.contains('revealing')) {
+                // Сцена уже видна — просто делаем reveal без перерисовки
+                doReveal();
+            }
+
+            // Управление рулеткой и лого
+            if (lastScene === 'quiz_roulette' && realId !== 'quiz_roulette') {
+                tape.classList.remove('rolling');
+                tape.innerHTML = '';
+            }
+            if (realId === 'quiz_announcement') {
+                announceLogo.currentTime = 0;
+                announceLogo.play().catch(() => {});
+            } else {
+                announceLogo.pause();
+            }
+
+            lastScene = sceneId;
+        }
+
+        // Применяет классы correct/wrong к карточкам и добавляет .revealing на сцену
+        function doReveal() {
+            qScene.classList.add('revealing');
+            document.getElementById('answers-grid').querySelectorAll('.answer-card').forEach(card => {
+                if (card.dataset.correct === '1') {
+                    card.classList.add('correct-reveal');
+                    card.classList.remove('wrong-reveal');
+                } else {
+                    card.classList.add('wrong-reveal');
+                    card.classList.remove('correct-reveal');
+                }
+            });
+        }
+
+        function applyBackground(url) {
+            if (url.trim()) {
+                bgLayer.style.backgroundImage = `url('${url}')`;
+                bgLayer.style.opacity = '1';
+                bgVideo.style.opacity = '0';
+            } else {
+                bgLayer.style.opacity = '0';
+                bgVideo.style.opacity = '1';
+            }
+        }
+
+        // ── Firebase listener ───────────────────────────────────────────────
+        onValue(ref(db, 'competition'), (snap) => {
+            const data = snap.val();
+            if (!data) return;
+
+            // Фон
+            applyBackground(data.backgrounds?.quiz || '');
+
+            const scene = data.quizState || null;
+            const ts    = data.quizStateTs || null;
+
+            const sceneChanged = scene && scene !== lastScene;
+            const tsNew        = ts && ts !== lastTs;
+
+            if (scene && (sceneChanged || tsNew)) {
+                lastTs = ts;
+
+                if (scene === 'quiz_question') {
+                    buildQuestionScene(data);
+                    prevActiveQuestionId = data.quiz?.activeQuestionId;
+                }
+                if (scene === 'quiz_answer_reveal') {
+                    // Обновляем лейбл; DOM карточек не перестраиваем если вопрос тот же
+                    const questions = data.quiz?.questions || {};
+                    const qId = data.quiz?.revealQuestionId || data.quiz?.activeQuestionId;
+                    if (qId && qId !== prevActiveQuestionId) {
+                        // другой вопрос — перестраиваем полностью
+                        buildQuestionScene(data, qId);
+                        prevActiveQuestionId = qId;
+                    }
+                    updateQuestionLabel(data, qId, true);
+                }
+                if (scene === 'quiz_results') {
+                    buildResultsScene(data);
+                    prevResponsesHash = responsesHash(data);
+                }
+                if (scene === 'quiz_roulette') buildRoulette(data);
+                if (scene === 'quiz_winner') {
+                    buildWinner(data.quiz?.winner);
+                    prevWinner = JSON.stringify(data.quiz?.winner);
+                }
+
+                switchScene(scene);
+                return;
+            }
+
+            // Точечные обновления без смены сцены
+            if (!sceneChanged && !tsNew) {
+                if (scene === 'quiz_question') {
+                    const aqId = data.quiz?.activeQuestionId;
+                    if (aqId !== prevActiveQuestionId) {
+                        buildQuestionScene(data);
+                        prevActiveQuestionId = aqId;
+                    }
+                }
+                if (scene === 'quiz_results') {
+                    const h = responsesHash(data);
+                    if (h !== prevResponsesHash) {
+                        buildResultsScene(data);
+                        prevResponsesHash = h;
+                    }
+                }
+                if (scene === 'quiz_winner') {
+                    const wStr = JSON.stringify(data.quiz?.winner);
+                    if (wStr !== prevWinner) {
+                        buildWinner(data.quiz?.winner);
+                        prevWinner = wStr;
+                    }
+                }
+            }
+        });
+
+        function responsesHash(data) {
+            const qId = data.quiz?.activeQuestionId;
+            if (!qId) return '';
+            return JSON.stringify((data.quiz?.responses || {})[qId] || {});
+        }
+
+        // ── Построение сцены вопроса ────────────────────────────────────────
+        function buildQuestionScene(data, overrideQId = null) {
+            const questions = data.quiz?.questions || {};
+            const qId = overrideQId || data.quiz?.activeQuestionId;
+            if (!qId || !questions[qId]) return;
+            const q = questions[qId];
+
+            // Убираем revealing — карточки сбросятся в исходное состояние
+            qScene.classList.remove('revealing');
+
+            updateQuestionLabel(data, qId, false);
+            document.getElementById('question-text').textContent = q.text || '';
+
+            const grid = document.getElementById('answers-grid');
+            grid.innerHTML = (q.answers || []).map((a, i) => {
+                if (!a || !a.text) return '';
+                return `<div class="answer-card" data-correct="${a.isCorrect ? '1' : '0'}">
+                    <div class="answer-letter">${ANSWER_LABELS[i]}</div>
+                    <div class="answer-text">${a.text}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateQuestionLabel(data, qId, isReveal) {
+            const questions = data.quiz?.questions || {};
+            if (!qId || !questions[qId]) return;
+            const sortedIds = Object.keys(questions).sort((a,b) => (questions[a].order||0) - (questions[b].order||0));
+            const idx = sortedIds.indexOf(qId);
+            const label = document.getElementById('question-label');
+            if (isReveal) {
+                label.textContent = `Вопрос ${idx+1} · ✓ Правильный ответ`;
+            } else {
+                label.textContent = `Вопрос ${idx+1}`;
+            }
+        }
+
+        // ── Результаты ──────────────────────────────────────────────────────
+        function buildResultsScene(data) {
+            const questions = data.quiz?.questions || {};
+            const responses = data.quiz?.responses || {};
+            const qId = data.quiz?.activeQuestionId;
+            if (!qId || !questions[qId]) return;
+            const q = questions[qId];
+            const qResp = responses[qId] || {};
+            const total = Object.keys(qResp).length;
+            const counts = [0,0,0,0];
+            Object.values(qResp).forEach(r => { if (r.answerIndex >= 0 && r.answerIndex < 4) counts[r.answerIndex]++; });
+            const maxC = Math.max(...counts, 1);
+            document.getElementById('results-grid').innerHTML = (q.answers || []).map((a,i) => {
+                if (!a || !a.text) return '';
+                const pct = total > 0 ? Math.round(counts[i]/total*100) : 0;
+                const bar = Math.round(counts[i]/maxC*100);
+                return `<div class="result-row ${a.isCorrect ? 'is-correct' : ''}">
+                    <div class="result-letter">${ANSWER_LABELS[i]}</div>
+                    <div class="result-text-col">
+                        <div class="result-answer-text">${a.text}</div>
+                        <div class="result-bar-track">
+                            <div class="result-bar-fill" style="width:${bar}%;background:${a.isCorrect?'#9ef01a':'rgba(255,255,255,0.45)'};"></div>
+                        </div>
+                    </div>
+                    <div class="result-count">${pct}%</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ── Рулетка ─────────────────────────────────────────────────────────
+        function buildRoulette(data) {
+            const pool = data.quiz?.roulettePool;
+            tape.innerHTML = '';
+            tape.classList.remove('rolling');
+            if (!pool || !Array.isArray(pool) || pool.length === 0) return;
+            const repeat = Math.ceil(40 / pool.length);
+            let base = [...pool].sort(() => Math.random() - 0.5);
+            let full = [];
+            for (let i = 0; i < repeat; i++) full = full.concat(base);
+            const display = [...full, ...full];
+            display.forEach(u => {
+                const photo = (u.photo && u.photo.trim() && u.photo !== 'https://via.placeholder.com/150') ? u.photo : DEFAULT_PHOTO;
+                const div = document.createElement('div');
+                div.className = 'user-card';
+                div.innerHTML = `<img src="${photo}" onerror="this.src='${DEFAULT_PHOTO}'"><span>${u.name||'Участник'}</span>`;
+                tape.appendChild(div);
+            });
+            tape.style.animationDuration = `${Math.max(10, pool.length * 0.8)}s`;
+            setTimeout(() => tape.classList.add('rolling'), 50);
+        }
+
+        // ── Победитель ──────────────────────────────────────────────────────
+        function buildWinner(winner) {
+            const el = document.getElementById('winner-display');
+            if (!el) return;
+            if (!winner) {
+                el.innerHTML = '<div style="font-size:70px;opacity:0.5;">Данные загружаются...</div>';
+                return;
+            }
+            const photo = (winner.photo && winner.photo.trim() && !winner.photo.includes('placeholder'))
+                ? winner.photo : DEFAULT_PHOTO;
+            const handle = winner.handle ? `<div style="font-size:58px;opacity:0.7;">@${winner.handle}</div>` : '';
+            el.innerHTML = `
+                <img src="${photo}" class="winner-avatar" onerror="this.src='${DEFAULT_PHOTO}'">
+                <div style="font-size:clamp(60px,7.5vw,130px);margin:10px 0;text-transform:uppercase;text-shadow:0 0 30px rgba(0,242,255,0.6);">${winner.name||'Победитель'}</div>
+                ${handle}`;
+        }
+    </script>
+</body>
+</html>
